@@ -240,7 +240,6 @@ module Discordrb
     # {API} methods.
     # @return [String] The API token.
     def token
-      API.bot_name = @name
       @token
     end
 
