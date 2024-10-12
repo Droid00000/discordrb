@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   }
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'tempfile'
   spec.add_dependency 'base64', '~> 0.2.0'
   spec.add_dependency 'faraday', '~> 2.12.0'
   spec.add_dependency 'ffi', '>= 1.9.24'

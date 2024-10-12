@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'faraday'
+require 'tempfile'
 
 module Discordrb
   # Basic attributes a server should have
@@ -564,11 +565,7 @@ module Discordrb
       else
       end
 
-      response = API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
-
-      role = Role.new(JSON.parse(response), @bot, self)
-      @roles << role
-      role
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
     end
 
     # Adds a new custom emoji on this server.
