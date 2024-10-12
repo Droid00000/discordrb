@@ -125,6 +125,20 @@ module Discordrb::API::Server
     )
   end
 
+  # Get a member's data
+  # https://discord.com/developers/docs/resources/guild#get-guild-member
+  def resolve_booster(token, server_id, user_id)
+    JSON.parse(Discordrb::API.request(
+      :guilds_sid_members_uid,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/members/#{user_id}",
+      Authorization: token
+    ))
+rescue StandardError
+  false
+  end
+
   # Gets members from the server
   # https://discord.com/developers/docs/resources/guild#list-guild-members
   def resolve_members(token, server_id, limit, after = nil)
@@ -231,13 +245,13 @@ module Discordrb::API::Server
   # sending TTS messages, embedding links, sending files, reading the history, mentioning everybody,
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#get-guild-roles
-  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil)
+  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, icon, reason = nil)
     Discordrb::API.request(
       :guilds_sid_roles,
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }.to_json,
+      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, icon: icon }.compact.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
@@ -250,7 +264,7 @@ module Discordrb::API::Server
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#batch-modify-guild-role
   # @param icon [:undef, File]
-  def update_role(token, server_id, role_id, name, colour, hoist = false, mentionable = false, packed_permissions = 104_324_161, reason = nil, icon = :undef)
+  def update_role(token, server_id, role_id, name, colour, hoist, mentionable, packed_permissions, icon = :undef, reason = nil)
     data = { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }
 
     if icon != :undef && icon
@@ -270,7 +284,7 @@ module Discordrb::API::Server
       server_id,
       :patch,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles/#{role_id}",
-      data.to_json,
+      data.compact.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason

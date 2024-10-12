@@ -209,7 +209,7 @@ module Discordrb::API
   end
 
   # Make an emoji icon URL from emoji ID
-  def emoji_icon_url(emoji_id, format = 'webp')
+  def emoji_icon_url(emoji_id, format: 'png')
     "#{cdn_url}/emojis/#{emoji_id}.#{format}"
   end
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'faraday'
+
 module Discordrb
   # Basic attributes a server should have
   module ServerAttributes
@@ -512,10 +514,13 @@ module Discordrb
     # @param hoist [true, false]
     # @param mentionable [true, false]
     # @param permissions [Integer, Array<Symbol>, Permissions, #bits] The permissions to write to the new role.
+    # @param icon [String, #read] A role icon for this role.
     # @param reason [String] The reason the for the creation of this role.
     # @return [Role] the created role.
-    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, reason: nil)
+    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
+
+      image_string = nil
 
       permissions = if permissions.is_a?(Array)
                       Permissions.bits(permissions)
@@ -525,7 +530,41 @@ module Discordrb
                       permissions
                     end
 
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, reason)
+      if icon && unlocked_icons? && valid_icon?(icon)
+        icon = valid_icon?(emoji_icon)
+        path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
+        mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+        image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+      end
+
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, image_string, reason)
+
+      role = Role.new(JSON.parse(response), @bot, self)
+      @roles << role
+      role
+    end
+
+    # Updates a role on this server.
+    # @param name [String] Name of the role to create
+    # @param colour [Integer, ColourRGB, #combined] The roles colour
+    # @param hoist [true, false]
+    # @param icon [String, #read] A role icon for this role.
+    # @param reason [String] The reason the for the creation of this role.
+    # @return [Role] the created role.
+    def update_role(role, name, colour, icon, reason)
+      colour = colour.respond_to?(:combined) ? colour.combined : colour
+
+      image_string = nil
+
+      if icon && unlocked_icons? && valid_icon?(icon)
+        icon = valid_icon?(icon)
+        path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
+        mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+        image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+      else
+      end
+
+      response = API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
 
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
@@ -583,6 +622,35 @@ module Discordrb
       else
         50
       end
+    end
+
+    # If this server has unlocked role icons
+    # @return [Boolean] If this server can access role icons
+    def role_icons?
+      case @boost_level
+      when 0
+        false
+      when 1
+        false
+      when 2
+        true
+      when 3
+        true
+      else
+        true
+      end
+    end
+
+    # Custom method to return a valid role icon in the form of a temporary file object.
+    # @param [String] ID of a custom emoiji.
+    # @return [File] A temporary file object containing the image data, or false.
+    def valid_icon?(icon)
+      return false if Faraday.get(API.emoji_icon_url(icon)).status == 404
+
+      file = Tempfile.new(icon)
+      file.write(Faraday.get(API.emoji_icon_url(icon)).body)
+      file.rewind
+      File.expand_path(file.path)
     end
 
     # Retrieve banned users from this server.
