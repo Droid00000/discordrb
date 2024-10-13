@@ -47,7 +47,7 @@ module Discordrb::API::Channel
   end
 
   # Update a channel name
-  def name(token, channel_id, name)
+  def name(token, channel_id, name, reason)
     data = { name: name }
     Discordrb::API.request(
       :channels_cid,
