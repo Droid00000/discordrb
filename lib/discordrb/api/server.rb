@@ -128,13 +128,13 @@ module Discordrb::API::Server
   # Get a member's data
   # https://discord.com/developers/docs/resources/guild#get-guild-member
   def resolve_booster(token, server_id, user_id)
-    JSON.parse(Discordrb::API.request(
+    !JSON.parse(Discordrb::API.request(
                  :guilds_sid_members_uid,
                  server_id,
                  :get,
                  "#{Discordrb::API.api_base}/guilds/#{server_id}/members/#{user_id}",
                  Authorization: token
-               ))
+               ))['premium_since'].nil?
   rescue StandardError
     false
   end
