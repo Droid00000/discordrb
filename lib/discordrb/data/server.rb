@@ -530,10 +530,12 @@ module Discordrb
                       permissions
                     end
 
-      image_string = image
-      if image.respond_to? :read
-      image_string = 'data:image/jpg;base64,'
-      image_string += Base64.strict_encode64(image.read)
+      image_string = resolve_icon(icon)
+      if image_string.respond_to? :read
+        image_string = 'data:image/jpg;base64,'
+        image_string += Base64.strict_encode64(image.read)
+      else
+        image_string = nil
       end
 
       response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, image_string, reason)
@@ -646,7 +648,7 @@ module Discordrb
       file = Tempfile.new(SecureRandom.hex(10))
       file.write(Faraday.get(API.emoji_icon_url(icon)).body)
       file.rewind
-      File.expand_path(file.path)
+      file
     end
 
     # Retrieve banned users from this server.
