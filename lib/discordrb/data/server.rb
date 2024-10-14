@@ -2,6 +2,7 @@
 
 require 'faraday'
 require 'tempfile'
+require 'securerandom'
 
 module Discordrb
   # Basic attributes a server should have
@@ -555,17 +556,7 @@ module Discordrb
     def update_role(role, name, colour, icon, reason)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-      image_string = nil
-
-      if icon && unlocked_icons? && valid_icon?(icon)
-        icon = valid_icon?(icon)
-        path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-        mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-        image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
-      else
-      end
-
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, resolve_icon(icon), reason)
     end
 
     # Adds a new custom emoji on this server.
@@ -650,12 +641,12 @@ module Discordrb
     end
 
     # Custom method to return a valid role icon in the form of a temporary file object.
-    # @param [String] ID of a custom emoiji.
+    # @param [String] ID of a custom emoji.
     # @return [File] A temporary file object containing the image data, or false.
-    def valid_icon?(icon)
-      return false if Faraday.get(API.emoji_icon_url(icon)).status == 404
+    def resolve_icon(icon)
+      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get(API.emoji_icon_url(icon)).status != 404)
 
-      file = Tempfile.new(icon)
+      file = Tempfile.new(SecureRandom.hex(10))
       file.write(Faraday.get(API.emoji_icon_url(icon)).body)
       file.rewind
       File.expand_path(file.path)
