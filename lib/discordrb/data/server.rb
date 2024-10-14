@@ -522,8 +522,6 @@ module Discordrb
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-      image_string = nil
-
       permissions = if permissions.is_a?(Array)
                       Permissions.bits(permissions)
                     elsif permissions.respond_to?(:bits)
@@ -532,11 +530,10 @@ module Discordrb
                       permissions
                     end
 
-      if icon && unlocked_icons? && valid_icon?(icon)
-        icon = valid_icon?(emoji_icon)
-        path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-        mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-        image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+      image_string = image
+      if image.respond_to? :read
+      image_string = 'data:image/jpg;base64,'
+      image_string += Base64.strict_encode64(image.read)
       end
 
       response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, image_string, reason)
