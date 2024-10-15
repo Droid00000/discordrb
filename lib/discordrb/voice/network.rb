@@ -216,7 +216,7 @@ module Discordrb::Voice
           data: {
             address: ip,
             port: port,
-            mode: mode
+            mode: "aead_aes256_gcm_rtpsize"
           }
         }
       }.to_json)
