@@ -22,14 +22,14 @@ module Discordrb::Voice
   # Signifies to Discord that encryption should be used
   # @deprecated Discord now supports multiple encryption options.
   # TODO: Resolve replacement for this constant.
-  ENCRYPTED_MODE = 'xsalsa20_poly1305'
+  ENCRYPTED_MODE = 'aead_xchacha20_poly1305_rtpsize'
 
   # Signifies to Discord that no encryption should be used
   # @deprecated Discord no longer supports unencrypted voice communication.
   PLAIN_MODE = 'plain'
 
   # Encryption modes supported by Discord
-  ENCRYPTION_MODES = %w[xsalsa20_poly1305_lite xsalsa20_poly1305_suffix xsalsa20_poly1305].freeze
+  ENCRYPTION_MODES = %w[aead_aes256_gcm_rtpsize aead_xchacha20_poly1305_rtpsize].freeze
 
   # Represents a UDP connection to a voice server. This connection is used to send the actual audio data.
   class VoiceUDP
@@ -139,16 +139,12 @@ module Discordrb::Voice
     # @return [String]
     # @note
     #   The nonce generated depends on the encryption mode.
-    #   In xsalsa20_poly1305 the nonce is the header plus twelve null bytes for padding.
-    #   In xsalsa20_poly1305_suffix, the nonce is 24 random bytes
+    #   In aead_aes256_gcm_rtpsize the nonce is an incremental 4 byte int.
+    #   In aead_xchacha20_poly1305_rtpsize, the nonce is an incremental 4 byte int.
     #   In xsalsa20_poly1305_lite, the nonce is an incremental 4 byte int.
     def generate_nonce(header)
       case @mode
-      when 'xsalsa20_poly1305'
-        header
-      when 'xsalsa20_poly1305_suffix'
-        Random.urandom(24)
-      when 'xsalsa20_poly1305_lite'
+      when 'aead_xchacha20_poly1305_rtpsize', 'aead_aes256_gcm_rtpsize'
         case @lite_nonce
         when nil, 0xff_ff_ff_ff
           @lite_nonce = 0
