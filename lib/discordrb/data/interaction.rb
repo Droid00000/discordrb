@@ -469,10 +469,11 @@ module Discordrb
       # @param min_length [Integer] A minimum length for option value.
       # @param max_length [Integer] A maximum length for option value.
       # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
+      # @param autocomplete [Boolean, nil] Dynamically returned option suggestions to a user.
       # @return (see #option)
-      def string(name, description, required: nil, min_length: nil, max_length: nil, choices: nil)
+      def string(name, description, required: nil, min_length: nil, max_length: nil, choices: nil, autocomplete: nil)
         option(TYPES[:string], name, description,
-               required: required, min_length: min_length, max_length: max_length, choices: choices)
+               required: required, min_length: min_length, max_length: max_length, choices: choices, autocomplete: autocomplete)
       end
 
       # @param name [String, Symbol] The name of the argument.
@@ -481,10 +482,11 @@ module Discordrb
       # @param min_value [Integer] A minimum value for option.
       # @param max_value [Integer] A maximum value for option.
       # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
+      # @param autocomplete [Boolean, nil] Dynamically returned option suggestions to a user.
       # @return (see #option)
-      def integer(name, description, required: nil, min_value: nil, max_value: nil, choices: nil)
+      def integer(name, description, required: nil, min_value: nil, max_value: nil, choices: nil, autocomplete: nil)
         option(TYPES[:integer], name, description,
-               required: required, min_value: min_value, max_value: max_value, choices: choices)
+               required: required, min_value: min_value, max_value: max_value, choices: choices, autocomplete: autocomplete)
       end
 
       # @param name [String, Symbol] The name of the argument.
@@ -534,10 +536,11 @@ module Discordrb
       # @param required [true, false] Whether this option must be provided.
       # @param min_value [Float] A minimum value for option.
       # @param max_value [Float] A maximum value for option.
+      # @param autocomplete [Boolean, nil] Dynamically returned option suggestions to a user.
       # @return (see #option)
-      def number(name, description, required: nil, min_value: nil, max_value: nil, choices: nil)
+      def number(name, description, required: nil, min_value: nil, max_value: nil, choices: nil, autocomplete: nil)
         option(TYPES[:number], name, description,
-               required: required, min_value: min_value, max_value: max_value, choices: choices)
+               required: required, min_value: min_value, max_value: max_value, choices: choices, autocomplete: autocomplete)
       end
 
       # @param name [String, Symbol] The name of the argument.
