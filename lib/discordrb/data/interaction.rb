@@ -561,15 +561,16 @@ module Discordrb
       # @param min_length [Integer] A minimum length for string option value.
       # @param max_length [Integer] A maximum length for string option value.
       # @param channel_types [Array<Integer>] Channel types that can be provides for channel options.
+      # @param autocomplete [Boolean, nil] Whether Dynamically returned option suggestions to a user can be returned.
       # @return Hash
       def option(type, name, description, required: nil, choices: nil, options: nil, min_value: nil, max_value: nil,
-                 min_length: nil, max_length: nil, channel_types: nil)
+                 min_length: nil, max_length: nil, channel_types: nil, autocomplete: nil)
         opt = { type: type, name: name, description: description }
         choices = choices.map { |option_name, value| { name: option_name, value: value } } if choices
 
         opt.merge!({ required: required, choices: choices, options: options, min_value: min_value,
                      max_value: max_value, min_length: min_length, max_length: max_length,
-                     channel_types: channel_types }.compact)
+                     channel_types: channel_types, autocomplete: autocomplete }.compact)
 
         @options << opt
         opt
