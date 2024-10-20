@@ -393,31 +393,31 @@ module Discordrb::Events
   class StringSelectEventHandler < ComponentEventHandler
   end
 
-  # Event handler for recciving an autocomplete event.
+  # An event reccived when a user is typing into an application command.
   class AutocompleteEvent < ApplicationCommandEvent
-    # Return autocomplete options to a user as they are typing.
-    # @param options [Array] Array of options to return.
+    # @return [Array<Hash>]
+    attr_reader :options
+
     def initialize(data, bot)
       super
-
       @options = []
     end
 
+    # Convineience method to add an options to an autocomplete response.
     def add_option(name:, value:, name_localizations: nil)
       @options << { name: name, value: value, name_localizations: name_localizations }.compact
     end
 
+    # Return autocomplete options to a user as they are typing.
+    # @param options [Array] Array of options to return.
     def return_autocomplete_options(options: nil)
-      yield @options if block_given?
-      opt = if !@options.empty?
-         @options
-      else
-        options
-      end     
+      yield self if block_given?
+      opt = @options.empty? ? options : @options
       @interaction.show_autocomplete_options(opt)
     end
   end
 
+  # Event handler for autocomplete interactions.
   class AutocompleteEventHandler < ApplicationCommandEventHandler; end
 
   # An event for when a user submits a modal.
