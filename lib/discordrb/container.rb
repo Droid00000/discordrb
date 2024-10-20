@@ -635,6 +635,24 @@ module Discordrb
       register_event(ChannelSelectEvent, attributes, block)
     end
 
+    # This **event** is raised whenever a user types a value into an interaction with the autocomplete field..
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Regexp] :custom_id A custom_id to match against.
+    # @option attributes [String, Integer, Message] :message The message to filter for.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [ChannelSelectEvent] The event that was raised.
+    # @return [ChannelSelectEventHandler] The event handler that was registered.
+    def autocomplete_option(name, attributes = {}, &block)
+      @application_commands ||= {}
+
+      unless block
+        @application_commands[name] ||= AutocompleteEventHandler.new(attributes, nil)
+        return @application_commands[name]
+      end
+
+      @application_commands[name] = AutocompleteEventHandler.new(attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.

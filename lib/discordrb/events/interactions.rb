@@ -226,7 +226,7 @@ module Discordrb::Events
     end
 
     def transform_options_hash(hash)
-      hash.to_h { |opt| [opt['name'], opt['options'] || opt['value']] }
+      hash.to_h { |opt| [opt['name'], opt['options'] || opt['value'], opt['focused'].key? ? opt['focused'] : nil] }
     end
   end
 
@@ -392,6 +392,17 @@ module Discordrb::Events
   # Event handler for a select string component.
   class StringSelectEventHandler < ComponentEventHandler
   end
+
+  # Event handler for recciving an autocomplete event.
+  class AutocompleteEvent < ApplicationCommandEvent
+    # Return autocomplete options to a user as they are typing.
+    # @param options [Array] Array of options to return.
+    def return_autocomplete_options(options)
+      @interaction.show_autocomplete_options(options)
+    end
+  end
+
+  class AutocompleteEventHandler < ApplicationCommandEventHandler; end
 
   # An event for when a user submits a modal.
   class ModalSubmitEvent < ComponentEvent

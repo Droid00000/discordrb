@@ -11,6 +11,7 @@ module Discordrb
       ping: 1,
       command: 2,
       component: 3,
+      autocomplete: 4,
       modal_submit: 5
     }.freeze
 
@@ -22,6 +23,7 @@ module Discordrb
       deferred_message: 5,
       deferred_update: 6,
       update_message: 7,
+      autocomplete_result: 8,
       modal: 9
     }.freeze
 
@@ -128,6 +130,11 @@ module Discordrb
     # Defer an update to an interaction. This is can only currently used by Button interactions.
     def defer_update
       Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:deferred_update])
+    end
+
+    # Dynamically return input as the user is type for interactions with autocomplete enabled.
+    def show_autocomplete_options(options)
+      Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete_result], nil, nil, nil, nil, nil, nil, options)
     end
 
     # Create a modal as a response.
