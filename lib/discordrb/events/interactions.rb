@@ -397,8 +397,18 @@ module Discordrb::Events
   class AutocompleteEvent < ApplicationCommandEvent
     # Return autocomplete options to a user as they are typing.
     # @param options [Array] Array of options to return.
+    def initialize
+      super
+      @options = []
+    end
+
+    def option(name, value, name_localizations: nil)
+      @options << { name: name, value: value, name_localizations: name_localizations }.compact
+    end
+
     def return_autocomplete_options(options)
-      @interaction.show_autocomplete_options(options)
+      yield @options if block_given?
+      @interaction.show_autocomplete_options(@options || options)
     end
   end
 
