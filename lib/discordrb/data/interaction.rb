@@ -127,13 +127,14 @@ module Discordrb
       nil
     end
 
-    # Defer an update to an interaction. This is can only currently used by Button interactions.
+    # Defer an update to an interaction. This can only currently used by Button interactions.
     def defer_update
       Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:deferred_update])
     end
 
     # Dynamically return input as the user is type for interactions with autocomplete enabled.
     def show_autocomplete_options(options)
+      puts "Got to here!"
       Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete_result], nil, nil, nil, nil, nil, nil, options)
     end
 
