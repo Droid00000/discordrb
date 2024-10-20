@@ -646,7 +646,7 @@ module Discordrb
       @application_commands ||= {}
 
       unless block
-        @application_commands[name] ||= AutocompleteEventHandler.new(attributes, nil)
+        @application_commands[name] ||= AutocompleteEventHandler.new(attributes, block)
         return @application_commands[name]
       end
 
