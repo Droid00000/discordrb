@@ -398,7 +398,6 @@ module Discordrb::Events
     # Return autocomplete options to a user as they are typing.
     # @param options [Array] Array of options to return.
     def initialize
-      super
       @options = []
     end
 
