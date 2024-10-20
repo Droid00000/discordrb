@@ -405,7 +405,7 @@ module Discordrb::Events
     def initialize(data, bot)
       super
       @options = []
-      @focused = data.dig('focused')
+      @focused = data['data']['options'].find { |opt| opt['focused'] }
     end
 
     # Convineience method to add an options to an autocomplete response.
