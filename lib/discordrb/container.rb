@@ -643,14 +643,7 @@ module Discordrb
     # @yieldparam event [ChannelSelectEvent] The event that was raised.
     # @return [ChannelSelectEventHandler] The event handler that was registered.
     def autocomplete_option(name, attributes = {}, &block)
-      @application_commands ||= {}
-
-      unless block
-        @application_commands[name] ||= AutocompleteEventHandler.new(attributes, block)
-        return @application_commands[name]
-      end
-
-      @application_commands[name] = AutocompleteEventHandler.new(attributes, block)
+      register_event(AutocompleteEvent, attributes, block)
     end
 
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
