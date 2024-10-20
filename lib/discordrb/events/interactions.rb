@@ -402,7 +402,7 @@ module Discordrb::Events
       @options = []
     end
 
-    def option(name:, value:, name_localizations: nil)
+    def add_option(name:, value:, name_localizations: nil)
       @options << { name: name, value: value, name_localizations: name_localizations }.compact
     end
 
