@@ -134,7 +134,6 @@ module Discordrb
 
     # Dynamically return input as the user is type for interactions with autocomplete enabled.
     def show_autocomplete_options(options)
-      puts "Got to here!"
       Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete_result], nil, nil, nil, nil, nil, nil, options)
     end
 
