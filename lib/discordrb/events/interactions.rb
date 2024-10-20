@@ -399,7 +399,7 @@ module Discordrb::Events
     # @param options [Array] Array of options to return.
     def initialize(data, bot)
       super
-      
+
       @options = []
     end
 
@@ -407,9 +407,14 @@ module Discordrb::Events
       @options << { name: name, value: value, name_localizations: name_localizations }.compact
     end
 
-    def return_autocomplete_options(options)
+    def return_autocomplete_options(options: nil)
       yield @options if block_given?
-      @interaction.show_autocomplete_options(@options || options)
+      opt = if !@options.empty?
+         @options
+      else
+        options
+      end     
+      @interaction.show_autocomplete_options(opt)
     end
   end
 
