@@ -398,14 +398,9 @@ module Discordrb::Events
     # @return [Array<Hash>]
     attr_reader :options
 
-    # @return [Boolean]
-    attr_reader :focused
-    alias_method :focused?, :focused
-
     def initialize(data, bot)
       super
       @options = []
-      @focused = data['data']['options'].find { |opt| opt['focused'] }
     end
 
     # Convineience method to add an options to an autocomplete response.
