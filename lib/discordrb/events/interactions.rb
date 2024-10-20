@@ -226,7 +226,7 @@ module Discordrb::Events
     end
 
     def transform_options_hash(hash)
-      hash.to_h { |opt| [opt['name'], opt['options'] || opt['value'], opt['focused'].key? ? opt['focused'] : nil] }
+      hash.to_h { |opt| [opt['name'], opt['options'] || opt['value'], opt['focused']] }
     end
   end
 
