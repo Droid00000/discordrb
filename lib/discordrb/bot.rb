@@ -393,6 +393,15 @@ module Discordrb
       API::Invite.delete(token, invite)
     end
 
+    # Utility method to return a message object given the mesage and chanel ID.
+    # @param message_id [Integer, String] Snowflake ID of a message.
+    # @param channel_id [Integer, String] Snowflake ID of a channel.
+    # @return [Message] The resolved message object on success.
+    def resolve_message(message_id, channel_id)
+      response = API::Channel.message(@token, channel_id, message_id)
+      Message.new(JSON.parse(response), @bot)
+    end
+
     # Sends a text message to a channel given its ID and the message's content.
     # @param channel [Channel, String, Integer] The channel, or its ID, to send something to.
     # @param content [String] The text that should be sent as a message. It is limited to 2000 characters (Discord imposed).
