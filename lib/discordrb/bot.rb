@@ -398,8 +398,8 @@ module Discordrb
     # @param channel_id [Integer, String] Snowflake ID of a channel.
     # @return [Message] The resolved message object on success.
     def resolve_message(message_id, channel_id)
-      response = API::Channel.message(@token, channel_id, message_id)
-      Message.new(JSON.parse(response), @bot)
+      response = API::Channel.message(token, channel_id, message_id)
+      Message.new(JSON.parse(response), self)
     end
 
     # Sends a text message to a channel given its ID and the message's content.
