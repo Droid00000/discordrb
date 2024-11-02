@@ -643,10 +643,10 @@ module Discordrb
     # @param [String] ID of a custom emoji.
     # @return [File] A temporary file object containing the image data, or false.
     def resolve_icon(icon)
-      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get(API.emoji_icon_url(icon)).status != 404)
+      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get(API.emoji_icon_url(icon, format = 'png')).status != 404)
 
       file = Tempfile.new(SecureRandom.hex(10))
-      file.write(Faraday.get(API.emoji_icon_url(icon)).body)
+      file.write(Faraday.get(API.emoji_icon_url(icon, format = 'png')).body)
       file.rewind
       file
     end
