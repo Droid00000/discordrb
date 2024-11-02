@@ -268,7 +268,7 @@ module Discordrb
 
     # @return [Array<Emoji>] the emotes that were used/mentioned in this message.
     def emoji
-      return if @content.nil?
+      return nil if @content.nil?
       return @emoji unless @emoji.empty?
 
       @emoji = @bot.parse_mentions(@content).select { |el| el.is_a? Discordrb::Emoji }
