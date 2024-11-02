@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'faraday'
+
 module Discordrb
   # Server emoji
   class Emoji
@@ -61,6 +63,24 @@ module Discordrb
     # @return [String] the icon URL of the emoji
     def icon_url
       API.emoji_icon_url(id)
+    end
+
+    # @return [File] a file object.
+    def file
+      gif_url = Discordrb::API.emoji_icon_url(icon, format = 'gif')
+      png_url = Discordrb::API.emoji_icon_url(icon, format = 'png')
+
+      response = Faraday.get(gif_url)
+
+      chosen_url = response.status != 404 ? gif_url : png_url
+
+      icon_response = Faraday.get(chosen_url)
+
+      file = Tempfile.new(SecureRandom.hex(10))
+      file.binmode
+      file.write(icon_response.body)
+      file.rewind
+      file
     end
 
     # The inspect method is overwritten to give more useful output
