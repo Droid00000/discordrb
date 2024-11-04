@@ -619,6 +619,14 @@ module Discordrb
       update_status(@status, name, nil, nil, nil, 5)
     end
 
+    # Sets the currently custom status to the specified name.
+    # @param name [String] The custom status.
+    # @return [String] The custom status that is being used now.
+    def custom_status=(name)
+      gateway_check
+      update_status(@status, name, nil, nil, nil, 4)
+    end
+
     # Sets status to online.
     def online
       gateway_check
