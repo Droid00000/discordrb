@@ -625,7 +625,8 @@ module Discordrb
     def set_status(status, name, *args)
       gateway_check
       presence = status.empty? || status.nil? ? @status : status.downcase
-      update_status(presence, name, nil, nil, nil, 4)
+      name_string = name.empty? || name.nil? ? @activity : name
+      update_status(presence, name_string, nil, nil, nil, 4)
     end
 
     # Sets status to online.
