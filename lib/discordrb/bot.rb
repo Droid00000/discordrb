@@ -143,6 +143,8 @@ module Discordrb
                    UNPRIVILEGED_INTENTS
                  when :none
                    NO_INTENTS
+                when Integer
+                  intents
                  else
                    calculate_intents(intents)
                  end
