@@ -77,7 +77,9 @@ module Discordrb::Voice
     attr_accessor :volume
 
     # Whether audio playback is currently paused.
+    # @return [Boolean] Whether audio playback is currently paused.
     attr_accessor :paused
+    alias_method :paused?, :paused
 
     # @!visibility private
     def initialize(channel, bot, token, session, endpoint)
