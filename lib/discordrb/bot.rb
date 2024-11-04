@@ -556,7 +556,7 @@ module Discordrb
     # @param activity_type [Integer] The type of activity status to display.
     #   Can be 0 (Playing), 1 (Streaming), 2 (Listening), 3 (Watching), or 5 (Competing).
     # @see Gateway#send_status_update
-    def update_status(status, activity, url, since = 0, afk = false, activity_type = 4)
+    def update_status(status, activity, url, since = 0, afk = false, activity_type = 0)
       gateway_check
 
       @activity = activity
@@ -564,7 +564,11 @@ module Discordrb
       @streamurl = url
       type = url ? 1 : activity_type
 
-      activity_obj = activity || url ? { 'name' => activity, 'url' => url, 'type' => type } : nil
+      activity_obj = if type == 4
+                       { 'name' => activity, 'type' => type, 'state' => activity }
+                     else
+                       activity || url ? { 'name' => activity, 'url' => url, 'type' => type } : nil
+                     end
       @gateway.send_status_update(status, since, activity_obj, afk)
 
       # Update the status in the cache
