@@ -556,7 +556,7 @@ module Discordrb
     # @param activity_type [Integer] The type of activity status to display.
     #   Can be 0 (Playing), 1 (Streaming), 2 (Listening), 3 (Watching), or 5 (Competing).
     # @see Gateway#send_status_update
-    def update_status(status, activity, url, since = 0, afk = false, activity_type = 0)
+    def update_status(status, activity, url, since = 0, afk = false, activity_type = 4)
       gateway_check
 
       @activity = activity
