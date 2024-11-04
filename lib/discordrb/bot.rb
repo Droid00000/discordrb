@@ -624,7 +624,8 @@ module Discordrb
     # @return [String] The custom status that is being used now.
     def set_status(status, name, *args)
       gateway_check
-      update_status(@status || status, name, nil, nil, nil, 4)
+      presence = status.empty? || status.nil? ? @status : status
+      update_status(presence, name, nil, nil, nil, 4)
     end
 
     # Sets status to online.
