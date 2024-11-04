@@ -76,6 +76,9 @@ module Discordrb::Voice
     # @return [Float] the volume for audio playback, `1.0` by default.
     attr_accessor :volume
 
+    # Whether audio playback is currently paused.
+    attr_accessor :paused
+
     # @!visibility private
     def initialize(channel, bot, token, session, endpoint)
       @bot = bot
