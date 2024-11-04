@@ -624,7 +624,7 @@ module Discordrb
     # @return [String] The custom status that is being used now.
     def set_status(status, name, *args)
       gateway_check
-      presence = status.empty? || status.nil? ? @status : status
+      presence = status.empty? || status.nil? ? @status : status.downcase
       update_status(presence, name, nil, nil, nil, 4)
     end
 
