@@ -611,10 +611,17 @@ module Discordrb
       end
     end
 
+    # If a server has hit the maximum amount of emojis.
     def emoji_limit?
       return true if @emoji.keys.count >= max_emoji
       return false if @emoji.keys.count < max_emoji
-    end 
+    end
+
+    # If a server has hit the maximum amount of roles.
+    def role_limit?
+      return true if @roles.count == 250
+      return false if @roles.count < 250
+    end
 
     # Searches a server for members that matches a username or a nickname.
     # @param name [String] The username or nickname to search for.
