@@ -76,11 +76,6 @@ module Discordrb::Voice
     # @return [Float] the volume for audio playback, `1.0` by default.
     attr_accessor :volume
 
-    # Whether audio playback is currently paused.
-    # @return [Boolean] Whether audio playback is currently paused.
-    attr_accessor :paused
-    alias_method :paused?, :paused
-
     # @!visibility private
     def initialize(channel, bot, token, session, endpoint)
       @bot = bot
@@ -143,6 +138,12 @@ module Discordrb::Voice
     # Continue playback. This change may take up to 100ms to take effect, which is usually negligible.
     def continue
       @paused = false
+    end
+
+    # Whether audio playback is currently paused.
+    # @return [Boolean] Whether audio playback is currently paused.
+    def paused?
+      @paused
     end
 
     # Skips to a later time in the song. It's impossible to go back without replaying the song.
