@@ -111,7 +111,7 @@ module Discordrb
     #   will request no intents. An array of symbols will request only those intents specified.
     # @see Discordrb::INTENTS
     def initialize(
-      log_mode: :normal,
+      log_mode: :silent,
       token: nil, client_id: nil,
       type: nil, name: '', fancy_log: false, suppress_ready: false, parse_self: false,
       shard_id: nil, num_shards: nil, redact_token: true, ignore_bots: false,
