@@ -17,9 +17,9 @@ module Discordrb
       # @param description [String] 1-100 character description.
       # @param options [Array<Hash>] The parameters for the command.
       # @param default_member_permissions [Integer] The bitwise permissions needed to use this command.
-      # @param type [1, 2, 3] The type of command, defaults `1` if not set.
-      # @param contexts [0, 1, 2] The contexts in which this command can be used.
-      # @param integration_types [0, 1] Supported installation contexts.
+      # @param type [Integer] The type of command, defaults `1` if not set.
+      # @param contexts [Integer] The contexts in which this command can be used.
+      # @param integration_types [Integer] Supported installation contexts.
       # @param nsfw [Boolean] Whether this command should be age-restricted.
       # @param name_localizations [Hash] Localized name of the application command.
       # @param description_localizations [Hash] Localized description of the application command.
@@ -61,8 +61,8 @@ module Discordrb
       # @param description [String] 1-100 character description.
       # @param options [Array<Hash>] The parameters for the command.
       # @param default_member_permissions [Integer] The bitwise permissions needed to use this command.
-      # @param contexts [0, 1, 2] The contexts in which this command can be used.
-      # @param integration_types [0, 1] Supported installation contexts.
+      # @param contexts [Integer] The contexts in which this command can be used.
+      # @param integration_types [Integer] Supported installation contexts.
       # @param nsfw [Boolean] Whether this command should be age-restricted.
       # @param name_localizations [Hash] Localized name of the application command.
       # @param description_localizations [Hash] Localized description of the application command.

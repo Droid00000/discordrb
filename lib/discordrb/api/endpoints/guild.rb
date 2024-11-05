@@ -11,7 +11,7 @@ module Discordrb
       # @param default_message_notifications [Integer] Default message notification level; 0-1.
       # @param explicit_content_filter [Integer] Explicit content filter level; 0-2.
       # @param roles [Array<Hash<Symbol, Object>>] Array of new roles to create.
-      # @param channels [Array<Hash<Symbol, Object>>] Array of new channels to create.
+      # @param channels [Array<Hash>] Array of new channels to create.
       # @param afk_channel_id [Integer, String] ID for the AFK channel.
       # @param afk_timeout [Integer] AFK timeout in seconds.
       # @param system_channel_id [Integer, String] Where messages such as welcomes and boosts should be posted.
