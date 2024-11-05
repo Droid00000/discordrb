@@ -565,11 +565,17 @@ module Discordrb
     # @param reason [String] The reason the for the creation of this emoji.
     # @return [Emoji] The emoji that has been added.
     def add_emoji(name, image, roles = [], reason: nil)
-      image_string = image
-      if image.respond_to? :read
-        image_string = 'data:image/jpg;base64,'
-        image_string += Base64.strict_encode64(image.read)
-      end
+    if image
+      path_method = %i[original_filename path local_path].find { |meth| image.respond_to?(meth) }
+
+      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+      raise ArgumentError, 'File must respond to read' unless image.respond_to? :read
+
+      mime_type = MIME::Types.type_for(image.__send__(path_method)).first&.to_s || 'image/jpeg'
+      image_string = "data:#{mime_type};base64,#{Base64.encode64(image.read).strip}"
+    elsif image.nil?
+      image_string = nil
+    end
 
       data = JSON.parse(API::Server.add_emoji(@bot.token, @id, image_string, name, roles.map(&:resolve_id), reason))
       new_emoji = Emoji.new(data, @bot, self)
