@@ -67,8 +67,8 @@ module Discordrb
 
     # @return [File] a file object.
     def file
-      gif_url = Discordrb::API.emoji_icon_url(icon, format = 'gif')
-      png_url = Discordrb::API.emoji_icon_url(icon, format = 'png')
+      gif_url = Discordrb::API.emoji_icon_url(@id, format = 'gif')
+      png_url = Discordrb::API.emoji_icon_url(@id, format = 'png')
 
       response = Faraday.get(gif_url)
 
