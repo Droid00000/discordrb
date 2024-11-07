@@ -521,20 +521,17 @@ module Discordrb
     # @return [Role] the created role.
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
+      icon = resolve_icon(icon)
 
-      permissions = if permissions.is_a?(Array)
-                      Permissions.bits(permissions)
-                    elsif permissions.respond_to?(:bits)
-                      permissions.bits
-                    else
-                      permissions
-                    end
+      if !icon.nil? && icon
+      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
 
-      image_string = resolve_icon(icon)
-      if image_string.respond_to? :read
-        image_string = 'data:image/jpg;base64,'
-        image_string += Base64.strict_encode64(image.read)
-      else
+      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
+
+      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+      image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+      else 
         image_string = nil
       end
 
@@ -554,8 +551,21 @@ module Discordrb
     # @return [Role] the created role.
     def update_role(role, name, colour, icon, reason)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
+      icon = resolve_icon(icon)
 
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, resolve_icon(icon), reason)
+      if !icon.nil? && icon
+      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
+
+      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
+
+      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+      image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+      else 
+        image_string = nil
+      end
+
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, resolve_icon(image_string), reason)
     end
 
     # Adds a new custom emoji on this server.
@@ -661,10 +671,10 @@ module Discordrb
     # @param [String] ID of a custom emoji.
     # @return [File] A temporary file object containing the image data, or false.
     def resolve_icon(icon)
-      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get(API.emoji_icon_url(icon, format = 'png')).status != 404)
+      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get("https://cdn.discordapp.com/emojis/#{icon}.png").status != 404)
 
-      file = Tempfile.new(SecureRandom.hex(10))
-      file.write(Faraday.get(API.emoji_icon_url(icon, format = 'png')).body)
+      file = Tempfile.new(Time.now.to_s)
+      file.write(Faraday.get("https://cdn.discordapp.com/emojis/#{icon}.png").body)
       file.rewind
       file
     end
