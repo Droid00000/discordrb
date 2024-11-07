@@ -72,7 +72,7 @@ module Discordrb
 
       response = Faraday.get(gif_url)
 
-      chosen_url = response.status == 404 ? png_url : gif_url
+      chosen_url = response.status == 415 ? png_url : gif_url
       
       chosen_url
     end
