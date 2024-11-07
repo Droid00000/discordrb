@@ -293,9 +293,9 @@ module Discordrb
 
     def restart(intents)
       @gateway.stop
-      @gateway = nil
       @gateway = Gateway.new(self, @token, @shard_key, @compress_mode, intents || @intents)
-      run
+      @gateway.run_async
+      @gateway.sync
     end
 
     # @return [true, false] whether or not the bot is currently connected to Discord.
