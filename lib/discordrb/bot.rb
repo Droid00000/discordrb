@@ -292,7 +292,7 @@ module Discordrb
     end
 
     def restart(intents)
-      @gateway.stop
+      @gateway.kill
       @gateway = Gateway.new(self, @token, @shard_key, @compress_mode, intents || @intents)
       @gateway.run_async
       @gateway.sync
