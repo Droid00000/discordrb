@@ -65,22 +65,16 @@ module Discordrb
       API.emoji_icon_url(id)
     end
 
-    # @return [File] a file object.
-    def file
+    # @return [File] a file.
+    def url
       gif_url = "#{API.cdn_url}/emojis/#{@id}.gif"
       png_url = "#{API.cdn_url}/emojis/#{@id}.png"
 
       response = Faraday.get(gif_url)
 
       chosen_url = response.status != 404 ? gif_url : png_url
-
-      icon_response = Faraday.get(chosen_url)
-
-      file = Tempfile.new(SecureRandom.hex(10))
-      file.binmode
-      file.write(icon_response.body)
-      file.rewind
-      file
+      
+      chosen_url
     end
 
     # The inspect method is overwritten to give more useful output
