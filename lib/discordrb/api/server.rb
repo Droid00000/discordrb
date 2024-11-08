@@ -267,7 +267,7 @@ module Discordrb::API::Server
 
       mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
       image = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
-    elsif icon.nil?
+    else
       image = nil
     end
 

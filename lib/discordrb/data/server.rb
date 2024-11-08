@@ -536,10 +536,10 @@ module Discordrb
     # @param icon [String, #read] A role icon for this role.
     # @param reason [String] The reason the for the creation of this role.
     # @return [Role] the created role.
-    def update_role(role, name, colour, icon, reason)
+    def update_role(role:, name:, colour:, icon:, reason:)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, resolve_icon(image_string), reason)
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
     end
 
     # Adds a new custom emoji on this server.
@@ -645,18 +645,6 @@ module Discordrb
       else
         true
       end
-    end
-
-    # Custom method to return a valid role icon in the form of a temporary file object.
-    # @param [String] ID of a custom emoji.
-    # @return [File] A temporary file object containing the image data, or false.
-    def resolve_icon(icon)
-      return nil unless role_icons? && !icon.nil? && !icon.empty? && (Faraday.get("https://cdn.discordapp.com/emojis/#{icon}.png").status != 404)
-
-      file = Tempfile.new(Time.now.to_s)
-      file.write(Faraday.get("https://cdn.discordapp.com/emojis/#{icon}.png").body)
-      file.rewind
-      file
     end
 
     # Retrieve banned users from this server.
