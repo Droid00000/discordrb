@@ -194,6 +194,11 @@ module Discordrb::Events
       @resolved.find { |data| data.key?(@target_id) }[@target_id]
     end
 
+    # Returns Emojis sent in this interaction.
+    def emojis(name)
+      @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }
+    end
+
     private
 
     def process_resolved(resolved_data)
