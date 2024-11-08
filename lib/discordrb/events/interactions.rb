@@ -198,7 +198,10 @@ module Discordrb::Events
     def emojis(name)
       return nil if @options[name]&.empty? || @options[name]&.nil?
 
-      @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }[0]
+      mentions = @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }
+      return nil if mentions&.empty?
+
+      mentions[0]
     end
 
     private
