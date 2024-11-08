@@ -66,7 +66,7 @@ module Discordrb
     end
 
     # @return [File] a file.
-    def url
+    def file
       gif_url = "#{API.cdn_url}/emojis/#{@id}.gif"
       png_url = "#{API.cdn_url}/emojis/#{@id}.png"
 
