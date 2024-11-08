@@ -521,21 +521,8 @@ module Discordrb
     # @return [Role] the created role.
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
-      icon = resolve_icon(icon)
 
-      if !icon.nil? && icon
-      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-
-      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
-
-      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-      image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
-      else 
-        image_string = nil
-      end
-
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, image_string, reason)
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
 
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
@@ -551,19 +538,6 @@ module Discordrb
     # @return [Role] the created role.
     def update_role(role, name, colour, icon, reason)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
-      icon = resolve_icon(icon)
-
-      if !icon.nil? && icon
-      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-
-      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
-
-      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-      image_string = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
-      else 
-        image_string = nil
-      end
 
       API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, resolve_icon(image_string), reason)
     end
@@ -575,17 +549,17 @@ module Discordrb
     # @param reason [String] The reason the for the creation of this emoji.
     # @return [Emoji] The emoji that has been added.
     def add_emoji(name, image, roles = [], reason: nil)
-    if image
-      path_method = %i[original_filename path local_path].find { |meth| image.respond_to?(meth) }
+      if image
+        path_method = %i[original_filename path local_path].find { |meth| image.respond_to?(meth) }
 
-      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-      raise ArgumentError, 'File must respond to read' unless image.respond_to? :read
+        raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+        raise ArgumentError, 'File must respond to read' unless image.respond_to? :read
 
-      mime_type = MIME::Types.type_for(image.__send__(path_method)).first&.to_s || 'image/jpeg'
-      image_string = "data:#{mime_type};base64,#{Base64.encode64(image.read).strip}"
-    elsif image.nil?
-      image_string = nil
-    end
+        mime_type = MIME::Types.type_for(image.__send__(path_method)).first&.to_s || 'image/jpeg'
+        image_string = "data:#{mime_type};base64,#{Base64.encode64(image.read).strip}"
+      elsif image.nil?
+        image_string = nil
+      end
 
       data = JSON.parse(API::Server.add_emoji(@bot.token, @id, image_string, name, roles.map(&:resolve_id), reason))
       new_emoji = Emoji.new(data, @bot, self)
@@ -628,9 +602,15 @@ module Discordrb
     end
 
     # If a server has hit the maximum amount of emojis.
-    def emoji_limit?
-      return true if @emoji.keys.count >= max_emoji
-      return false if @emoji.keys.count < max_emoji
+    def emoji_limit?(emoji)
+      if emoji.animated?
+        emoji = @emoji.select { |_, emoji| emoji.animated? }
+      elsif !emoji.animated?
+        emoji = @emoji.select { |_, emoji| !emoji.animated? }
+      end
+
+      return true if emoji.keys.count >= max_emoji
+      return false if emoji.keys.count < max_emoji
     end
 
     # If a server has hit the maximum amount of roles.

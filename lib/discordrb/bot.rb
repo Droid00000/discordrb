@@ -291,13 +291,6 @@ module Discordrb
       @gateway.stop
     end
 
-    def restart(intents)
-      @gateway.kill
-      @gateway = Gateway.new(self, @token, @shard_key, @compress_mode, intents || @intents)
-      @gateway.run_async
-      @gateway.sync
-    end
-
     # @return [true, false] whether or not the bot is currently connected to Discord.
     def connected?
       @gateway.open?
@@ -627,9 +620,9 @@ module Discordrb
     end
 
     # Sets the currently custom status to the specified name.
-    # @param name [String] The custom status.
-    # @return [String] The custom status that is being used now.
-    def set_status(status, name, *args)
+    # @param name [String] The custom status. E.g. idle, dnd, etc.
+    # @return [String] The new custom status that the bot will display.
+    def custom_status(status, name)
       gateway_check
       presence = status.nil? ? @status : status.downcase
       name_string = name.nil? ? @activity : name

@@ -65,6 +65,7 @@ module Discordrb
       API.emoji_icon_url(id)
     end
 
+    # Returns a tempfile object of the emoji.
     # @return [File] a file.
     def file
       gif_url = "#{API.cdn_url}/emojis/#{@id}.gif"
@@ -73,7 +74,7 @@ module Discordrb
       response = Faraday.get(gif_url)
 
       chosen_url = response.status == 415 ? png_url : gif_url
-      
+
       file = Tempfile.new(Time.now.to_s)
       file.binmode
       file.write(chosen_url.body)
