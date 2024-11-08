@@ -74,7 +74,11 @@ module Discordrb
 
       chosen_url = response.status == 415 ? png_url : gif_url
       
-      chosen_url
+      file = Tempfile.new(Time.now.to_s)
+      file.binmode
+      file.write(chosen_url.body)
+      file.rewind
+      file
     end
 
     # The inspect method is overwritten to give more useful output
