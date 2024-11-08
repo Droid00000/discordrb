@@ -77,7 +77,7 @@ module Discordrb
 
       file = Tempfile.new(Time.now.to_s)
       file.binmode
-      file.write(chosen_url.body)
+      file.write(Faraday.get(chosen_url).body)
       file.rewind
       file
     end
