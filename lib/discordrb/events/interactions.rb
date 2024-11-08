@@ -196,7 +196,7 @@ module Discordrb::Events
 
     # Returns Emojis sent in this interaction.
     def emojis(name)
-      @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }
+      @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }[0]
     end
 
     private
