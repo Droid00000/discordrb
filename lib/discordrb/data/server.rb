@@ -521,8 +521,9 @@ module Discordrb
     # @return [Role] the created role.
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
+      image = role_icons? ? icon : nil
 
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, image, reason)
 
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
@@ -538,8 +539,9 @@ module Discordrb
       return nil if role(role).nil?
 
       colour = colour.respond_to?(:combined) ? colour.combined : colour
+      image = role_icons? ? icon : nil
 
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, icon, reason)
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image, reason)
     end
 
     # Adds a new custom emoji on this server.
