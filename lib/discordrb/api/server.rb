@@ -595,4 +595,19 @@ module Discordrb::API::Server
       Authorization: token
     )
   end
+
+  # Bans multiple users in a guild at once.
+  # https://discord.com/developers/docs/resources/guild#bulk-guild-ban
+  def bulk_ban(token, server_id, user_ids, delete_message_seconds, reason)
+    Discordrb::API.request(
+      :guilds_sid_bans_uids,
+      server_id,
+      :post,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/bulk-ban",
+      { user_ids: user_ids, delete_message_seconds: delete_message_seconds }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
 end

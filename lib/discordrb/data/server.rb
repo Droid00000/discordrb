@@ -530,16 +530,16 @@ module Discordrb
     end
 
     # Updates a role on this server.
-    # @param name [String] Name of the role to create
-    # @param colour [Integer, ColourRGB, #combined] The roles colour
-    # @param hoist [true, false]
+    # @param name [String] New name of the role.
+    # @param colour [Integer, ColourRGB, #combined] The roles colour.
     # @param icon [String, #read] A role icon for this role.
-    # @param reason [String] The reason the for the creation of this role.
-    # @return [Role] the created role.
+    # @param reason [String] The reason for updating this role.
     def update_role(role:, name:, colour:, icon:, reason:)
+      return nil if role(role).nil?
+
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, image_string, reason)
+      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, icon, reason)
     end
 
     # Adds a new custom emoji on this server.
@@ -672,6 +672,16 @@ module Discordrb
     # @param reason [String] The reason the user is being unbanned.
     def unban(user, reason = nil)
       API::Server.unban_user(@bot.token, @id, user.resolve_id, reason)
+    end
+
+    # Bans multiple users at once.
+    # @param users [Array<Integer>] An array of snowflake ID's to ban.
+    # @param message_seconds [Integer] The number of seconds to delete messages from.
+    # @param reason [String] The reason for banning these users.
+    def bulk_ban(users, message_seconds, reason)
+      messages = message_seconds ? message_seconds * 86_400 : 0
+      response = JSON.parse(API::Server.bulk_ban(@bot.token, @id, users, messages, reason))
+      response['banned_users']
     end
 
     # Kicks a user from this server.
