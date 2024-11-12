@@ -19,8 +19,17 @@ rescue LoadError
 end
 
 module Discordrb::Voice
+  # Signifies to Discord that encryption should be used
+  # @deprecated Discord now supports multiple encryption options.
+  # TODO: Resolve replacement for this constant.
+  ENCRYPTED_MODE = 'xsalsa20_poly1305'
+
+  # Signifies to Discord that no encryption should be used
+  # @deprecated Discord no longer supports unencrypted voice communication.
+  PLAIN_MODE = 'plain'
+
   # Encryption modes supported by Discord
-  ENCRYPTION_MODES = %w[aead_xchacha20_poly1305_rtpsize aead_aes256_gcm_rtpsize].freeze
+  ENCRYPTION_MODES = %w[xsalsa20_poly1305_lite xsalsa20_poly1305_suffix xsalsa20_poly1305].freeze
 
   # Represents a UDP connection to a voice server. This connection is used to send the actual audio data.
   class VoiceUDP
@@ -135,7 +144,11 @@ module Discordrb::Voice
     #   In xsalsa20_poly1305_lite, the nonce is an incremental 4 byte int.
     def generate_nonce(header)
       case @mode
-      when 'aead_xchacha20_poly1305_rtpsize', 'aead_aes256_gcm_rtpsize'
+      when 'xsalsa20_poly1305'
+        header
+      when 'xsalsa20_poly1305_suffix'
+        Random.urandom(24)
+      when 'xsalsa20_poly1305_lite'
         case @lite_nonce
         when nil, 0xff_ff_ff_ff
           @lite_nonce = 0
