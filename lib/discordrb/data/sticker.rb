@@ -50,7 +50,7 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot, server = nil)
       @bot = bot
-      @server = @bot.server(data['guild_id']) if data['guild_id']
+      @server = server ? server : @bot.server(data['guild_id']) 
       @name = data['name']
       @id = data['id']&.to_i
       @tags = data['tags']

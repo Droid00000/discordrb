@@ -81,7 +81,7 @@ module Discordrb
 
       @booster_count = data['premium_subscription_count'] || 0
       @boost_level = data['premium_tier']
-      @stickers = data['stickers'] ? data['stickers'].map { |s| Sticker.new(s, @bot, self) } : []
+      #@stickers = data['stickers'] ? data['stickers'].map { |s| Sticker.new(s, @bot, self) } : []
     end
 
     # @return [Member] The server owner.
@@ -971,6 +971,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_stickers(new_data['stickers']) if new_data['stickers']
     end
 
     # Adds a channel to this server's cache
@@ -1039,6 +1040,20 @@ module Discordrb
       emoji.each do |element|
         new_emoji = Emoji.new(element, @bot, self)
         @emoji[new_emoji.id] = new_emoji
+      end
+    end
+
+    def process_stickers(stickers)
+      return if stickers.empty?
+      
+      # Create stickers
+      @stickers = []
+      @stickers_by_id = {}
+
+      stickers.each do |element|
+        sticker = Sticker.new(element, @bot, self)
+        @stickers << sticker
+        @stickers_by_id[sticker.id] = sticker
       end
     end
 
