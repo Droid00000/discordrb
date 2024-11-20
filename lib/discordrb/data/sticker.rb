@@ -65,7 +65,7 @@ module Discordrb
 
     # @return [String] the file URL of the sticker
     def url
-      mime = @format == :lottie ? :json : @format
+      mime = @format == :lottie ? :json : (@format == :apng ? :png : @format)
       API.sticker_file_url(id, format: mime.to_s)
     end
 
