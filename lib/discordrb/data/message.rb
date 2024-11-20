@@ -292,7 +292,7 @@ module Discordrb
       @stickers&.empty?
     end
 
-    alias_method :stickers?, sticker?
+    alias_method :stickers?, :sticker?
 
     # Check if any reactions were used in this message.
     # @return [true, false] whether or not this message has reactions

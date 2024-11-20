@@ -77,7 +77,7 @@ module Discordrb
       user = User.new(JSON.parse(response), self)
       @users[id] = user
     end
-    
+
     # Gets a sticker by ID.
     def sticker(id)
       response = API::Server.resolve_sticker(token, id)
