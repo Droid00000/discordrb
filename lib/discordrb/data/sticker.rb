@@ -60,7 +60,7 @@ module Discordrb
       @pack_id = data['pack_id']&.to_i
       @sort_order = data['sort_value']&.to_i
       @usable = data['available']
-      @member = @bot.user(data['user']) if data['user']
+      @member = data['user']&.to_i
     end
 
     # @return [String] the file URL of the sticker
