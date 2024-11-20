@@ -289,7 +289,7 @@ module Discordrb
     # Check if any stickers were sent in this message.
     # @return [true, false] whether or not any stickers were sent.
     def sticker?
-      @stickers&.empty?
+      !@stickers&.empty?
     end
 
     alias_method :stickers?, :sticker?
