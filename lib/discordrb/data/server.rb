@@ -1047,7 +1047,7 @@ module Discordrb
       @stickers = []
       @stickers_by_id = {}
 
-      return unless stickers
+      return if stickers.empty?
 
       stickers.each do |element|
         sticker = Sticker.new(element, @bot, self)
