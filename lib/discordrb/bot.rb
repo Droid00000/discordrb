@@ -192,6 +192,14 @@ module Discordrb
       @thread_members
     end
 
+    # Gets a specific server from the cache if it exists.
+    # @return [Server, nil] The server or nil if it couldn't be found.
+    def find_server(server)
+      gateway_check
+      unavailable_servers_check
+      @servers.key?(server) ? @servers[server] : nil
+    end
+
     # @overload emoji(id)
     #   Return an emoji by its ID
     #   @param id [String, Integer] The emoji's ID.
