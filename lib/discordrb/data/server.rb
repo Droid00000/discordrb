@@ -81,6 +81,7 @@ module Discordrb
 
       @booster_count = data['premium_subscription_count'] || 0
       @boost_level = data['premium_tier']
+      @stickers = data['stickers'] ? data['stickers'].map { |s| Sticker.new(s, @bot, self) } : []
     end
 
     # @return [Member] The server owner.
@@ -1043,11 +1044,11 @@ module Discordrb
     end
 
     def process_stickers(stickers)
+      return if stickers.empty?
+      
       # Create stickers
       @stickers = []
       @stickers_by_id = {}
-
-      return if stickers.empty?
 
       stickers.each do |element|
         sticker = Sticker.new(element, @bot, self)
