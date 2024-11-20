@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'rest-client'
+require 'tempfile'
+require 'faraday'
 require 'zlib'
 
 require 'discordrb/events/message'

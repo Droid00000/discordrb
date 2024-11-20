@@ -77,6 +77,12 @@ module Discordrb
       user = User.new(JSON.parse(response), self)
       @users[id] = user
     end
+    
+    # Gets a sticker by ID.
+    def sticker(id)
+      response = API::Server.resolve_sticker(token, id)
+      Sticker.new(JSON.parse(response), self)
+    end
 
     # Gets a server by its ID.
     # @note This can only resolve servers the bot is currently in.

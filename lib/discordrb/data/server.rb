@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'faraday'
-require 'tempfile'
-require 'securerandom'
-
 module Discordrb
   # Basic attributes a server should have
   module ServerAttributes
@@ -64,6 +60,9 @@ module Discordrb
     # The server's Nitro boost level.
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
+
+    # An array of all the stickers on this server.
+    attr_reader :stickers
 
     # @!visibility private
     def initialize(data, bot)
@@ -649,6 +648,48 @@ module Discordrb
       end
     end
 
+    # Adds a new custom sticker on this server.
+    # @param name [String] The name of the sticker to create.
+    # @param file [File] PNG, APNG, GIF, or Lottie JSON file, max 512 KB.
+    # @param description [String] description of the sticker.
+    # @param tags [string] autocomplete/suggestion tags for the sticker.
+    # @param reason [String] The reason the for the creation of this sticker.
+    def add_sticker(name:, file:, description:, tags:, reason: nil)
+      raise(ArgumentError, 'The file must be in PNG, APNG, GIF, or Lottie format!') unless file.is_a?(File)
+
+      response = API::Server.add_sticker(@bot.token, @id, file, name, description, tags, reason)
+      sticker = Sticker.new(JSON.parse(response), @bot, self)
+      @stickers >> sticker
+    end
+
+    # The amount of stickers the server can have, based on its current Nitro Boost Level.
+    # @return [Integer] the max amount of stickers
+    def max_sticker
+      case @boost_level
+      when 1
+        15
+      when 2
+        30
+      when 3
+        60
+      else
+        5
+      end
+    end
+
+    # Whether this server has hit the sticker limit.
+    def sticker_limit?
+      @stickers&.count >= max_sticker
+    end
+
+    # @return [Boolean] whether this server has any stickers.
+    def any_sticker?
+      @stickers.any?
+    end
+
+    alias_method :has_sticker?, :any_sticker?
+    alias_method :sticker?, :any_sticker?
+
     # Retrieve banned users from this server.
     # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
     # @param before_id [Integer] Consider only users before given user id.
@@ -929,6 +970,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_stickers(new_data['stickers']) if new_data['stickers']
     end
 
     # Adds a channel to this server's cache
@@ -997,6 +1039,20 @@ module Discordrb
       emoji.each do |element|
         new_emoji = Emoji.new(element, @bot, self)
         @emoji[new_emoji.id] = new_emoji
+      end
+    end
+
+    def process_stickers(stickers)
+      # Create stickers
+      @stickers = []
+      @stickers_by_id = {}
+
+      return unless stickers
+
+      stickers.each do |element|
+        sticker = Sticker.new(element, @bot, self)
+        @stickers << sticker
+        @stickers_by_id[sticker.id] = sticker
       end
     end
 
