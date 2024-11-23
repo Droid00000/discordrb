@@ -78,7 +78,6 @@ module Discordrb
     # @return [File] a file.
     def file
       file = Tempfile.new(Time.now.to_s)
-      file.binmode
       file.write(Faraday.get(url).body)
       file.rewind
       file
