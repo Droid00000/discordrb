@@ -156,6 +156,9 @@ module Discordrb
       # @return [Array<Option>]
       attr_reader :options
 
+      # @return [Emoji]
+      attr_reader :emoji
+
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
