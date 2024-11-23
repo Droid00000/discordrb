@@ -73,10 +73,6 @@ module Discordrb
     # @return [Array<Component>]
     attr_reader :components
 
-    # @return [Array<Stickers>]
-    attr_reader :stickers
-    alias_method :sticker, :stickers
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -145,8 +141,6 @@ module Discordrb
       end
 
       @role_mentions = []
-
-      @stickers = data['sticker_items'] ? data['sticker_items'].map { |s| @bot.sticker(s['id']) } : []
 
       # Role mentions can only happen on public servers so make sure we only parse them there
       if @channel.text?
@@ -285,14 +279,6 @@ module Discordrb
     def emoji?
       !emoji&.empty?
     end
-
-    # Check if any stickers were sent in this message.
-    # @return [true, false] whether or not any stickers were sent.
-    def sticker?
-      !@stickers&.empty?
-    end
-
-    alias_method :stickers?, :sticker?
 
     # Check if any reactions were used in this message.
     # @return [true, false] whether or not this message has reactions
