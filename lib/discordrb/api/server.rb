@@ -643,9 +643,8 @@ module Discordrb::API::Server
       :server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/stickers",
-      { name: name, description: description, tags: tags, file: file }.to_json,
-      Authorization: token,
-      'X-Audit-Log-Reason': reason
+      { name: name, description: description, tags: tags, file: file },
+      { multipart: true, Authorization: token, 'X-Audit-Log-Reason': reason }
     )
   end
 
