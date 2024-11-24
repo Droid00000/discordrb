@@ -713,6 +713,20 @@ module Discordrb
       @prevent_ready = true
     end
 
+    def encode_64(icon)
+      if icon
+        path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
+
+       raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+       raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
+
+     mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+     "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+    elsif icon.nil?
+      nil
+    end
+  end
+
     # Add an await the bot should listen to. For information on awaits, see {Await}.
     # @param key [Symbol] The key that uniquely identifies the await for {AwaitEvent}s to listen to (see {#await}).
     # @param type [Class] The event class that should be listened for.
