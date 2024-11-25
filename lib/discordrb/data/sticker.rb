@@ -35,10 +35,10 @@ module Discordrb
     # @return [Boolean] If this sticker can be used.
     attr_reader :usable
 
-    # @return [Object, nil] The server this sticker originates from.
+    # @return [Object, Integer, nil] The server this sticker originates from.
     attr_reader :server
 
-    # @return [Object, nil] The user that uploaded this sticker.
+    # @return [Integer, nil] The user that uploaded this sticker.
     attr_reader :member
 
     # @return [Integer] Sort order of a sticker if it belongs to a pack.
@@ -50,7 +50,7 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot, server = nil)
       @bot = bot
-      @server = server ? server : @bot.find_server(data['guild_id']) 
+      @server = server ? server : data['guild_id']&.to_i
       @name = data['name']
       @id = data['id']&.to_i
       @tags = data['tags']
@@ -76,8 +76,9 @@ module Discordrb
 
     # Returns a tempfile object for this sticker.
     # @return [File] a file.
-    def file
+    def to_file
       file = Tempfile.new(Time.now.to_s)
+      file.binmode
       file.write(Faraday.get(url).body)
       file.rewind
       file

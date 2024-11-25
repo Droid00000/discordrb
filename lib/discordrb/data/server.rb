@@ -81,7 +81,6 @@ module Discordrb
 
       @booster_count = data['premium_subscription_count'] || 0
       @boost_level = data['premium_tier']
-      #@stickers = data['stickers'] ? data['stickers'].map { |s| Sticker.new(s, @bot, self) } : []
     end
 
     # @return [Member] The server owner.
@@ -657,37 +656,13 @@ module Discordrb
     # @param reason [String] The reason the for the creation of this sticker.
     def add_sticker(name:, file:, description:, tags:, reason: nil)
       response = API::Server.add_sticker(@bot.token, @id, file, name, description, tags, reason)
-      sticker = Sticker.new(JSON.parse(response), @bot, self)
+      begin
+        sticker = Sticker.new(JSON.parse(response), @bot, self)
+      rescue Discordrb::Errors::UnknownError
+        400
+      end
       @stickers >> sticker
     end
-
-    # The amount of stickers the server can have, based on its current Nitro Boost Level.
-    # @return [Integer] the max amount of stickers
-    def max_sticker
-      case @boost_level
-      when 1
-        15
-      when 2
-        30
-      when 3
-        60
-      else
-        5
-      end
-    end
-
-    # Whether this server has hit the sticker limit.
-    def sticker_limit?
-      @stickers&.count >= max_sticker
-    end
-
-    # @return [Boolean] whether this server has any stickers.
-    def any_sticker?
-      @stickers.any?
-    end
-
-    alias_method :has_sticker?, :any_sticker?
-    alias_method :sticker?, :any_sticker?
 
     # Retrieve banned users from this server.
     # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
@@ -1043,7 +1018,7 @@ module Discordrb
 
     def process_stickers(stickers)
       return if stickers.empty?
-      
+
       # Create stickers
       @stickers = []
       @stickers_by_id = {}
