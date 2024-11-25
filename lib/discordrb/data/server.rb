@@ -654,8 +654,8 @@ module Discordrb
     # @param description [String] description of the sticker.
     # @param tags [string] autocomplete/suggestion tags for the sticker.
     # @param reason [String] The reason the for the creation of this sticker.
-    def add_sticker(name:, file:, description:, tags:, reason: nil)
-      response = API::Server.add_sticker(@bot.token, @id, file, name, description, tags, reason)
+    def add_sticker(name, file, description, tags, reason: nil)
+      response = API::Server.add_sticker(@bot.token, @id, file, name, description || 'sticker', tags || 'tags', reason)
       begin
         sticker = Sticker.new(JSON.parse(response), @bot, self)
       rescue Discordrb::Errors::UnknownError
@@ -697,6 +697,7 @@ module Discordrb
     # @param reason [String] The reason for banning these users.
     def bulk_ban(users, message_seconds, reason)
       messages = message_seconds ? message_seconds * 86_400 : 0
+      users = users.map { |user| user&.to_i }
       response = JSON.parse(API::Server.bulk_ban(@bot.token, @id, users, messages, reason))
       response['banned_users']
     end

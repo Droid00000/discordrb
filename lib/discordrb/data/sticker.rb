@@ -76,7 +76,7 @@ module Discordrb
 
     # Returns a tempfile object for this sticker.
     # @return [File] a file.
-    def to_file
+    def file
       file = Tempfile.new(Time.now.to_s)
       file.binmode
       file.write(Faraday.get(url).body)
