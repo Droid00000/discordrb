@@ -194,14 +194,21 @@ module Discordrb::Events
       @resolved.find { |data| data.key?(@target_id) }[@target_id]
     end
 
-    # Returns Emojis sent in this interaction.
+    # @param name [String] The name of the option.
+    # @return [Emoji] Emojis sent in this interaction.
     def emojis(name)
       return nil unless @options[name]
 
-      mentions = @bot.parse_mentions(@options[name]).select { |mention| mention.is_a? Discordrb::Emoji }
-      return nil if mentions&.empty?
+      emoji = @bot.parse_mentions(@options[name]).select { |m| m.is_a? Discordrb::Emoji }
+      return nil if emoji&.empty?
 
-      mentions[0]
+      mentions.first
+    end
+
+    # @param name [String] The name of the option.
+    # @return [Member]
+    def member(name)
+      @resolved[:members][@options[name].to_i]
     end
 
     private
