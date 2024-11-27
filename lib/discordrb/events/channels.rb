@@ -97,6 +97,40 @@ module Discordrb::Events
     end
   end
 
+  # Raised when a message is pinned or unpinned.
+  class ChannelPinsUpdateEvent < Event
+    # @return [Integer] the time at which the channel's pins were updated.
+    attr_reader :last_pin_timestamp
+
+    # @return [Channel] the channel where pins were updated.
+    attr_reader :channel
+
+    # @return [Server] the channel's server.
+    attr_reader :server
+
+    def initialize(data, bot)
+      @bot = bot
+
+      @server = bot.server(data['guild_id']&.to_i)
+      @channel = bot.channel(data['channel_id']&.to_i, @server.id)
+      @last_pin_timestamp = Time.parse(data['last_pin_timestamp'])
+    end
+  end
+
+  # Event handler for ChannelDeleteEvent
+  class ChannelPinsUpdateEventHandler < EventHandler
+    def matches?(event)
+      # Check for the proper event type
+      return false unless event.is_a? ChannelPinsUpdateEvent
+
+      [
+        matches_all(@attributes[:id], event.channel.id) do |a, e|
+          a.resolve_id == e.resolve_id
+        end
+      ].reduce(true, &:&)
+    end
+  end
+
   # Event handler for ChannelDeleteEvent
   class ChannelDeleteEventHandler < EventHandler
     def matches?(event)
