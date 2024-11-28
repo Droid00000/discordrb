@@ -200,7 +200,6 @@ module Discordrb::Events
       return nil unless @options[name]
 
       emoji = @bot.parse_mention(@options[name])
-      emoji.first
     end
 
     # @param name [String] The name of the option.
