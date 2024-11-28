@@ -580,9 +580,33 @@ module Discordrb
       API::Channel.update_permission(@bot.token, @id, thing.id, thing.allow.bits, thing.deny.bits, thing.type, reason)
     end
 
+    # The same as define overwrite except it modifies the overwrites in place.
+    # @param thing [Overwrite] an Overwrite object to apply to this channel
+    #   @param reason [String] The reason the for defining the overwrite.
+    #   @overload define_overwrite(thing, allow, deny)
+    #   @param thing [User, Role] What to define an overwrite for.
+    #   @param allow [#bits, Permissions, Integer] The permission sets that should receive an `allow` override.
+    #   @param deny [#bits, Permissions, Integer] The permission sets that should receive a `deny` override.
+    #   @param reason [String] The reason the for defining the overwrite.
+    def produce_overwrite(thing, allow: 0, deny: 0, reason: nil)
+      unless thing.is_a? Overwrite
+        allow_bits = allow.respond_to?(:bits) ? allow.bits : allow
+        deny_bits = deny.respond_to?(:bits) ? deny.bits : deny
+
+        thing = Overwrite.new thing, allow: allow_bits, deny: deny_bits
+      end
+
+      current_bits = overwrites(:role).find { |o| o.id == @server_id }
+
+      computed_allow = thing.allow_bits | current_bits.allow.bits
+      computed_deny = thing.deny_bits | current_bits.deny.bits
+
+      API::Channel.update_permission(@bot.token, @id, thing.id, computed_allow, computed_deny, thing.type, reason)
+    end
+
     # Deletes a permission overwrite for this channel
     # @param target [Member, User, Role, Profile, Recipient, String, Integer] What permission overwrite to delete
-    #   @param reason [String] The reason the for the overwrite deletion.
+    # @param reason [String] The reason the for the overwrite deletion.
     def delete_overwrite(target, reason = nil)
       raise 'Tried deleting a overwrite for an invalid target' unless target.is_a?(Member) || target.is_a?(User) || target.is_a?(Role) || target.is_a?(Profile) || target.is_a?(Recipient) || target.respond_to?(:resolve_id)
 
