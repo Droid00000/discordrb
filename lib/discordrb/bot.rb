@@ -565,6 +565,18 @@ module Discordrb
       parse_mentions(mention, server).first
     end
 
+    # Gets the emoji from a string.
+    # @param mention [String] The mention, which should look like `<:name:126328:>`.
+    # @return [Nil, Emoji] The emoji identified by the mention, or `nil` if none exists.
+    def parse_emoji(mention)
+      return nil if mention.nil?
+
+      mentions = parse_mentions(mention).select { |m| m.is_a? Discordrb::Emoji }
+      return nil if mention.empty?
+
+      mentions.first
+    end
+
     # Updates presence status.
     # @param status [String] The status the bot should show up as. Can be `online`, `dnd`, `idle`, or `invisible`
     # @param activity [String, nil] The name of the activity to be played/watched/listened to/stream name on the stream.
