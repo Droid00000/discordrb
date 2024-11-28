@@ -598,8 +598,8 @@ module Discordrb
 
       current_bits = overwrites(:role).find { |o| o.id == @server_id }
 
-      computed_allow = thing.allow_bits | current_bits.allow.bits
-      computed_deny = thing.deny_bits | current_bits.deny.bits
+      computed_allow = thing.allow.bits | current_bits.allow.bits
+      computed_deny = thing.deny.bits | current_bits.deny.bits
 
       API::Channel.update_permission(@bot.token, @id, thing.id, computed_allow, computed_deny, thing.type, reason)
     end
