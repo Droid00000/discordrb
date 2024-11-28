@@ -621,7 +621,7 @@ module Discordrb
         thing = Overwrite.new thing, allow: allow_bits, deny: deny_bits
       end
 
-      computed_allow = thing.allow.bits | current_bits.allow.bits
+      computed_allow = current_bits.allow.bits
 
       API::Channel.update_permission(@bot.token, @id, thing.id, computed_allow, thing.deny.bits, thing.type, reason)
     end
