@@ -612,7 +612,7 @@ module Discordrb
     #   @param allow [#bits, Permissions, Integer] The permission sets that should receive an `allow` override.
     #   @param deny [#bits, Permissions, Integer] The permission sets that should receive a `deny` override.
     #   @param reason [String] The reason the for defining the overwrite.
-    def destory_overwrite(thing, allow: 0, deny: 0, reason: nil)
+    def destroy_overwrite(thing, allow: 0, deny: 0, reason: nil)
       current_bits = overwrites(:role).find { |o| o.id == @server_id }
       unless thing.is_a? Overwrite
         allow_bits = allow.respond_to?(:bits) ? allow.bits : allow
