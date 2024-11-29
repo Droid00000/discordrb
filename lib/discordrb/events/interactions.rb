@@ -205,7 +205,7 @@ module Discordrb::Events
     # @param name [String] The name of the option.
     # @return [Member]
     def member(name)
-      @resolved[:members][@options[name].to_i]
+      @resolved[:members][@options[name].to_i] || @resolved[:users][@options[name].to_i]
     end
 
     private
