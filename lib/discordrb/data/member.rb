@@ -201,6 +201,11 @@ module Discordrb
       roles.max_by(&:position)
     end
 
+    # @return [Integer] Position of the highest role this member has.
+    def role_position
+      roles.max_by(&:position).position
+    end
+
     # @return [Role, nil] the role this member is being hoisted with.
     def hoist_role
       hoisted_roles = roles.select(&:hoist)
