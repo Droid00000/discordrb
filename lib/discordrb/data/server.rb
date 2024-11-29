@@ -604,18 +604,6 @@ module Discordrb
       end
     end
 
-    # If a server has hit the maximum amount of emojis.
-    def emoji_limit?(emoji)
-      if emoji.animated?
-        emoji = @emoji.select { |_, emoji| emoji.animated? }
-      elsif !emoji.animated?
-        emoji = @emoji.select { |_, emoji| !emoji.animated? }
-      end
-
-      return true if emoji.keys.count >= max_emoji
-      return false if emoji.keys.count < max_emoji
-    end
-
     # If a server has hit the maximum amount of roles.
     def role_limit?
       return true if @roles.count == 250
@@ -631,23 +619,6 @@ module Discordrb
       return nil if response.empty?
 
       response.map { |mem| Member.new(mem, self, @bot) }
-    end
-
-    # If this server has unlocked role icons
-    # @return [Boolean] If this server can access role icons
-    def role_icons?
-      case @boost_level
-      when 0
-        false
-      when 1
-        false
-      when 2
-        true
-      when 3
-        true
-      else
-        true
-      end
     end
 
     # Adds a new custom sticker on this server.

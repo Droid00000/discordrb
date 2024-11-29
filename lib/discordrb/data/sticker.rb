@@ -50,7 +50,7 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot, server = nil)
       @bot = bot
-      @server = server ? server : data['guild_id']&.to_i
+      @server = server || data['guild_id']&.to_i
       @name = data['name']
       @id = data['id']&.to_i
       @tags = data['tags']
@@ -65,7 +65,11 @@ module Discordrb
 
     # @return [String] the file URL of the sticker
     def url
-      mime = @format == :lottie ? :json : (@format == :apng ? :png : @format)
+      mime = if @format == :lottie
+               :json
+             else
+               (@format == :apng ? :png : @format)
+             end
       API.sticker_file_url(id, format: mime.to_s)
     end
 
@@ -78,7 +82,6 @@ module Discordrb
     # @return [File] a file.
     def file
       file = Tempfile.new(Time.now.to_s)
-      file.binmode
       file.write(Faraday.get(url).body)
       file.rewind
       file
