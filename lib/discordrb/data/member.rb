@@ -202,7 +202,7 @@ module Discordrb
     end
 
     # @return [Integer] Position of the highest role this member has.
-    def role_position
+    def hierarchy
       roles.max_by(&:position).position
     end
 
