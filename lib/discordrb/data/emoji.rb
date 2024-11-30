@@ -80,6 +80,16 @@ module Discordrb
       file
     end
 
+    # Returns a tempfile object of the emoji.
+    # @return [File] a file.
+    def static_file
+      file = Tempfile.new(Time.now.to_s)
+      file.binmode
+      file.write(Faraday.get("#{API.cdn_url}/emojis/#{@id}.png").body)
+      file.rewind
+      file
+    end
+
     # The inspect method is overwritten to give more useful output
     def inspect
       "<Emoji name=#{name} id=#{id} animated=#{animated}>"
