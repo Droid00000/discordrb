@@ -259,7 +259,7 @@ module Discordrb::API::Server
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#get-guild-roles
   def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, icon, reason = nil)
-    if icon && !icon.empty?
+    if icon
       path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
 
       raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
