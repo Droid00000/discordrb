@@ -521,13 +521,17 @@ module Discordrb
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
+    begin
       response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
-    rescue StandardError
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, nil, reason)
-
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
       role
+    rescue StandardError
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, nil, reason)
+      role = Role.new(JSON.parse(response), @bot, self)
+      @roles << role
+      role
+      end
     end
 
     # Updates a role on this server.
