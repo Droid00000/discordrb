@@ -608,4 +608,29 @@ module Discordrb::API::Channel
       Authorization: token
     )
   end
+
+  # Immediately ends a poll the bot has made.
+  # https://discord.com/developers/docs/resources/poll#end-poll
+  def end_poll(token, channel_id, message_id)
+    Discordrb::API.request(
+      :channels_cid_messages_mid_expire,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/polls/#{message_id}/expire",
+      Authorization: token
+    )
+  end
+
+  # Gets the members that have voted for a specific poll answer.
+  # https://discord.com/developers/docs/resources/poll#end-poll
+  def get_answer_voters(token, channel_id, message_id, answer_id, after, limit)
+    query = URI.encode_www_form({ after: after, limit: limit }.compact)
+    Discordrb::API.request(
+      :channels_cid_messages_mid_answers_aid,
+      channel_id,
+      :get,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/polls/#{message_id}/answers/#{answer_id}?#{query}",
+      Authorization: token
+    )
+  end
 end
