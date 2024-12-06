@@ -41,9 +41,9 @@ module Discordrb
       @finalized = data['poll']['results']['is_finalized']
       @answer_counts = []
 
-      if !data['poll']['results']['answer_counts'].empty?
-        @answers_counts = data['poll']['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot, self) }
-      end
+      return if data['poll']['results']['answer_counts'].empty?
+
+      @answers_counts = data['poll']['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) }
     end
 
     # Immediately ends the poll and returns a new message object.
@@ -53,6 +53,8 @@ module Discordrb
       response = API::Channel.end_poll(@bot.token, @message.channel.id, @message.id)
       Message.new(JSON.parse(response), @bot)
     end
+
+    alias_method :expire, :end
 
     # Get a specific answer by its ID.
     # @param id [Integer, String] ID of the answer.
@@ -90,9 +92,8 @@ module Discordrb
       # @return [Boolean] If the current user voted for this answer.
       attr_reader :voted
 
-      def initialize(data, bot, poll)
+      def initialize(data, bot)
         @bot = bot
-        @poll = poll
         @id = data['id']
         @count = data['count']
         @voted = data['me_voted']
@@ -121,28 +122,30 @@ module Discordrb
       # @param after [Integer, String] Gets the users after this user ID.
       # @param limit [Integer] The max number of users between 1-100. Defaults to 25.
       def voters(after: nil, limit: 25)
-        respone = API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit)
+        response = API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit)
         return nil if response.empty?
 
         response.map { |user| User.new(user, @bot) }
       end
     end
 
+    # Allows for easy creation of a poll request object.
     class Builder
-      # @return [String] Question of the poll.
-      attr_reader :question
+      # Sets the poll question to something.
+      # @param question [String] The question of the poll.
+      attr_writer :question
 
-      # @return [Array] Selectable poll answers.
-      attr_reader :answers
+      # Whether multiple answers can be chosen.
+      # @param allow_multiselect [Boolean]
+      attr_writer :allow_multiselect
 
-      # @return [Boolean] Whether you can select multiple poll answers.
-      attr_reader :allow_multiselect
+      # The layout type. This can currently only be 1.
+      # @param layout_type [Integer]
+      attr_writer :layout_type
 
-      # @return [Integer] How long this poll will last before expiring.
-      attr_reader :duration
-
-      # @return [Boolean] The layout type of this poll.
-      attr_reader :layout_type
+      # How long this poll should last.
+      # @param duration [Integer]
+      attr_writer :duration
 
       # @param question [String]
       # @param answers [Array<Hash>]
@@ -156,12 +159,6 @@ module Discordrb
         @duration = duration
         @layout_type = layout_type
         yield self if block_given?
-      end
-
-      # Sets the poll question to something.
-      # @param question [String] The question of the poll.
-      def question=(question)
-        @question = question
       end
 
       # Adds an answer to this poll.
@@ -180,26 +177,7 @@ module Discordrb
         @answers << { poll_media: { text: name, emoji: emoji }.compact }
       end
 
-      # Whether multiple answers can be chosen.
-      # @param allow_multiselect [Boolean]
-      def allow_multiselect=(alllow_multiselect)
-        @allow_multiselect = allow_multiselect
-      end
-
-      # The layout type. This can currently only be 1.
-      # @param layout_type [Integer]
-      def layout_type=(layout_type)
-        @layout_type = layout_type
-      end
-
-      # How long this poll should last.
-      # @param duration [Integer]
-      def duration=(duration)
-        @duration = duration
-      end
-
-      private
-
+      # Converts the poll into a hash that can be sent to Discord when making requests.
       def to_hash
         {
           question: { text: @question },
