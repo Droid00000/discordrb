@@ -33,18 +33,17 @@ module Discordrb
     def initialize(data, message, bot)
       @bot = bot
       @message = message
-      print(data)
-      @question = data['poll']['question']['text']
-      @answers = data['poll']['answers'].map { |a| Answer.new(a, @bot, self) }
-      @expiry = Time.iso8601(data['poll']['expiry']) if data['poll']['expiry']
-      @allow_multiselect = data['poll']['allow_multiselect']
-      @layout_type = data['poll']['layout_type']
-      @finalized = data['poll']['results']['is_finalized']
+      @question = data['question']['text']
+      @answers = data['answers'].map { |a| Answer.new(a, @bot, self) }
+      @expiry = Time.iso8601(data['expiry']) if data['expiry']
+      @allow_multiselect = data['allow_multiselect']
+      @layout_type = data['layout_type']
+      @finalized = data['results']['is_finalized']
       @answer_counts = []
 
-      return if data['poll']['results']['answer_counts'].empty?
+      return if data['results']['answer_counts'].empty?
 
-      @answers_counts = data['poll']['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) }
+      @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) }
     end
 
     # Immediately ends the poll and returns a new message object.
