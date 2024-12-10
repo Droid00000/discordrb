@@ -1640,6 +1640,14 @@ module Discordrb
 
         event = ThreadMembersUpdateEvent.new(data, self)
         raise_event(event)
+
+      when :MESSAGE_POLL_VOTE_ADD
+        event = PollVoteAddEvent.new(data, self)
+        raise_event(event)
+
+      when :MESSAGE_POLL_VOTE_REMOVE
+        event PollVoteRemoveEvent.new(data, self)
+        raise_event(event)
       else
         # another event that we don't support yet
         debug "Event #{type} has been received but is unsupported. Raising UnknownEvent"

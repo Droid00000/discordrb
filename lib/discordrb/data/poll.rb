@@ -60,7 +60,7 @@ module Discordrb
     # @param id [Integer, String] ID of the answer.
     # @return [Answer, nil]
     def answer(id)
-      @answers.find { |a| a.id == id&.to_i }
+      @answers.find { |a| a.id == id&.resolve_id }
     end
 
     # Whether or not this poll has ended.
@@ -80,6 +80,12 @@ module Discordrb
       return nil if @answer_counts.empty?
 
       @answer_counts.find { |a| a.id == id&.to_i }
+    end
+
+    # Returns the answer with the highest count.
+    # @return [AnswerCount]
+    def highest_count
+      @answer_counts.max_by(&:count)
     end
 
     # Represents the count of answers for an answer.
@@ -103,6 +109,9 @@ module Discordrb
     # Represents a single answer for a poll.
     class Answer
       include IDObject
+
+      # @return [Poll] Poll this answers originates from.
+      attr_reader :poll
 
       # @return [String] Name of this question.
       attr_reader :name
@@ -170,15 +179,13 @@ module Discordrb
                   emoji.to_i.positive? ? { id: emoji } : { name: emoji }
                 when Emoji
                   { id: emoji.id }
-                else
-                  emoji&.to_h
                 end
 
         @answers << { poll_media: { text: name, emoji: emoji }.compact }
       end
 
-      # Converts the poll into a hash that can be sent to Discord when making requests.
-      def to_hash
+      # Converts the poll into a hash that can be sent to Discord.
+      def to_h
         {
           question: { text: @question },
           answers: @answers,
