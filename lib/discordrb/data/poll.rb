@@ -33,6 +33,7 @@ module Discordrb
     def initialize(data, message, bot)
       @bot = bot
       @message = message
+      print(data)
       @question = data['poll']['question']['text']
       @answers = data['poll']['answers'].map { |a| Answer.new(a, @bot, self) }
       @expiry = Time.iso8601(data['poll']['expiry']) if data['poll']['expiry']
