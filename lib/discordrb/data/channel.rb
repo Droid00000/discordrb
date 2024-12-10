@@ -495,12 +495,12 @@ module Discordrb
     # @yieldparam embed [Discordrb::Poll] The poll from the parameters, or a new one.
     # @return [Message] The resulting message.
     def send_poll(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, poll = nil)
-      poll ||= Discordrb::Poll::Builder.new
       view = Discordrb::Webhooks::View.new
+      builder ||= Discordrb::Poll::Builder.new
 
-      yield(poll, view) if block_given?
+      yield(builder, view) if block_given?
 
-      send_message(message, tts, embed, attachments, allowed_mentions, message_reference, components || view.to_a, poll || poll.to_h)
+      send_message(message, tts, embed, attachments, allowed_mentions, message_reference, components || view.to_a, poll || builder.to_h)
     end
 
     # Sends multiple messages to a channel
