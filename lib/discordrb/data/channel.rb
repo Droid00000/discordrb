@@ -495,7 +495,7 @@ module Discordrb
     # @yieldparam embed [Discordrb::Poll] The poll from the parameters, or a new one.
     # @return [Message] The resulting message.
     def send_poll(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, poll = nil)
-      builder ||= Discordrb::Poll::Builder.new
+      poll ||= Discordrb::Poll::Builder.new
       view = Discordrb::Webhooks::View.new
 
       yield(poll, view) if block_given?
