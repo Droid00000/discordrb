@@ -104,37 +104,37 @@ module Discordrb
         @count = data['count']
         @voted = data['me_voted']
       end
-    end
 
-    # Represents a single answer for a poll.
-    class Answer
-      include IDObject
+      # Represents a single answer for a poll.
+      class Answer
+        include IDObject
 
-      # @return [Poll] Poll this answers originates from.
-      attr_reader :poll
+        # @return [Poll] Poll this answers originates from.
+        attr_reader :poll
 
-      # @return [String] Name of this question.
-      attr_reader :name
+        # @return [String] Name of this question.
+        attr_reader :name
 
-      # @return [Emoji, nil] Emoji associated with this question.
-      attr_reader :emoji
+        # @return [Emoji, nil] Emoji associated with this question.
+        attr_reader :emoji
 
-      def initialize(data, bot, poll)
-        @bot = bot
-        @poll = poll
-        @name = data['poll_media']['text']
-        @id = data['answer_id']
-        @emoji = Emoji.new(data['poll_media']['emoji'], @bot) if data['poll_media']['emoji']
-      end
+        def initialize(data, bot, poll)
+          @bot = bot
+          @poll = poll
+          @name = data['poll_media']['text']
+          @id = data['answer_id']
+          @emoji = Emoji.new(data['poll_media']['emoji'], @bot) if data['poll_media']['emoji']
+        end
 
-      # Gets an array of user objects that have voted for this poll.
-      # @param after [Integer, String] Gets the users after this user ID.
-      # @param limit [Integer] The max number of users between 1-100. Defaults to 25.
-      def voters(after: nil, limit: 25)
-        response = API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit)
-        return nil if response.empty?
+        # Gets an array of user objects that have voted for this poll.
+        # @param after [Integer, String] Gets the users after this user ID.
+        # @param limit [Integer] The max number of users between 1-100. Defaults to 25.
+        def voters(after: nil, limit: 25)
+          response = API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit)
+          return nil if response.empty?
 
-        response.map { |user| User.new(user, @bot) }
+          response.map { |user| User.new(user, @bot) }
+        end
       end
     end
 
