@@ -167,7 +167,6 @@ module Discordrb
         @allow_multiselect = allow_multiselect
         @duration = duration
         @layout_type = layout_type
-        yield self if block_given?
       end
 
       # Adds an answer to this poll.

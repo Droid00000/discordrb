@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'discordrb/webhooks/view'
-require 'discordrb/data/poll'
 require 'time'
 
 module Discordrb
