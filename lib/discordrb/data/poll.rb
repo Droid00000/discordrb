@@ -34,6 +34,7 @@ module Discordrb
       @bot = bot
       @message = message
       @question = data['question']['text']
+      puts data['answers']
       @answers = data['answers'].map { |a| Answer.new(a, @bot, self) }
       @expiry = Time.iso8601(data['expiry']) if data['expiry']
       @allow_multiselect = data['allow_multiselect']
@@ -119,6 +120,7 @@ module Discordrb
         attr_reader :emoji
 
         def initialize(data, bot, poll)
+          puts data
           @bot = bot
           @poll = poll
           @name = data['poll_media']['text']
