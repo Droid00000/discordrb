@@ -46,8 +46,7 @@ module Discordrb
       @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) }
     end
 
-    # Immediately ends the poll and returns a new message object.
-    # This will fail if the poll wasn't created by the bot.
+    # Immediately ends the poll and returns a new message object or fails if the bot isn't the one who made the poll.
     # @return [Message] The new message object.
     def end
       response = API::Channel.end_poll(@bot.token, @message.channel.id, @message.id)
@@ -131,7 +130,7 @@ module Discordrb
       # @param after [Integer, String] Gets the users after this user ID.
       # @param limit [Integer] The max number of users between 1-100. Defaults to 25.
       def voters(after: nil, limit: 25)
-        response = API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit)
+        response = JSON.parse(API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit))
         return nil if response.empty?
 
         response.map { |user| User.new(user, @bot) }
