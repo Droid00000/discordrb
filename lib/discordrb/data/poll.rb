@@ -49,8 +49,8 @@ module Discordrb
     # Immediately ends the poll and returns a new message object or fails if the bot isn't the one who made the poll.
     # @return [Message] The new message object.
     def end
-      response = API::Channel.end_poll(@bot.token, @message.channel.id, @message.id)
-      Message.new(JSON.parse(response), @bot)
+      response = JSON.parse(API::Channel.end_poll(@bot.token, @message.channel.id, @message.id))
+      Message.new(response, @bot)
     end
 
     alias_method :expire, :end
