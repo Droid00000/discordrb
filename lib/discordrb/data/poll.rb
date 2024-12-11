@@ -129,7 +129,7 @@ module Discordrb
       def voters(after: nil, limit: 25)
         response = JSON.parse(API::Channel.get_answer_voters(@bot.token, @poll.message.channel.id, @poll.message.id, @id, after, limit))
         return nil if response.empty?
-
+        puts response
         response.map { |user| User.new(user, @bot) }
       end
     end
