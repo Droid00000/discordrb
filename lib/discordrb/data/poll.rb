@@ -39,11 +39,7 @@ module Discordrb
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized']
-      @answer_counts = []
-
-      return if data['results']['answer_counts'].empty?
-
-      @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) }
+      @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) } unless data['results']['answer_counts'].empty?
     end
 
     # Immediately ends the poll and returns a new message object or fails if the bot isn't the one who made the poll.
@@ -76,7 +72,7 @@ module Discordrb
     # @param id [Integer, String] ID of the answer.
     # @return [AnswerCount, nil]
     def answer_count(id)
-      return nil if @answer_counts.empty?
+      return nil if @answer_counts.nil?
 
       @answer_counts.find { |a| a.id == id&.to_i }
     end
