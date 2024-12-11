@@ -38,7 +38,7 @@ module Discordrb
       @answers = data['answers'].map { |a| Answer.new(a, @bot, self) }
       @expiry = Time.iso8601(data['expiry']) if data['expiry']
       @allow_multiselect = data['allow_multiselect']
-      @layout_type = data['layout_type']
+      @layout_type = data['layout_type']&.to_i
       @finalized = data['results']['is_finalized']
       @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) } unless data['results']['answer_counts'].empty?
     end
