@@ -11,8 +11,9 @@ module Discordrb
 
     # @return [Time] How long this poll will last before expiring.
     attr_reader :expiry
+    alias_method :duration, :expiry
 
-    # @return [Boolean] Whether selecting multiple poll answers is enabled.
+    # @return [Boolean] Whether you can select multiple poll answers.
     attr_reader :allow_multiselect
     alias_method :allow_multiselect?, :allow_multiselect
     alias_method :multiselect?, :allow_multiselect
@@ -42,7 +43,7 @@ module Discordrb
       @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) } if data['results']
     end
 
-    # Immediately ends the poll and returns a new message object or fails if the bot isn't the one who made the poll.
+    # Ends this poll. Only works if the bot made the poll.
     # @return [Message] The new message object.
     def end
       response = JSON.parse(API::Channel.end_poll(@bot.token, @message.channel.id, @message.id))
@@ -55,7 +56,7 @@ module Discordrb
     # @param id [Integer, String] ID of the answer.
     # @return [Answer, nil]
     def answer(id)
-      @answers.find { |a| a.id == id&.resolve_id }
+      @answers.find { |a| a.id == id.resolve_id }
     end
 
     # Whether or not this poll has ended.
@@ -74,7 +75,7 @@ module Discordrb
     def answer_count(id)
       return nil if @answer_counts.nil?
 
-      @answer_counts.find { |a| a.id == id&.to_i }
+      @answer_counts.find { |a| a.id == id.resolve_id }
     end
 
     # Returns the answer with the highest count.
@@ -135,8 +136,8 @@ module Discordrb
 
     # Allows for easy creation of a poll request object.
     class Builder
-      # Sets the poll question to something.
-      # @param question [String] The question of the poll.
+      # Sets the poll question.
+      # @param question [String]
       attr_writer :question
 
       # Whether multiple answers can be chosen.
@@ -166,7 +167,7 @@ module Discordrb
 
       # Adds an answer to this poll.
       # @param name [String] Name of the answer.
-      # @param emoji [String, Integer, Emoji] An emoji for this polls answer.
+      # @param emoji [String, Integer, Emoji] An emoji for this poll answer.
       def add_answer(name:, emoji: nil)
         emoji = case emoji
                 when Integer, String

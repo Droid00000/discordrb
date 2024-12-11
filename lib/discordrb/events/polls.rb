@@ -8,6 +8,7 @@ module Discordrb::Events
   class PollVoteAddEvent < Event
     # @return [User, Member, nil] The user that added or removed a vote.
     attr_reader :user
+    alias_method :member, :user
 
     # @return [Server, nil] The server where this poll originates from.
     attr_reader :server
@@ -18,7 +19,7 @@ module Discordrb::Events
     # @return [Message] The message where this poll originates from.
     attr_reader :message
 
-    # @return [Poll::Answer] The answer that got voted for or had their vote removed..
+    # @return [Poll::Answer] The answer that got voted for or had their vote removed.
     attr_reader :answer
 
     # @return [Poll] The poll that triggered this event.
@@ -39,7 +40,7 @@ module Discordrb::Events
   # Event handler for PollVoteAddEvent.
   class PollVoteAddEventHandler < EventHandler
     def matches?(event)
-      # Check for the proper event type
+      # Check for the proper event type.
       return false unless event.is_a? PollVoteAddEvent
 
       [
