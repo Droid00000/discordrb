@@ -40,7 +40,7 @@ module Discordrb
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized'] if data['results']
-      @answer_counts = transform_counts(data['results']['answer_counts']) if data['results']
+      @answer_counts = data['results']['answer_counts'].map { |h| h.delete('me_voted') }.reduce({}, :merge) if data['results']['answer_counts']
     end
 
     # Ends this poll. Only works if the bot made the poll.
@@ -73,14 +73,6 @@ module Discordrb
     # @return [Answer] The answer object.
     def highest_count
       answer(@answer_counts.invert.max&.last)
-    end
-
-    private
-
-    def transform_counts(data)
-      return nil if data.empty?
-
-      data.map { |k| k.reject { |k| k == 'me_voted' } }.reduce(:merge)
     end
 
     # Represents a single answer for a poll.
