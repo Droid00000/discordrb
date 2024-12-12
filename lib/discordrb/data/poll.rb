@@ -25,7 +25,7 @@ module Discordrb
     attr_reader :finalized
     alias_method :finalized?, :finalized
 
-    # @return [Array] An array of poll answer count objects.
+    # @return [Hash<Integer => Integer>] The answer counts by ID.
     attr_reader :answer_counts
 
     # @return [Message] The message this poll originates from.
@@ -40,7 +40,7 @@ module Discordrb
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized'] if data['results']
-      @answers_counts = data['results']['answer_counts'].map { |a| AnswerCount.new(a, @bot) } if data['results']
+      @answer_counts = transform_counts(data['results']['answer_counts']) if data['results']
     end
 
     # Ends this poll. Only works if the bot made the poll.
@@ -69,37 +69,18 @@ module Discordrb
 
     alias_method :ended?, :expired?
 
-    # Get a specific answer count by its ID.
-    # @param id [Integer, String] ID of the answer.
-    # @return [AnswerCount, nil]
-    def answer_count(id)
-      return nil if @answer_counts.nil?
-
-      @answer_counts.find { |a| a.id == id.resolve_id }
-    end
-
     # Returns the answer with the highest count.
-    # @return [AnswerCount]
+    # @return [Answer] The answer object.
     def highest_count
-      @answer_counts.max_by(&:count)
+      answer(@answer_counts.invert.max&.last)
     end
 
-    # Represents the count of answers for an answer.
-    class AnswerCount
-      include IDObject
+    private
 
-      # @return [Integer] The number of voters for the answer.
-      attr_reader :count
+    def transform_counts(data)
+      return nil if data.empty?
 
-      # @return [Boolean] If the current user voted for this answer.
-      attr_reader :voted
-
-      def initialize(data, bot)
-        @bot = bot
-        @id = data['id']
-        @count = data['count']
-        @voted = data['me_voted']
-      end
+      data.map { |k| k.reject { |k| k == 'me_voted' } }.reduce(:merge)
     end
 
     # Represents a single answer for a poll.
@@ -123,6 +104,14 @@ module Discordrb
         @emoji = Emoji.new(data['poll_media']['emoji'], @bot) if data['poll_media']['emoji']
       end
 
+      # Returns how many users have voted for this answer.
+      # @return [Integer, nil] Returns the number of votes or nil if they don't exist.
+      def count
+        return 0 if !@Poll.answer_counts&.key?(@id) && @poll.finalized?
+
+        @poll.answer_counts&.key(@id)
+      end
+
       # Gets an array of user objects that have voted for this poll.
       # @param after [Integer, String] Gets the users after this user ID.
       # @param limit [Integer] The max number of users between 1-100. Defaults to 25.
@@ -143,6 +132,7 @@ module Discordrb
       # Whether multiple answers can be chosen.
       # @param allow_multiselect [Boolean]
       attr_writer :allow_multiselect
+      alias_method :multiselect, :allow_multiselect=
 
       # The layout type. This can currently only be 1.
       # @param layout_type [Integer]
@@ -172,6 +162,8 @@ module Discordrb
         emoji = case emoji
                 when Integer, String
                   emoji.to_i.positive? ? { id: emoji } : { name: emoji }
+                when Reaction
+                  emoji.id ? { id: emoji.id } : { name: emoji.name }
                 when Emoji
                   { id: emoji.id }
                 end
