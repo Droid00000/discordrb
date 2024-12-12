@@ -1647,7 +1647,7 @@ module Discordrb
         raise_event(event)
 
       when :MESSAGE_POLL_VOTE_REMOVE
-        event PollVoteRemoveEvent.new(data, self)
+        event = PollVoteRemoveEvent.new(data, self)
         raise_event(event)
       else
         # another event that we don't support yet
