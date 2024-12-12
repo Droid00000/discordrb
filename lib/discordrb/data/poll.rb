@@ -124,7 +124,7 @@ module Discordrb
       # Whether multiple answers can be chosen.
       # @param allow_multiselect [Boolean]
       attr_writer :allow_multiselect
-      alias_method :multiselect, :allow_multiselect=
+      alias_method :multiselect, :allow_multiselect
 
       # The layout type. This can currently only be 1.
       # @param layout_type [Integer]
