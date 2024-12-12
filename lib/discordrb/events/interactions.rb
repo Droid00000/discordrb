@@ -35,10 +35,11 @@ module Discordrb::Events
     end
 
     # (see Interaction#respond)
-    def respond(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, &block)
+    def respond(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, poll: nil, &block)
       @interaction.respond(
         content: content, tts: tts, embeds: embeds, allowed_mentions: allowed_mentions,
-        flags: flags, ephemeral: ephemeral, wait: wait, components: components, &block
+        flags: flags, ephemeral: ephemeral, wait: wait, components: components, poll: poll,
+        &block
       )
     end
 
