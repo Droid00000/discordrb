@@ -35,12 +35,12 @@ module Discordrb
       @bot = bot
       @message = message
       @question = data['question']['text']
-      @answers = data['answers'].map { |a| Answer.new(a, @bot, self) }
+      @answers = data['answers'].map { |answer| Answer.new(answer, @bot, self) }
       @expiry = Time.iso8601(data['expiry']) if data['expiry']
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized'] if data['results']
-      @answer_counts = proccess_counts(data['results']['answer_counts']) unless data.dig('results', 'answer_counts')&.empty?
+      @answer_counts = process_counts(data['results']['answer_counts']) unless data.dig('results', 'answer_counts')&.empty?
     end
 
     # Ends this poll. Only works if the bot made the poll.
@@ -75,11 +75,16 @@ module Discordrb
       answer(@answer_counts.invert.max&.last)
     end
 
-    # Proccess the answer counts hash.
-    # @return [Hash, nil] The new hash or nil
-    def proccess_counts(data)
-      return nil if data.empty?
+    alias_method :most_votes, :highest_count
+    alias_method :most_voted, :highest_count
 
+    private 
+
+    # @!visibility private
+    # @note For internal use only
+    # Proccess the answer counts hash.
+    # @return [Hash] The new answer hash.
+    def process_counts(data)
       data.each_with_object({}) do |data, hash|
         hash[data['id']] = data['count']
       end
@@ -108,11 +113,14 @@ module Discordrb
 
       # Returns how many users have voted for this answer.
       # @return [Integer, nil] Returns the number of votes or nil if they don't exist.
-      def count
+      def counts
         return 0 if !@Poll.answer_counts&.key?(@id) && @poll.finalized?
 
         @poll.answer_counts&.key(@id)
       end
+
+      alias_method :votes, :counts
+      alias_method :count, :counts
 
       # Gets an array of user objects that have voted for this poll.
       # @param after [Integer, String] Gets the users after this user ID.
@@ -143,6 +151,8 @@ module Discordrb
       # How long this poll should last.
       # @param duration [Integer]
       attr_writer :duration
+      alias_method :length=, :duration=
+      alias_method :expiry=, :duration=
 
       # @param question [String]
       # @param answers [Array<Hash>]
