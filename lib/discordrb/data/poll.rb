@@ -40,7 +40,7 @@ module Discordrb
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized'] if data['results']
-      @answer_counts = proccess_counts(['results']['answer_counts']) unless data.dig('results', 'answer_counts')&.empty?
+      @answer_counts = proccess_counts(data['results']['answer_counts']) unless data.dig('results', 'answer_counts')&.empty?
     end
 
     # Ends this poll. Only works if the bot made the poll.
