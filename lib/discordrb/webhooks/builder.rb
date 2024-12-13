@@ -5,7 +5,7 @@ require 'discordrb/webhooks/embeds'
 module Discordrb::Webhooks
   # A class that acts as a builder for a webhook message object.
   class Builder
-    def initialize(content: '', username: nil, avatar_url: nil, tts: false, file: nil, embeds: [], allowed_mentions: nil)
+    def initialize(content: '', username: nil, avatar_url: nil, tts: false, file: nil, embeds: [], allowed_mentions: nil, poll: nil)
       @content = content
       @username = username
       @avatar_url = avatar_url
@@ -13,6 +13,7 @@ module Discordrb::Webhooks
       @file = file
       @embeds = embeds
       @allowed_mentions = allowed_mentions
+      @poll = poll
     end
 
     # The content of the message. May be 2000 characters long at most.
@@ -65,6 +66,13 @@ module Discordrb::Webhooks
       embed
     end
 
+    def add_poll(poll = nil)
+      poll ||= Poll::Builder.new
+      yield(poll)
+      @poll = poll
+      poll
+    end
+
     # @return [File, nil] the file attached to this message.
     attr_reader :file
 
@@ -83,7 +91,8 @@ module Discordrb::Webhooks
         avatar_url: @avatar_url,
         tts: @tts,
         embeds: @embeds.map(&:to_hash),
-        allowed_mentions: @allowed_mentions&.to_hash
+        allowed_mentions: @allowed_mentions&.to_hash,
+        poll: @poll
       }
     end
 
