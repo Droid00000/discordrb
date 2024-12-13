@@ -31,6 +31,7 @@ module Discordrb
     # @return [Message] The message this poll originates from.
     attr_reader :message
 
+    # @!visibility private
     def initialize(data, message, bot)
       @bot = bot
       @message = message
@@ -69,7 +70,7 @@ module Discordrb
 
     alias_method :ended?, :expired?
 
-    # Returns the answer with the highest count.
+    # Returns the answer with the most votes.
     # @return [Answer] The answer object.
     def highest_count
       answer(@answer_counts.invert.max&.last)
@@ -105,6 +106,7 @@ module Discordrb
       # @return [Emoji, nil] Emoji associated with this question.
       attr_reader :emoji
 
+      # @!visibility private
       def initialize(data, bot, poll)
         @bot = bot
         @poll = poll
@@ -138,20 +140,16 @@ module Discordrb
     # Allows for easy creation of a poll request object.
     class Builder
       # Sets the poll question.
-      # @param question [String]
       attr_writer :question
 
       # Whether multiple answers can be chosen.
-      # @param allow_multiselect [Boolean]
       attr_writer :allow_multiselect
       alias_method :multiselect=, :allow_multiselect=
 
       # The layout type. This can currently only be 1.
-      # @param layout_type [Integer]
       attr_writer :layout_type
 
       # How long this poll should last.
-      # @param duration [Integer]
       attr_writer :duration
       alias_method :length=, :duration=
       alias_method :expiry=, :duration=
@@ -186,7 +184,9 @@ module Discordrb
       end
 
       alias_method :add_option, :add_answer
+      alias_method :add_choice, :add_answer
       
+      # @!visibility private
       # Converts the poll into a hash that can be sent to Discord.
       def to_hash
         {
