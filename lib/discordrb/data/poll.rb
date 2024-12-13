@@ -151,7 +151,6 @@ module Discordrb
       # @!attribute layout_type
       # @return [Integer] This can currently only be 1.
       attr_writer :layout_type
-      alias_method :layout=, :layout_type=
 
       # @!attribute duration
       # @return [Integer] How long this poll should last.
@@ -175,7 +174,7 @@ module Discordrb
       # Adds an answer to this poll.
       # @param name [String] Name of the answer.
       # @param emoji [String, Integer, Emoji] An emoji for this poll answer.
-      def add_answer(name:, emoji: nil)
+      def add_answer=(name, emoji: nil)
         emoji = case emoji
                 when Integer, String
                   emoji.to_i.positive? ? { id: emoji } : { name: emoji }
