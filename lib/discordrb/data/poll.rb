@@ -73,11 +73,21 @@ module Discordrb
     # Returns the answer with the most votes.
     # @return [Answer] The answer object.
     def highest_count
+      return nil if @answer_counts.nil?
+
       answer(@answer_counts.invert.max&.last)
     end
 
     alias_method :most_votes, :highest_count
     alias_method :most_voted, :highest_count
+
+    # Whether this poll is currently tied.
+    # @return [Boolean] True if this poll is tied. False otherwise.
+    def tied?
+      return nil if @answer_counts.nil?
+
+      @answer_counts.values != @answer_counts.values.uniq
+    end
 
     private
 
