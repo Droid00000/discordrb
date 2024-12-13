@@ -500,7 +500,7 @@ module Discordrb
 
       yield(builder, view) if block_given?
 
-      send_message(message, tts, embed, attachments, allowed_mentions, message_reference, components || view.to_a, poll || builder.to_h)
+      send_message(message, tts, embed, attachments, allowed_mentions, message_reference, components || view.to_a, poll || builder.to_hash)
     end
 
     # Sends multiple messages to a channel

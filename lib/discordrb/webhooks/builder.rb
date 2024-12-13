@@ -34,6 +34,10 @@ module Discordrb::Webhooks
     # @return [true, false] the TTS status.
     attr_accessor :tts
 
+    # A poll request object to attatch to this webhook message.
+    # @return [Poll] the poll request object.
+    attr_accessor :poll
+
     # Sets a file to be sent together with the message. Mutually exclusive with embeds; a webhook message can contain
     # either a file to be sent or an embed.
     # @param file [File] A file to be sent.
@@ -102,7 +106,7 @@ module Discordrb::Webhooks
         tts: @tts,
         embeds: @embeds.map(&:to_hash),
         allowed_mentions: @allowed_mentions&.to_hash,
-        poll: @poll&.to_h
+        poll: @poll&.to_hash
       }
     end
 

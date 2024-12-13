@@ -40,7 +40,7 @@ module Discordrb
       @allow_multiselect = data['allow_multiselect']
       @layout_type = data['layout_type']
       @finalized = data['results']['is_finalized'] if data['results']
-      @answer_counts = process_counts(data['results']['answer_counts']) if data.dig('results', 'answer_counts')
+      @answer_counts = process_votes(data['results']['answer_counts']) if data.dig('results', 'answer_counts')
     end
 
     # Ends this poll. Only works if the bot made the poll.
@@ -84,7 +84,7 @@ module Discordrb
     # @note For internal use only
     # Proccess the answer counts hash.
     # @return [Hash] The new answer hash.
-    def process_counts(data)
+    def process_votes(data)
       return nil if data.empty?
 
       data.each_with_object({}) do |data, hash|
@@ -186,7 +186,7 @@ module Discordrb
       end
 
       # Converts the poll into a hash that can be sent to Discord.
-      def to_h
+      def to_hash
         {
           question: { text: @question },
           answers: @answers,
