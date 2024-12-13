@@ -51,8 +51,6 @@ module Discordrb
       Message.new(response, @bot)
     end
 
-    alias_method :expire, :end
-
     # Get a specific answer by its ID.
     # @param id [Integer, String] ID of the answer.
     # @return [Answer, nil]
@@ -127,14 +125,11 @@ module Discordrb
 
       # Returns how many users have voted for this answer.
       # @return [Integer, nil] Returns the number of votes or nil if they don't exist.
-      def counts
+      def votes
         return 0 if !@Poll.answer_counts&.key?(@id) && @poll.finalized?
 
         @poll.answer_counts&.key(@id)
       end
-
-      alias_method :votes, :counts
-      alias_method :count, :counts
 
       # Gets an array of user objects that have voted for this poll.
       # @param after [Integer, String] Gets the users after this user ID.
