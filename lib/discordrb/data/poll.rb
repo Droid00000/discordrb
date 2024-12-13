@@ -88,8 +88,8 @@ module Discordrb
     def process_votes(data)
       return nil if data.empty?
 
-      data.each_with_object({}) do |data, hash|
-        hash[data['id']] = data['count']
+      data.each_with_object({}) do |vote, hash|
+        hash[vote['id']] = vote['count']
       end
     end
 
@@ -185,7 +185,7 @@ module Discordrb
 
       alias_method :add_option, :add_answer
       alias_method :add_choice, :add_answer
-      
+
       # @!visibility private
       # Converts the poll into a hash that can be sent to Discord.
       def to_hash
