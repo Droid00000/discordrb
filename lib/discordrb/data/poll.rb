@@ -160,7 +160,6 @@ module Discordrb
       # @!attribute duration
       # @return [Integer] How long this poll should last.
       attr_writer :duration
-      alias_method :length=, :duration=
       alias_method :expiry=, :duration=
 
       # @param question [String]
