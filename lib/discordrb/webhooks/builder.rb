@@ -70,13 +70,14 @@ module Discordrb::Webhooks
       embed
     end
 
-    # Convenience method to add a poll request object using a block-style builder pattern
+    # Convenience method to add a poll request object using a block-style builder pattern.
     # @example Add a poll to a message
     #   builder.add_poll do |poll|
     #     poll.question = 'Webhooks'
     #     poll.duration = 56
-    #     poll.add_answer(name: 'Hell Yea', emoji: nil)
-    #     poll.add_answer(name: 'Hell Na', emoji: nil)
+    #     poll.allow_multiselect = true
+    #     poll.add_answer(name: 'Hell Yea', emoji: foo)
+    #     poll.add_answer(name: 'Hell Na', emoji: bar)
     #   end
     # @param poll [Poll, nil] The poll to start the building process with, or nil if one should be created anew.
     # @return [Poll] The created poll.
