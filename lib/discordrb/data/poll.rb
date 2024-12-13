@@ -185,6 +185,8 @@ module Discordrb
         @answers << { poll_media: { text: name, emoji: emoji }.compact }
       end
 
+      alias_method :add_option, :add_answer
+      
       # Converts the poll into a hash that can be sent to Discord.
       def to_hash
         {
