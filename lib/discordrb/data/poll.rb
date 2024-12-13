@@ -139,17 +139,22 @@ module Discordrb
 
     # Allows for easy creation of a poll request object.
     class Builder
-      # Sets the poll question.
+      # @!attribute question
+      # @return [String] Sets the poll question.
       attr_writer :question
 
-      # Whether multiple answers can be chosen.
+      # @!attribute allow_multiselect
+      # @return [Boolean] Whether multiple answers can be chosen.
       attr_writer :allow_multiselect
       alias_method :multiselect=, :allow_multiselect=
 
-      # The layout type. This can currently only be 1.
+      # @!attribute layout_type
+      # @return [Integer] This can currently only be 1.
       attr_writer :layout_type
+      alias_method :layout=, :layout_type=
 
-      # How long this poll should last.
+      # @!attribute duration
+      # @return [Integer] How long this poll should last.
       attr_writer :duration
       alias_method :length=, :duration=
       alias_method :expiry=, :duration=
