@@ -80,7 +80,7 @@ module Discordrb::Webhooks
     #     poll.add_answer(name: 'Hell Na', emoji: bar)
     #   end
     # @param poll [Poll, nil] The poll to start the building process with, or nil if one should be created anew.
-    # @return [Poll] The created poll.
+    # @return [Discordrb::Poll::Builder] An instance of the poll builder.
     def add_poll(poll = nil)
       poll ||= Discordrb::Poll::Builder.new
       yield(poll)
