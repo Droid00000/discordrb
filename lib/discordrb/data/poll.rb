@@ -179,10 +179,8 @@ module Discordrb
         emoji = case emoji
                 when Integer, String
                   emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-                when Reaction
+                when Reaction, Emoji
                   emoji.id ? { id: emoji.id } : { name: emoji.name }
-                when Emoji
-                  { id: emoji.id }
                 end
 
         @answers << { poll_media: { text: name, emoji: emoji }.compact }
