@@ -492,7 +492,7 @@ module Discordrb
     # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
     # @param components [View, Array<Hash>] Interaction components to associate with this message.
     # @param poll [Hash] A poll request object to include with this message.
-    # @yieldparam embed [Discordrb::Poll] The poll from the parameters, or a new one.
+    # @yieldparam poll [Discordrb::Poll::Builder] The poll from the parameters, or a new one.
     # @return [Message] The resulting message.
     def send_poll(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, poll = nil)
       view = Discordrb::Webhooks::View.new
