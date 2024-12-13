@@ -174,7 +174,7 @@ module Discordrb
       # Adds an answer to this poll.
       # @param name [String] Name of the answer.
       # @param emoji [String, Integer, Emoji] An emoji for this poll answer.
-      def add_answer=(name:, emoji: nil)
+      def add_answer(name:, emoji: nil)
         emoji = case emoji
                 when Integer, String
                   emoji.to_i.positive? ? { id: emoji } : { name: emoji }
