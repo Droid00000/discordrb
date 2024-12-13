@@ -110,7 +110,7 @@ module Discordrb
         @poll = poll
         @name = data['poll_media']['text']
         @id = data['answer_id']
-        @emoji = Emoji.new(data['poll_media']['emoji'], @bot) if data['poll_media']['emoji']
+        @emoji = Emoji.new(data['poll_media']['emoji'], @bot) if data.dig('poll_media', 'emoji')
       end
 
       # Returns how many users have voted for this answer.
