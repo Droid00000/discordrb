@@ -81,7 +81,7 @@ module Discordrb::Webhooks
     # @param poll [Poll, nil] The poll to start the building process with, or nil if one should be created anew.
     # @return [Poll] The created poll.
     def add_poll(poll = nil)
-      poll ||= Poll::Builder.new
+      poll ||= Discordrb::Poll::Builder.new
       yield(poll)
       @poll = poll
       poll
