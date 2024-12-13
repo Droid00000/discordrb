@@ -66,6 +66,16 @@ module Discordrb::Webhooks
       embed
     end
 
+    # Convenience method to add a poll request object using a block-style builder pattern
+    # @example Add a poll to a message
+    #   builder.add_poll do |poll|
+    #     poll.question = 'Webhooks'
+    #     poll.duration = 56
+    #     poll.add_answer(name: 'Hell Yea', emoji: nil)
+    #     poll.add_answer(name: 'Hell Na', emoji: nil)
+    #   end
+    # @param poll [Poll, nil] The poll to start the building process with, or nil if one should be created anew.
+    # @return [Poll] The created poll.
     def add_poll(poll = nil)
       poll ||= Poll::Builder.new
       yield(poll)
@@ -92,7 +102,7 @@ module Discordrb::Webhooks
         tts: @tts,
         embeds: @embeds.map(&:to_hash),
         allowed_mentions: @allowed_mentions&.to_hash,
-        poll: @poll
+        poll: @poll&.to_h
       }
     end
 

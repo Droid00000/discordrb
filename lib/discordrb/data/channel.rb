@@ -481,8 +481,8 @@ module Discordrb
     #   channel.send_poll do |poll|
     #     poll.question = 'Cops?'
     #     poll.duration = 56
-    #     poll.add_answer(name: 'Hell Yea', emoji: 236243426662678528)
-    #     poll.add_answer(name: 'Hell Na', emoji: 239120424938504192)
+    #     poll.add_answer(name: 'Hell Yea', emoji: nil)
+    #     poll.add_answer(name: 'Hell Na', emoji: nil)
     #   end
     # @param message [String] The message that should be sent along with the embed. If this is the empty string, only the embed will be shown.
     # @param embed [Discordrb::Webhooks::Embed, nil] The embed to start the building process with, or nil if one should be created anew.
@@ -491,7 +491,7 @@ module Discordrb
     # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
     # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
     # @param components [View, Array<Hash>] Interaction components to associate with this message.
-    # @param [Poll] A poll request object to include with this message.
+    # @param poll [Hash] A poll request object to include with this message.
     # @yieldparam embed [Discordrb::Poll] The poll from the parameters, or a new one.
     # @return [Message] The resulting message.
     def send_poll(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, poll = nil)
