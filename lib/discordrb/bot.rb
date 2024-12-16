@@ -192,14 +192,6 @@ module Discordrb
       @thread_members
     end
 
-    # Gets a specific server from the cache if it exists.
-    # @return [Server, nil] The server or nil if it couldn't be found.
-    def find_server(server)
-      gateway_check
-      unavailable_servers_check
-      @servers.key?(server) ? @servers[server] : nil
-    end
-
     # @overload emoji(id)
     #   Return an emoji by its ID
     #   @param id [String, Integer] The emoji's ID.
@@ -401,15 +393,6 @@ module Discordrb
     def delete_invite(code)
       invite = resolve_invite_code(code)
       API::Invite.delete(token, invite)
-    end
-
-    # Utility method to return a message object given the mesage and chanel ID.
-    # @param message_id [Integer, String] Snowflake ID of a message.
-    # @param channel_id [Integer, String] Snowflake ID of a channel.
-    # @return [Message] The resolved message object on success.
-    def resolve_message(message_id, channel_id)
-      response = API::Channel.message(token, channel_id, message_id)
-      Message.new(JSON.parse(response), self)
     end
 
     # Sends a text message to a channel given its ID and the message's content.

@@ -140,12 +140,6 @@ module Discordrb::Voice
       @paused = false
     end
 
-    # Whether audio playback is currently paused.
-    # @return [Boolean] Whether audio playback is currently paused.
-    def paused?
-      @paused
-    end
-
     # Skips to a later time in the song. It's impossible to go back without replaying the song.
     # @param secs [Float] How many seconds to skip forwards. Skipping will always be done in discrete intervals of
     #   0.05 seconds, so if the given amount is smaller than that, it will be rounded up.
