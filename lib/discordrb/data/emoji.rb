@@ -63,33 +63,6 @@ module Discordrb
       API.emoji_icon_url(id)
     end
 
-    # Returns a tempfile object of the emoji.
-    # @return [File] a file.
-    def file
-      gif_url = "#{API.cdn_url}/emojis/#{@id}.gif"
-      png_url = "#{API.cdn_url}/emojis/#{@id}.png"
-
-      response = Faraday.get(gif_url)
-
-      chosen_url = response.status == 415 ? png_url : gif_url
-
-      file = Tempfile.new(Time.now.to_s)
-      file.binmode
-      file.write(Faraday.get(chosen_url).body)
-      file.rewind
-      file
-    end
-
-    # Returns a tempfile object of the emoji.
-    # @return [File] a file.
-    def static_file
-      file = Tempfile.new(Time.now.to_s)
-      file.binmode
-      file.write(Faraday.get("#{API.cdn_url}/emojis/#{@id}.png").body)
-      file.rewind
-      file
-    end
-
     # The inspect method is overwritten to give more useful output
     def inspect
       "<Emoji name=#{name} id=#{id} animated=#{animated}>"
