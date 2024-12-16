@@ -199,7 +199,7 @@ module Discordrb::Events
     def emojis(name)
       return nil unless @options[name]
 
-      @bot.parse_emoji(@options[name])
+      @bot.parse_mentions(@content).select { |e| e.is_a? Discordrb::Emoji }.first
     end
 
     # @param name [String] The name of the option.
@@ -403,7 +403,7 @@ module Discordrb::Events
     end
 
     def emoji
-      @bot.parse_emoji(@values.first)
+      @bot.parse_mentions(@values.first).select { |el| el.is_a? Discordrb::Emoji }.first
     end
   end
 

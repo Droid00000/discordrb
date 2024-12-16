@@ -113,7 +113,7 @@ module Discordrb
     #   will request no intents. An array of symbols will request only those intents specified.
     # @see Discordrb::INTENTS
     def initialize(
-      log_mode: :silent,
+      log_mode: :normal,
       token: nil, client_id: nil,
       type: nil, name: '', fancy_log: false, suppress_ready: false, parse_self: false,
       shard_id: nil, num_shards: nil, redact_token: true, ignore_bots: false,
@@ -538,18 +538,6 @@ module Discordrb
     # @return [User, Channel, Role, Emoji] The user, channel, role or emoji identified by the mention, or `nil` if none exists.
     def parse_mention(mention, server = nil)
       parse_mentions(mention, server).first
-    end
-
-    # Gets the emoji from a string.
-    # @param mention [String] The mention, which should look like `<:name:126328:>`.
-    # @return [Nil, Emoji] The emoji identified by the mention, or `nil` if none exists.
-    def parse_emoji(mention)
-      return nil if mention.nil?
-
-      mentions = parse_mentions(mention).select { |m| m.is_a? Discordrb::Emoji }
-      return nil if mention.empty?
-
-      mentions.first
     end
 
     # Updates presence status.
