@@ -512,38 +512,24 @@ module Discordrb
     # @param hoist [true, false]
     # @param mentionable [true, false]
     # @param permissions [Integer, Array<Symbol>, Permissions, #bits] The permissions to write to the new role.
-    # @param icon [String, #read] A role icon for this role.
     # @param reason [String] The reason the for the creation of this role.
     # @return [Role] the created role.
-    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
+    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-      begin
-        response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
-        role = Role.new(JSON.parse(response), @bot, self)
-        @roles << role
-        role
-      rescue StandardError
-        response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, nil, reason)
-        role = Role.new(JSON.parse(response), @bot, self)
-        @roles << role
-        role
-      end
-    end
+      permissions = if permissions.is_a?(Array)
+                      Permissions.bits(permissions)
+                    elsif permissions.respond_to?(:bits)
+                      permissions.bits
+                    else
+                      permissions
+                    end
 
-    # Updates a role on this server.
-    # @param name [String] New name of the role.
-    # @param colour [Integer, ColourRGB, #combined] The roles colour.
-    # @param icon [String, #read] A role icon for this role.
-    # @param reason [String] The reason for updating this role.
-    def update_role(role:, name:, colour:, icon:, reason:)
-      return nil if role(role).nil?
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, reason)
 
-      colour = colour.respond_to?(:combined) ? colour.combined : colour
-
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, icon, reason)
-    rescue StandardError
-      API::Server.update_role(@bot.token, @id, role, name, colour, nil, nil, nil, nil, reason)
+      role = Role.new(JSON.parse(response), @bot, self)
+      @roles << role
+      role
     end
 
     # Adds a new custom emoji on this server.
@@ -553,16 +539,10 @@ module Discordrb
     # @param reason [String] The reason the for the creation of this emoji.
     # @return [Emoji] The emoji that has been added.
     def add_emoji(name, image, roles = [], reason: nil)
-      if image
-        path_method = %i[original_filename path local_path].find { |meth| image.respond_to?(meth) }
-
-        raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-        raise ArgumentError, 'File must respond to read' unless image.respond_to? :read
-
-        mime_type = MIME::Types.type_for(image.__send__(path_method)).first&.to_s || 'image/jpeg'
-        image_string = "data:#{mime_type};base64,#{Base64.encode64(image.read).strip}"
-      elsif image.nil?
-        image_string = nil
+      image_string = image
+      if image.respond_to? :read
+        image_string = 'data:image/jpg;base64,'
+        image_string += Base64.strict_encode64(image.read)
       end
 
       data = JSON.parse(API::Server.add_emoji(@bot.token, @id, image_string, name, roles.map(&:resolve_id), reason))
@@ -605,12 +585,6 @@ module Discordrb
       end
     end
 
-    # If a server has hit the maximum amount of roles.
-    def role_limit?
-      return true if @roles.count == 250
-      return false if @roles.count < 250
-    end
-
     # Searches a server for members that matches a username or a nickname.
     # @param name [String] The username or nickname to search for.
     # @param limit [Integer] The maximum number of members between 1-1000 to return. Returns 1 member by default.
@@ -647,17 +621,6 @@ module Discordrb
     # @param reason [String] The reason the user is being unbanned.
     def unban(user, reason = nil)
       API::Server.unban_user(@bot.token, @id, user.resolve_id, reason)
-    end
-
-    # Bans multiple users at once.
-    # @param users [Array<Integer>] An array of snowflake ID's to ban.
-    # @param message_seconds [Integer] The number of seconds to delete messages from.
-    # @param reason [String] The reason for banning these users.
-    def bulk_ban(users, message_seconds, reason)
-      messages = message_seconds ? message_seconds * 86_400 : 0
-      users = users.map { |user| user&.to_i }
-      response = JSON.parse(API::Server.bulk_ban(@bot.token, @id, users, messages, reason))
-      response['banned_users']
     end
 
     # Kicks a user from this server.
