@@ -194,20 +194,6 @@ module Discordrb::Events
       @resolved.find { |data| data.key?(@target_id) }[@target_id]
     end
 
-    # @param name [String] The name of the option.
-    # @return [Emoji] Emojis sent in this interaction.
-    def emojis(name)
-      return nil unless @options[name]
-
-      @bot.parse_mentions(@content).select { |e| e.is_a? Discordrb::Emoji }.first
-    end
-
-    # @param name [String] The name of the option.
-    # @return [Member]
-    def member(name)
-      @resolved[:members][@options[name].to_i] || @resolved[:users][@options[name].to_i]
-    end
-
     private
 
     def process_resolved(resolved_data)
@@ -400,10 +386,6 @@ module Discordrb::Events
       super
 
       @values = data['data']['values']
-    end
-
-    def emoji
-      @bot.parse_mentions(@values.first).select { |el| el.is_a? Discordrb::Emoji }.first
     end
   end
 
