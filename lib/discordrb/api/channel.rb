@@ -46,21 +46,6 @@ module Discordrb::API::Channel
     )
   end
 
-  # Update a channel name
-  def name(token, channel_id, name, reason)
-    data = { name: name }
-    Discordrb::API.request(
-      :channels_cid,
-      channel_id,
-      :patch,
-      "#{Discordrb::API.api_base}/channels/#{channel_id}",
-      data.compact.to_json,
-      Authorization: token,
-      content_type: :json,
-      'X-Audit-Log-Reason': reason
-    )
-  end
-
   # Get a list of messages from a channel's history
   # https://discord.com/developers/docs/resources/channel#get-channel-messages
   def messages(token, channel_id, amount, before = nil, after = nil, around = nil)

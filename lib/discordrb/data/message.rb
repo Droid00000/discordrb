@@ -73,9 +73,6 @@ module Discordrb
     # @return [Array<Component>]
     attr_reader :components
 
-    # @return [Sticker]
-    attr_reader :sticker
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -160,9 +157,6 @@ module Discordrb
 
       @components = []
       @components = data['components'].map { |component_data| Components.from_data(component_data, @bot) } if data['components']
-
-      @sticker = nil
-      @sticker = @bot.find_sticker(data['sticker_items'].first['id']) if data['sticker_items']
     end
 
     # Replies to this message with the specified content.
@@ -296,12 +290,6 @@ module Discordrb
     # @return [Array<Reaction>] the reactions.
     def my_reactions
       @reactions.select(&:me)
-    end
-
-    # Checks if this message contains a sticker.
-    # @return [Boolean] Whether or not this message has a sticker.
-    def sticker?
-      !@sticker.nil?
     end
 
     # Reacts to a message.

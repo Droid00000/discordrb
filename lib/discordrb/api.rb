@@ -231,11 +231,6 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
-  # Make a sticker file URL from sticker ID
-  def sticker_file_url(sticker_id, format: 'png')
-    "#{cdn_url}/stickers/#{sticker_id}.#{format}"
-  end
-
   # Create an OAuth application
   def create_oauth_application(token, name, redirect_uris)
     request(

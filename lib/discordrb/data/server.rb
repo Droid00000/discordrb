@@ -61,9 +61,6 @@ module Discordrb
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
 
-    # An array of all the stickers on this server.
-    attr_reader :stickers
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -521,16 +518,16 @@ module Discordrb
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 0, icon: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
-    begin
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
-      role = Role.new(JSON.parse(response), @bot, self)
-      @roles << role
-      role
-    rescue StandardError
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, nil, reason)
-      role = Role.new(JSON.parse(response), @bot, self)
-      @roles << role
-      role
+      begin
+        response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, icon, reason)
+        role = Role.new(JSON.parse(response), @bot, self)
+        @roles << role
+        role
+      rescue StandardError
+        response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, nil, reason)
+        role = Role.new(JSON.parse(response), @bot, self)
+        @roles << role
+        role
       end
     end
 
@@ -623,22 +620,6 @@ module Discordrb
       return nil if response.empty?
 
       response.map { |mem| Member.new(mem, self, @bot) }
-    end
-
-    # Adds a new custom sticker on this server.
-    # @param name [String] The name of the sticker to create.
-    # @param file [File] PNG, APNG, GIF, or Lottie JSON file, max 512 KB.
-    # @param description [String] description of the sticker.
-    # @param tags [string] autocomplete/suggestion tags for the sticker.
-    # @param reason [String] The reason the for the creation of this sticker.
-    def add_sticker(name, file, description, tags, reason: nil)
-      response = API::Server.add_sticker(@bot.token, @id, file, name, description || 'sticker', tags || 'tags', reason)
-      begin
-        sticker = Sticker.new(JSON.parse(response), @bot, self)
-      rescue Discordrb::Errors::UnknownError
-        400
-      end
-      @stickers >> sticker
     end
 
     # Retrieve banned users from this server.
@@ -922,7 +903,6 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
-      process_stickers(new_data['stickers']) if new_data['stickers']
     end
 
     # Adds a channel to this server's cache
@@ -991,20 +971,6 @@ module Discordrb
       emoji.each do |element|
         new_emoji = Emoji.new(element, @bot, self)
         @emoji[new_emoji.id] = new_emoji
-      end
-    end
-
-    def process_stickers(stickers)
-      return if stickers.empty?
-
-      # Create stickers
-      @stickers = []
-      @stickers_by_id = {}
-
-      stickers.each do |element|
-        sticker = Sticker.new(element, @bot, self)
-        @stickers << sticker
-        @stickers_by_id[sticker.id] = sticker
       end
     end
 
