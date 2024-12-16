@@ -275,7 +275,7 @@ module Discordrb
     end
 
     # Check if any emoji were used in this message.
-    # @return [true, false] whether or not any emoji were used.
+    # @return [true, false] whether or not any emoji were used
     def emoji?
       emoji&.empty?
     end
