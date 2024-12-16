@@ -51,12 +51,6 @@ module Discordrb
         select { |component| component.is_a? TextInput }
       end
 
-      # Gets all select menus in this row.
-      # @return [Array<SelectMenu>]
-      def select_menu
-        select { |component| component.is_a? SelectMenu }
-      end
-
       # @!visibility private
       def to_a
         @components
@@ -161,9 +155,6 @@ module Discordrb
 
       # @return [Array<Option>]
       attr_reader :options
-
-      # @return [Emoji]
-      attr_reader :emoji
 
       # @!visibility private
       def initialize(data, bot)
