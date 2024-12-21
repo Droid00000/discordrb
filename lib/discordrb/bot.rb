@@ -557,11 +557,8 @@ module Discordrb
       @streamurl = url
       type = url ? 1 : activity_type
 
-      activity_obj = if type == 4
-                       { 'name' => activity, 'type' => type, 'state' => activity }
-                     else
-                       activity || url ? { 'name' => activity, 'url' => url, 'type' => type } : nil
-                     end
+      activity_obj = activity || url ? { 'name' => activity, 'url' => url, 'type' => type } : nil
+
       @gateway.send_status_update(status, since, activity_obj, afk)
 
       # Update the status in the cache
@@ -610,16 +607,6 @@ module Discordrb
     def competing=(name)
       gateway_check
       update_status(@status, name, nil, nil, nil, 5)
-    end
-
-    # Sets the currently custom status to the specified name.
-    # @param name [String] The custom status. E.g. idle, dnd, etc.
-    # @return [String] The new custom status that the bot will display.
-    def custom_status(status, name)
-      gateway_check
-      presence = status.nil? ? @status : status.downcase
-      name_string = name.nil? ? @activity : name
-      update_status(presence, name_string, nil, nil, nil, 4)
     end
 
     # Sets status to online.
@@ -1733,8 +1720,6 @@ module Discordrb
     end
 
     def calculate_intents(intents)
-      intents = [intents] unless intents.is_a? Array
-
       intents.reduce(0) do |sum, intent|
         case intent
         when Symbol

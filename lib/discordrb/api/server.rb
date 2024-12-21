@@ -125,20 +125,6 @@ module Discordrb::API::Server
     )
   end
 
-  # Get a member's data
-  # https://discord.com/developers/docs/resources/guild#get-guild-member
-  def resolve_booster(token, server_id, user_id)
-    !JSON.parse(Discordrb::API.request(
-                  :guilds_sid_members_uid,
-                  server_id,
-                  :get,
-                  "#{Discordrb::API.api_base}/guilds/#{server_id}/members/#{user_id}",
-                  Authorization: token
-                ))['premium_since'].nil?
-  rescue StandardError
-    false
-  end
-
   # Gets members from the server
   # https://discord.com/developers/docs/resources/guild#list-guild-members
   def resolve_members(token, server_id, limit, after = nil)
@@ -258,25 +244,13 @@ module Discordrb::API::Server
   # sending TTS messages, embedding links, sending files, reading the history, mentioning everybody,
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#get-guild-roles
-  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, icon, reason = nil)
-    if icon
-      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-
-      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
-
-      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-      image = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
-    else
-      image = nil
-    end
-
+  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil)
     Discordrb::API.request(
       :guilds_sid_roles,
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, icon: image }.compact.to_json,
+      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
@@ -289,7 +263,7 @@ module Discordrb::API::Server
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#batch-modify-guild-role
   # @param icon [:undef, File]
-  def update_role(token, server_id, role_id, name, colour, hoist, mentionable, packed_permissions, icon = :undef, reason = nil)
+  def update_role(token, server_id, role_id, name, colour, hoist = false, mentionable = false, packed_permissions = 104_324_161, reason = nil, icon = :undef)
     data = { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }
 
     if icon != :undef && icon
@@ -309,7 +283,7 @@ module Discordrb::API::Server
       server_id,
       :patch,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles/#{role_id}",
-      data.compact.to_json,
+      data.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
@@ -593,21 +567,6 @@ module Discordrb::API::Server
       { access_token: access_token, nick: nick, roles: roles, mute: mute, deaf: deaf }.to_json,
       content_type: :json,
       Authorization: token
-    )
-  end
-
-  # Bans multiple users in a guild at once.
-  # https://discord.com/developers/docs/resources/guild#bulk-guild-ban
-  def bulk_ban(token, server_id, user_ids, delete_message_seconds, reason)
-    Discordrb::API.request(
-      :guilds_sid_bans_uids,
-      server_id,
-      :post,
-      "#{Discordrb::API.api_base}/guilds/#{server_id}/bulk-ban",
-      { user_ids: user_ids, delete_message_seconds: delete_message_seconds }.to_json,
-      content_type: :json,
-      Authorization: token,
-      'X-Audit-Log-Reason': reason
     )
   end
 end
