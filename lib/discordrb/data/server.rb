@@ -69,6 +69,7 @@ module Discordrb
       @members = {}
       @voice_states = {}
       @emoji = {}
+      @auto_moderation_rules = {}
 
       process_channels(data['channels'])
       update_data(data)
@@ -137,7 +138,7 @@ module Discordrb
       @bot.debug("Members for server #{@id} not chunked yet - initiating")
 
       # If the SERVER_MEMBERS intent flag isn't set, the gateway won't respond when we ask for members.
-      raise 'The :server_members intent is required to get server members' if (@bot.gateway.intents & INTENTS[:server_members]).zero?
+      raise 'The :server_members intent is required to get server members' if @bot.gateway.intents.nobits?(INTENTS[:server_members])
 
       @bot.request_chunks(@id)
       sleep 0.05 until @chunked
@@ -596,6 +597,20 @@ module Discordrb
       response.map { |mem| Member.new(mem, self, @bot) }
     end
 
+    # Returns the auto moderation rules for this server. Requires the manage server permission.
+    # @return [Hash<Integer => AutoModerationRule>, nil] The auto moderation rules, or nil.
+    def auto_moderation_rules
+      return @auto_moderation_rules unless @auto_moderation_rules.empty?
+
+      begin
+        response = API::Server.get_auto_moderation_rules(@bot.token, @id)
+      rescue Errors::NoPermission
+        return nil
+      end
+
+      process_auto_moderation_rules(JSON.parse(response))
+    end
+
     # Retrieve banned users from this server.
     # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
     # @param before_id [Integer] Consider only users before given user id.
@@ -926,6 +941,25 @@ module Discordrb
         @roles << role
         @roles_by_id[role.id] = role
       end
+    end
+
+    def process_automod_rules(rules)
+      return nil if rules.empty?
+
+      rules.each do |rule|
+        new_rule = AutoModerationRule.new(rule, @bot, self)
+        @auto_moderation_rules[new_rule.id] = new_rule
+      end
+    end
+
+    def add_automod_rule(rule)
+      new_rule = AutoModerationRule.new(rule, @bot, self)
+      @auto_moderation_rules[new_rule.id] = new_rule
+    end
+
+    def delete_automod_rule(rule)
+      id = rule.is_a?(Hash) ? rule['id'].to_i : rule
+      @auto_moderation_rules.delete(id)
     end
 
     def process_emoji(emoji)

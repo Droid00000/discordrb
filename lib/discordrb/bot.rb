@@ -1219,7 +1219,7 @@ module Discordrb
 
     def handle_dispatch(type, data)
       # Check whether there are still unavailable servers and there have been more than 10 seconds since READY
-      if @unavailable_servers&.positive? && (Time.now - @unavailable_timeout_time) > 10 && !((@intents || 0) & INTENTS[:servers]).zero?
+      if @unavailable_servers&.positive? && (Time.now - @unavailable_timeout_time) > 10 && !(@intents || 0).nobits?(INTENTS[:servers])
         # The server streaming timed out!
         LOGGER.debug("Server streaming timed out with #{@unavailable_servers} servers remaining")
         LOGGER.debug('Calling ready now because server loading is taking a long time. Servers may be unavailable due to an outage, or your bot is on very large servers.')
@@ -1637,6 +1637,24 @@ module Discordrb
         end
 
         event = ThreadMembersUpdateEvent.new(data, self)
+        raise_event(event)
+      when :AUTO_MODERATION_RULE_CREATE
+        @servers[data['guild_id'].to_i].add_automod_rule(data)
+        event = AutoModerationRuleCreateEvent.new(data, self)
+        raise_event(event)
+
+      when :AUTO_MODERATION_RULE_UPDATE
+        @servers[data['guild_id'].to_i].add_automod_rule(data)
+        event = AutoModerationRuleUpdateEvent.new(data, self)
+        raise_event(event)
+
+      when :AUTO_MODERATION_RULE_DELETE
+        @servers[data['guild_id'].to_i].delete_automod_rule(data)
+        event = AutoModerationRuleDeleteEvent.new(data, self)
+        raise_event(event)
+
+      when :AUTO_MODERATION_ACTION_EXECUTION
+        event = AutoModerationActionEvent.new(data, self)
         raise_event(event)
       else
         # another event that we don't support yet
