@@ -231,6 +231,11 @@ module Discordrb
       Interactions::Message.new(JSON.parse(resp), @bot, @interaction)
     end
 
+    # Add support for autocomplete responses.
+    def create_autocomplete_response(options)
+      Discordrb::API::Interaction.create_interaction_response(@token, @id, 8, nil, nil, nil, nil, nil, nil, options)
+    end
+
     # @param message [String, Integer, InteractionMessage, Message] The message created by this interaction to be edited.
     # @param content [String] The message content.
     # @param embeds [Array<Hash, Webhooks::Embed>] The embeds for the message.
