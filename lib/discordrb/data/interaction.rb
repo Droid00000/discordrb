@@ -471,9 +471,9 @@ module Discordrb
       # @param max_length [Integer] A maximum length for option value.
       # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
       # @return (see #option)
-      def string(name, description, required: nil, min_length: nil, max_length: nil, choices: nil, name_localizations: nil, description_localizations: nil)
+      def string(name, description, required: nil, min_length: nil, max_length: nil, choices: nil, name_localizations: nil, description_localizations: nil, autocomplete: nil)
         option(TYPES[:string], name, description,
-               required: required, min_length: min_length, max_length: max_length, choices: choices, name_localizations: name_localizations, description_localizations: description_localizations)
+               required: required, min_length: min_length, max_length: max_length, choices: choices, name_localizations: name_localizations, description_localizations: description_localizations, autocomplete: autocomplete)
       end
 
       # @param name [String, Symbol] The name of the argument.
@@ -561,8 +561,8 @@ module Discordrb
       # @param channel_types [Array<Integer>] Channel types that can be provides for channel options.
       # @return Hash
       def option(type, name, description, required: nil, choices: nil, options: nil, min_value: nil, max_value: nil,
-                 min_length: nil, max_length: nil, channel_types: nil, name_localizations: nil, description_localizations: nil)
-        opt = { type: type, name: name, description: description, name_localizations: name_localizations, description_localizations: description_localizations }.compact
+                 min_length: nil, max_length: nil, channel_types: nil, name_localizations: nil, description_localizations: nil, autocomplete: nil)
+        opt = { type: type, name: name, description: description, name_localizations: name_localizations, description_localizations: description_localizations, autocomplete: autocomplete }.compact
         choices = choices.map { |option_name, value| { name: option_name, value: value } } if choices
 
         opt.merge!({ required: required, choices: choices, options: options, min_value: min_value,
