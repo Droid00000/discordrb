@@ -65,7 +65,6 @@ module Discordrb
       #   flatten_errors(data['errors'])
       #   # => ["embed.fields[0].name: This field is required", "embed.fields[0].value: This field is required"]
       def flatten_errors(err, prev_key = nil)
-        print(err)
         err.collect do |key, sub_err|
           if prev_key
             key = /\A\d+\Z/.match?(key) ? "#{prev_key}[#{key}]" : "#{prev_key}.#{key}"
