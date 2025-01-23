@@ -11,7 +11,7 @@ module Discordrb::API::Interaction
 
     body = if attachments
              files = [*0...attachments.size].zip(attachments).to_h
-             { type: type, data: body.merge!({ attachments: files }) }
+             { **files, payload_json: { type: type, data: body }.to_json }
            else
              { type: type, data: body }.to_json
            end
