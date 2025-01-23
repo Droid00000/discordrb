@@ -130,8 +130,7 @@ module Discordrb::API::Webhook
              body.to_json
            end
 
-    headers = { Authorization: token }
-    headers[:content_type] = :json unless attachments
+    headers = { content_type: :json } unless attachments
 
     Discordrb::API.request(
       :webhooks_wid_messages,
@@ -139,7 +138,7 @@ module Discordrb::API::Webhook
       :patch,
       "#{Discordrb::API.api_base}/webhooks/#{webhook_id}/#{webhook_token}/messages/#{message_id}",
       body,
-      **headers
+      headers
     )
   end
 
