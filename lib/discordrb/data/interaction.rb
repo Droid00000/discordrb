@@ -783,8 +783,8 @@ module Discordrb
       # Respond to this message.
       # @param (see Interaction#send_message)
       # @yieldparam (see Interaction#send_message)
-      def respond(content: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: true, components: nil, &block)
-        @interaction.send_message(content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, ephemeral: ephemeral, components: components, &block)
+      def respond(content: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: true, components: nil, attachments: nil, &block)
+        @interaction.send_message(content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, ephemeral: ephemeral, components: components, attachments: attachments, &block)
       end
 
       # Delete this message.
@@ -797,8 +797,8 @@ module Discordrb
       # @param embeds (see Interaction#send_message)
       # @param allowed_mentions (see Interaction#send_message)
       # @yieldparam (see Interaction#send_message)
-      def edit(content: nil, embeds: nil, allowed_mentions: nil, components: nil, &block)
-        @interaction.edit_message(@id, content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components, &block)
+      def edit(content: nil, embeds: nil, allowed_mentions: nil, components: nil, attachments: nil, &block)
+        @interaction.edit_message(@id, content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components, attachments: attachments, &block)
       end
 
       # @return [Discordrb::Message]
