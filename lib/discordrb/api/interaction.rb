@@ -24,7 +24,7 @@ module Discordrb::API::Interaction
       :post,
       "#{Discordrb::API.api_base}/interactions/#{interaction_id}/#{interaction_token}/callback",
       body,
-      headers
+      header
     )
   end
 
