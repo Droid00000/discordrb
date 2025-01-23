@@ -255,7 +255,7 @@ module Discordrb
       resp = Discordrb::API::Webhook.token_edit_message(
         @token, @application_id, message.resolve_id, data[:content], data[:embeds], data[:allowed_mentions], components.to_a, attachments
       )
-      Interactions::Message.new(JSON.parse(resp), @bot, @interaction)
+      Interactions::Message.new(JSON.parse(resp), @bot, self)
     end
 
     # @param message [Integer, String, InteractionMessage, Message] The message created by this interaction to be deleted.
