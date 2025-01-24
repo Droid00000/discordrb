@@ -49,7 +49,7 @@ module Discordrb::API::Webhook
       :post,
       "#{Discordrb::API.api_base}/webhooks/#{webhook_id}/#{webhook_token}?wait=#{wait}",
       body,
-      header
+      **header
     )
   end
 
@@ -138,7 +138,7 @@ module Discordrb::API::Webhook
       :patch,
       "#{Discordrb::API.api_base}/webhooks/#{webhook_id}/#{webhook_token}/messages/#{message_id}",
       body,
-      header
+      **header
     )
   end
 
