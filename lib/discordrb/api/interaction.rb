@@ -16,7 +16,7 @@ module Discordrb::API::Interaction
              { type: type, data: body }.to_json
            end
 
-    header = { content_type: :json } unless attachments
+    headers = { content_type: :json } unless attachments
 
     Discordrb::API.request(
       :interactions_iid_token_callback,
@@ -24,7 +24,7 @@ module Discordrb::API::Interaction
       :post,
       "#{Discordrb::API.api_base}/interactions/#{interaction_id}/#{interaction_token}/callback",
       body,
-      **header
+      **headers
     )
   end
 
