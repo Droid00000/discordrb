@@ -238,7 +238,6 @@ module Discordrb
     # @param message [String, Integer, InteractionMessage, Message] The message created by this interaction to be edited.
     # @param content [String] The message content.
     # @param embeds [Array<Hash, Webhooks::Embed>] The embeds for the message.
-    # @param components [Array<#to_h>] An array of components.
     # @param allowed_mentions [Hash, AllowedMentions] Mentions that can ping on this message.
     # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the method overwrite builder data.
