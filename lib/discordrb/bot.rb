@@ -1098,7 +1098,6 @@ module Discordrb
 
     # Internal handler for GUILD_MEMBER_UPDATE
     def update_guild_member(data)
-      print("#{data}\n")
       server_id = data['guild_id'].to_i
       server = self.server(server_id)
 
