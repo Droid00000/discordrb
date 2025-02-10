@@ -721,6 +721,9 @@ module Discordrb
       # @return [Array<Component>]
       attr_reader :components
 
+      # @return [Integer]
+      attr_reader :initiating_user
+    
       # @!visibility private
       def initialize(data, bot, interaction)
         @data = data
@@ -754,6 +757,8 @@ module Discordrb
         data['mentions']&.each do |element|
           @mentions << bot.ensure_user(element)
         end
+
+        @initiating_user = data['interaction_metadata']['user']['id']&.to_i
 
         @mention_roles = data['mention_roles']
         @mention_everyone = data['mention_everyone']
