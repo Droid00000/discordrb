@@ -748,6 +748,8 @@ module Discordrb
 
     # Check if invites are paused for this server.
     def invites_paused?
+      print(@features)
+      
       @features.include?(:invites_disbled) || !@invites_disabled_until.nil?
     end
 
