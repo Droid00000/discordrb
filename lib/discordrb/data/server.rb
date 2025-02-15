@@ -937,7 +937,7 @@ module Discordrb
     end
 
     def update_guild_data(new_data)
-      update_data(JSON.parse(API::Server.features(@bot.token, @id, new_data[:features])))
+      update_data(JSON.parse(API::Server.features(@bot.token, @id, new_data[:features], nil)))
     end
 
     def process_incidents(data)
