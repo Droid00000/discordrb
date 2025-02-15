@@ -741,6 +741,8 @@ module Discordrb
     def features=(features)
       features = features.select { |feature| MUTABLE_FEATURES.include?(feature) }
 
+      print(features)
+
       update_guild_data(features: features.map(&:to_s).map(&:upcase))
     end
 
