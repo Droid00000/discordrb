@@ -734,6 +734,27 @@ module Discordrb
       update_server_data(verification_level: level)
     end
 
+    MUTABLE_FEATURES = [:community, :discoverable, :invites_disabled, :raid_alerts_disabled]
+
+    # Set the mutable features of the server
+    # @param features [Array<Symbol>] Array of enabled features for this server.
+    def features=(features)
+      features = features.select { |feature| MUTABLE_FEATURES.include?(feature) }
+
+      update_guild_data(features: features.map(&:to_s).map(&:upcase))
+    end
+
+    # Pause invites for this server.
+    def pause_invites(time)
+      time = time.nil? ? nil : Time.iso8601(time)
+      process_incidents(JSON.parse(API::Server.incident_actions(@bot.token, @id, :undef, time)))
+    end
+
+    # Check if invites are paused for this server.
+    def invites_paused?
+      @features.include?(:invites_disbled) || !@invites_disabled_until.nil?
+    end
+
     # A map of possible message notification levels to symbol names
     NOTIFICATION_LEVELS = {
       all_messages: 0,
@@ -866,6 +887,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_incidents(new_data['incidents_data']) if new_data['incidents_data']
     end
 
     # Adds a channel to this server's cache
@@ -912,6 +934,21 @@ module Discordrb
                                                new_data[:explicit_content_filter] || @explicit_content_filter,
                                                new_data[:system_channel_id] || @system_channel_id))
       update_data(response)
+    end
+
+    def update_guild_data(new_data)
+      update_data(JSON.parse(API::Server.features(@bot.token, @id, new_data[:features])))
+    end
+
+    def process_incidents(data)
+      if data.nil?
+        @invites_disabled_until = nil
+        @dms_disabled_until = nil
+        return
+      end
+
+      @invites_disabled_until = data['invites_disabled_until'] ? Time.iso8601(data['invites_disabled_until']) : nil
+      @dms_disabled_until = data['dms_disabled_until'] ? Time.iso8601(data['dms_disabled_until']) : nil
     end
 
     def process_roles(roles)

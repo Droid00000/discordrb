@@ -45,6 +45,20 @@ module Discordrb::API::Server
     )
   end
 
+  # Enable specific features in a server.
+  def features(token, server_id, features, reason)
+    Discordrb::API.request(
+      :guilds_sid,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}",
+      { features: features }.to_json,
+      Authorization: token,
+      content_type: :json,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
   # Transfer server ownership
   # https://discord.com/developers/docs/resources/guild#modify-guild
   def transfer_ownership(token, server_id, user_id, reason = nil)
@@ -565,6 +579,22 @@ module Discordrb::API::Server
       :put,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/members/#{user_id}",
       { access_token: access_token, nick: nick, roles: roles, mute: mute, deaf: deaf }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
+  # Modifies the incident actions of a guild, e.g. enabling and re-enabling invites.
+  # https://discord.com/developers/docs/resources/guild#modify-guild-incident-actions
+  def incident_actions(token, server_id, dms_disabled_until = :undef, invites_disabled_until = :undef)
+    body = { dms_disabled_until: dms_disabled_until, invites_disabled_until: invites_disabled_until }
+
+    Discordrb::API.request(
+      :guilds_sid_incidents_actions,
+      server_id,
+      :put,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/incident-actions",
+      body.reject { |_, v| v == :undef }.to_json,
       content_type: :json,
       Authorization: token
     )
