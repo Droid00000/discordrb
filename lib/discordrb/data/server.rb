@@ -742,8 +742,7 @@ module Discordrb
 
     # Pause invites for this server.
     def pause_invites(time)
-      time = time.nil? ? nil : Time.iso8601(time)
-      process_incidents(JSON.parse(API::Server.incident_actions(@bot.token, @id, :undef, time)))
+      process_incidents(JSON.parse(API::Server.incident_actions(@bot.token, @id, :undef, time&.iso8601)))
     end
 
     # Check if invites are paused for this server.
