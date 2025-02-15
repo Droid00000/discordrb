@@ -734,7 +734,7 @@ module Discordrb
       update_server_data(verification_level: level)
     end
 
-    MUTABLE_FEATURES = [:community, :discoverable, :invites_disabled, :raid_alerts_disabled]
+    MUTABLE_FEATURES = [:community, :invites_disabled, :raid_alerts_disabled]
 
     # Set the mutable features of the server
     # @param features [Array<Symbol>] Array of enabled features for this server.
