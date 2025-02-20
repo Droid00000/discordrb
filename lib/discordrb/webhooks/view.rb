@@ -2,6 +2,7 @@
 
 # A reusable view representing a component collection, with builder methods.
 class Discordrb::Webhooks::View
+  include Builder
   # Possible button style names and values.
   BUTTON_STYLES = {
     primary: 1,
@@ -32,7 +33,7 @@ class Discordrb::Webhooks::View
   }.freeze
 
   # This builder is used when constructing an ActionRow. All current components must be within an action row, but this can
-  # change in the future. A message can have 5 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
+  # change in the future. A message can have 10 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
   # and dropdowns have a weight of 5.
   class RowBuilder
     # @!visibility private
@@ -55,8 +56,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              else
-                emoji&.to_h
+              when Reaction, Emoji
+                emoji.id ? { id: emoji.id } : { name: emoji.name }
               end
 
       @components << { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
@@ -155,8 +156,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              else
-                emoji&.to_h
+              when Reaction, Emoji
+                emoji.id ? { id: emoji.id } : { name: emoji.name }
               end
 
       @options << { label: label, value: value, description: description, emoji: emoji, default: default }
@@ -176,10 +177,15 @@ class Discordrb::Webhooks::View
     end
   end
 
+  # @!visibility hidden
   attr_reader :rows
+
+  # @!visibility hidden
+  attr_reader :components
 
   def initialize
     @rows = []
+    @components = []
 
     yield self if block_given?
   end
@@ -194,9 +200,72 @@ class Discordrb::Webhooks::View
     @rows << new_row
   end
 
+  # Add a text display component to this container.
+  # @param id [Integer, nil] Integer ID of this component.
+  # @param text [String] Set the text display of this component.
+  # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
+  def text_display(id: nil, text: nil)
+    builder = TextDisplay.new(text: text, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
+  # Add a section to this container.
+  # @param id [Integer, nil] Integer ID of this section component.
+  # @param components [Array<Components>] Optional array of text display components.
+  # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
+  # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
+  def section(id: nil, components: [], accessory: nil)
+    builder = Section.new(components: components, accessory: accessory, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
+  # Add a media gallery to this container.
+  # @param id [Integer, nil] Integer ID of this media gallery component.
+  # @param items [Array<Hash>] Array of media gallery components to include.
+  # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
+  def media_gallery(id: nil, items: [])
+    builder = MediaGallery.new(items: items, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
+  # Add a seperator to this container.
+  # @param id [Integer, nil] Integer ID of this seperator component.
+  # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
+  # @param spacing [Integer, nil] The amount of spacing for this seperator component.
+  # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
+  def seperator(id: nil, divider: true, spacing: nil)
+    builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
+  # Add a file to this container.
+  # @param id [Integer, nil] Integer ID of this file component.
+  # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
+  # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
+  # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
+  def file(id: nil, file: nil, spoiler: false)
+    builder = File.new(file: file, spoiler: spoiler, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
   # @!visibility private
   def to_a
-    @rows.map(&:to_h)
+    [@rows.map(&:to_h), @components.map(&:to_h)].reject(&:empty?)
   end
 
   # A text display component allows you to send text.
@@ -228,8 +297,8 @@ class Discordrb::Webhooks::View
 
     # @!visibility hidden
     def initialize(divider: nil, spacing: nil, id: nil)
-      @divider = divider
       @spacing = SIZE[spacing] || spacing
+      @divider = divider
       @id = id
     end
 
@@ -336,8 +405,6 @@ class Discordrb::Webhooks::View
       @components = components
       @accessory = accessory
       @id = id
-
-      yield self if block_given?
     end
 
     # Add a text display component to this section.
@@ -387,7 +454,10 @@ class Discordrb::Webhooks::View
     end
   end
 
-  class Container
+  # This builder can be used to construct a container. A container can hold several other types of components
+  # including other action rows. A container can currently have a maximum of 10 components inside of it.
+  class ContainerBuilder
+    include Components
     # Set the integer ID of this component.
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
@@ -402,52 +472,12 @@ class Discordrb::Webhooks::View
 
     # @!visibility hidden
     def initialize(id: nil, components: [], colour: nil, spoiler: nil)
-      @id = id
       @components = components
       @colour = colour
       @spoiler = spoiler
+      @id = id
 
       yield self if block_given?
-    end
-
-    def text_display(text: nil, id: nil)
-      builder = TextDisplay.new(text: text, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    def section(components: [], accessory: nil, id: nil)
-      builder = Section.new(components: components, accessory: accessory, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    def media_gallery(items: [], id: nil)
-      builder = MediaGallery.new(items: items, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    def seperator(divider: nil, spacing: nil, id: nil)
-      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    def file(file:, spoiler: nil, id: nil)
-      builder = File.new(file: file, spoiler: spoiler, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
     end
 
     # Sets the colour of the bar to the side of the embed to something new.
@@ -472,6 +502,81 @@ class Discordrb::Webhooks::View
     end
 
     alias_method :color=, :colour=
+
+    # Add a text display component to this container.
+    # @param id [Integer, nil] Integer ID of this component.
+    # @param text [String] Set the text display of this component.
+    # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
+    def text_display(id: nil, text: nil)
+      builder = TextDisplay.new(text: text, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Add a section to this container.
+    # @param id [Integer, nil] Integer ID of this section component.
+    # @param components [Array<Components>] Optional array of text display components.
+    # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
+    # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
+    def section(id: nil, components: [], accessory: nil)
+      builder = Section.new(components: components, accessory: accessory, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Add a media gallery to this container.
+    # @param id [Integer, nil] Integer ID of this media gallery component.
+    # @param items [Array<Hash>] Array of media gallery components to include.
+    # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
+    def media_gallery(id: nil, items: [])
+      builder = MediaGallery.new(items: items, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Add a seperator to this container.
+    # @param id [Integer, nil] Integer ID of this seperator component.
+    # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
+    # @param spacing [Integer, nil] The amount of spacing for this seperator component.
+    # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
+    def seperator(id: nil, divider: true, spacing: nil)
+      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Add a file to this container.
+    # @param id [Integer, nil] Integer ID of this file component.
+    # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
+    # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
+    # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
+    def file(id: nil, file: nil, spoiler: false)
+      builder = File.new(file: file, spoiler: spoiler, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Add an action row to this container, this allows for some interesting nesting.
+    # @yieldparam builder [RowBuilder] The row builder object is yielded to allow for addition of components.
+    def row
+      builder = RowBuilder.new
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    alias_method :action_row, :row
 
     # @!visibility hidden
     def to_h
