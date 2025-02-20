@@ -21,7 +21,14 @@ class Discordrb::Webhooks::View
     user_select: 5,
     role_select: 6,
     mentionable_select: 7,
-    channel_select: 8
+    channel_select: 8,
+    section: 9,
+    text_display: 10,
+    thumbnail: 11,
+    media_gallery: 12,
+    file: 13,
+    seperator: 14,
+    container: 17
   }.freeze
 
   # This builder is used when constructing an ActionRow. All current components must be within an action row, but this can
@@ -190,5 +197,288 @@ class Discordrb::Webhooks::View
   # @!visibility private
   def to_a
     @rows.map(&:to_h)
+  end
+
+  # A text display component allows you to send text.
+  class TextDisplay
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @!visibility hidden
+    def initialize(text, id: nil)
+      @text = text
+      @id = id
+    end
+
+    # @!visibility private
+    def to_h
+      { type: COMPONENT_TYPES[:text_display], text: @text, id: @id }.compact
+    end
+  end
+
+  # A seperator allows you to divide a component with a thin grey divider.
+  class Seperator
+    # Possible size values.
+    SIZE = { small: 1, large: 2 }
+
+    # Whether this seperator is a divider.
+    # @return [Boolean] If this seperator is a divider.
+    attr_accessor :divider
+
+    # @!visibility hidden
+    def initialize(divider: nil, spacing: nil, id: nil)
+      @divider = divider
+      @spacing = SIZE[spacing] || spacing
+      @id = id
+    end
+
+    # Set the spacing of this builder.
+    # @param space [Symbol, Integer] The space of the component. See {SIZE}.
+    def spacing=(space)
+      @spacing = SIZE[space] || space
+    end
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:seperator], divider: @divider, spacing: @spacing, id: @id }.compact
+    end
+  end
+
+  # Unfurled media items allow you to specifiy a URL or `attachment://file.png` refrence.
+  # Upon being sent to Discord, this returns a full object, similar to an attatchment.
+  class UnfurledMedia
+    # The URL that this media item links to.
+    # @return [String] The URL of of this media item.
+    attr_accessor :url
+
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @!visibility hidden
+    def initialize(url:, id: nil)
+      @url = url
+      @id = id
+    end
+
+    # @!visibility hidden
+    def to_h
+      { url: @url, id: @id }.compact
+    end
+  end
+
+  # A file component lets you send a file. Only attachment://<filename> references
+  # are currently supported at the time of writing.
+  class File
+    # The URL of this file.
+    # @return [String] attachment://<filename> of this file.
+    attr_accessor :url
+
+    # If this file should be spoilered.
+    # @return [Boolean, nil] If this file is a spoiler or not.
+    attr_accessor :spoiler
+
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @!visibility hidden
+    def initialize(file:, spoiler: nil, id: nil)
+      @id = id
+      @file = file.is_a?(UnfurledMedia) ? file : UnfurleMedia.new(file)
+      @spoiler = spoiler
+    end
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:file], file: @file, spoiler: @spoiler, id: @id }.compact
+    end
+  end
+
+  # A media gallery container lets you group files into a gallery or a grid.
+  class MediaGallery
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @!visibility hidden
+    def initialize(items: [], id: nil)
+      @id = nil
+      @items = items
+
+      yield self if block_given?
+    end
+
+    # Add a gallery item to this media gallery collection.
+    # @param media [UnfurledMedia, String] The unfurled-media item or a URL.
+    # @param description [String, nil] An optional description of this media item.
+    # @param spoiler [Boolean, nil] Whether this argument should be spoilered. Defaults to false.
+    def gallery_item(media:, description: nil, spoiler: nil)
+      media = UnfurledMedia.new(media).to_h unless media.is_a?(UnfurledMedia)
+
+      @items << { media: media, description: description, spoiler: spoiler }.compact
+    end
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:media_gallery], items: @items }
+    end
+  end
+
+  class Section
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @!visibility hidden
+    def initialize(components: [], accessory: nil, id: nil)
+      @components = components
+      @accessory = accessory
+      @id = id
+
+      yield self if block_given?
+    end
+
+    # Add a text display component to this section.
+    # @param content [String] Content of the component.
+    def text_display(content:, id: nil)
+      @components << { type: COMPONENT_TYPES[:text_display], content: content, id: id }.compact
+    end
+
+    # Set the accessory to a thumbnail for this media gallery collection.
+    # @param media [UnfurledMedia, String] The unfurled-media item or a URL.
+    # @param description [String, nil] An optional description of this media item.
+    # @param spoiler [Boolean, nil] Whether this argument should be spoilered. Defaults to false.
+    def thumbnail(media:, description: nil, spoiler: nil)
+      media = UnfurledMedia.new(media).to_h unless media.is_a?(UnfurledMedia)
+
+      @accessory = { type: COMPONENT_TYPES[:thumbnail],
+                     media: media,
+                     description: description,
+                     spoiler: spoiler }.compact
+    end
+
+    # Set the accessory to a button for this media gallery collection.
+    # @param style [Symbol, Integer] The button's style type. See {BUTTON_STYLES}
+    # @param label [String, nil] The text label for the button. Either a label or emoji must be provided.
+    # @param emoji [#to_h, String, Integer] An emoji ID, or unicode emoji to attach to the button. Can also be a object
+    # that responds to `#to_h` which returns a hash in the format of `{ id: Integer, name: string }`.
+    # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
+    # There is a limit of 100 characters to each custom_id.
+    # @param disabled [true, false] Whether this button is disabled and shown as greyed out.
+    # @param url [String, nil] The URL, when using a link style button.
+    def button(style:, label: nil, emoji: nil, custom_id: nil, disabled: nil, url: nil)
+      style = BUTTON_STYLES[style] || style
+
+      emoji = case emoji
+              when Integer, String
+                emoji.to_i.positive? ? { id: emoji } : { name: emoji }
+              else
+                emoji&.to_h
+              end
+
+      @accessory = { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
+    end
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:section], components: @components, accessory: @accessory }.compact
+    end
+  end
+
+  class Container
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @return [Integer, nil] the colour of the bar to the side, in decimal form.
+    attr_reader :colour
+    alias_method :color, :colour
+
+    # If this container be spoilered.
+    # @return [Boolean, nil] If this container is a spoiler or not.
+    attr_accessor :spoiler
+
+    # @!visibility hidden
+    def initialize(id: nil, components: [], colour: nil, spoiler: nil)
+      @id = id
+      @components = components
+      @colour = colour
+      @spoiler = spoiler
+
+      yield self if block_given?
+    end
+
+    def text_display(text: nil, id: nil)
+      builder = TextDisplay.new(text: text, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    def section(components: [], accessory: nil, id: nil)
+      builder = Section.new(components: components, accessory: accessory, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    def media_gallery(items: [], id: nil)
+      builder = MediaGallery.new(items: items, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    def seperator(divider: nil, spacing: nil, id: nil)
+      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    def file(file:, spoiler: nil, id: nil)
+      builder = File.new(file: file, spoiler: spoiler, id: id)
+
+      yield builder if block_given?
+
+      @components << builder.to_h
+    end
+
+    # Sets the colour of the bar to the side of the embed to something new.
+    # @param value [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
+    # hexadecimal, R/G/B decimal, or nil to clear the embeds colour form.
+    def colour=(value)
+      if value.nil?
+        @colour = nil
+      elsif value.is_a? Integer
+        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
+
+        @colour = value
+      elsif value.is_a? String
+        self.colour = value.delete('#').to_i(16)
+      elsif value.is_a? Array
+        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
+
+        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
+      else
+        self.colour = value.to_i
+      end
+    end
+
+    alias_method :color=, :colour=
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:container],
+        accent_color: @colour,
+        spoiler: @spoiler,
+        components: @components }.compact
+    end
   end
 end
