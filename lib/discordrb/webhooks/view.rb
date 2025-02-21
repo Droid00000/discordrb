@@ -2,7 +2,6 @@
 
 # A reusable view representing a component collection, with builder methods.
 class Discordrb::Webhooks::View
-  include Builder
   # Possible button style names and values.
   BUTTON_STYLES = {
     primary: 1,
@@ -30,6 +29,12 @@ class Discordrb::Webhooks::View
     file: 13,
     seperator: 14,
     container: 17
+  }.freeze
+
+  # Possible size values for seperators.
+  SIZE = {
+    small: 1,
+    large: 2
   }.freeze
 
   # This builder is used when constructing an ActionRow. All current components must be within an action row, but this can
@@ -200,7 +205,7 @@ class Discordrb::Webhooks::View
     @rows << new_row
   end
 
-  # Add a text display component to this container.
+  # Add a text display component.
   # @param id [Integer, nil] Integer ID of this component.
   # @param text [String] Set the text display of this component.
   # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
@@ -212,7 +217,7 @@ class Discordrb::Webhooks::View
     @components << builder.to_h
   end
 
-  # Add a section to this container.
+  # Add a section component.
   # @param id [Integer, nil] Integer ID of this section component.
   # @param components [Array<Components>] Optional array of text display components.
   # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
@@ -225,7 +230,7 @@ class Discordrb::Webhooks::View
     @components << builder.to_h
   end
 
-  # Add a media gallery to this container.
+  # Add a media gallery component.
   # @param id [Integer, nil] Integer ID of this media gallery component.
   # @param items [Array<Hash>] Array of media gallery components to include.
   # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
@@ -237,7 +242,7 @@ class Discordrb::Webhooks::View
     @components << builder.to_h
   end
 
-  # Add a seperator to this container.
+  # Add a seperator component.
   # @param id [Integer, nil] Integer ID of this seperator component.
   # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
   # @param spacing [Integer, nil] The amount of spacing for this seperator component.
@@ -250,13 +255,28 @@ class Discordrb::Webhooks::View
     @components << builder.to_h
   end
 
-  # Add a file to this container.
+  # Add a file component.
   # @param id [Integer, nil] Integer ID of this file component.
   # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
   # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
   def file(id: nil, file: nil, spoiler: false)
-    builder = File.new(file: file, spoiler: spoiler, id: id)
+    builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
+
+    yield builder if block_given?
+
+    @components << builder.to_h
+  end
+
+  # Add a container component.
+  # @param id [Integer, nil] Integer ID of this container component.
+  # @param components [Array<Hash>] Container components to include.
+  # @param colour [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
+  # hexadecimal, R/G/B decimal, or nil if the container should have no color.
+  # @param spoiler [Boolean] Whether this container should be spoilered. Defaults to false.
+  # @yieldparam builder [ContainerBuilder] The container object is yielded to allow for modification of attributes.
+  def container(id: nil, components: [], colour: nil, spoiler: false)
+    builder = ContainerBuilder.new(id: id, components: components, colour: colour, spoiler: spoiler)
 
     yield builder if block_given?
 
@@ -288,9 +308,6 @@ class Discordrb::Webhooks::View
 
   # A seperator allows you to divide a component with a thin grey divider.
   class Seperator
-    # Possible size values.
-    SIZE = { small: 1, large: 2 }
-
     # Whether this seperator is a divider.
     # @return [Boolean] If this seperator is a divider.
     attr_accessor :divider
@@ -310,7 +327,10 @@ class Discordrb::Webhooks::View
 
     # @!visibility hidden
     def to_h
-      { type: COMPONENT_TYPES[:seperator], divider: @divider, spacing: @spacing, id: @id }.compact
+      { type: COMPONENT_TYPES[:seperator],
+        id: @id,
+        divider: @divider,
+        spacing: @spacing }.compact
     end
   end
 
@@ -339,7 +359,7 @@ class Discordrb::Webhooks::View
 
   # A file component lets you send a file. Only attachment://<filename> references
   # are currently supported at the time of writing.
-  class File
+  class ComponentFile
     # The URL of this file.
     # @return [String] attachment://<filename> of this file.
     attr_accessor :url
@@ -361,7 +381,10 @@ class Discordrb::Webhooks::View
 
     # @!visibility hidden
     def to_h
-      { type: COMPONENT_TYPES[:file], file: @file, spoiler: @spoiler, id: @id }.compact
+      { type: COMPONENT_TYPES[:file],
+        file: @file,
+        spoiler: @spoiler,
+        id: @id }.compact
     end
   end
 
@@ -457,7 +480,6 @@ class Discordrb::Webhooks::View
   # This builder can be used to construct a container. A container can hold several other types of components
   # including other action rows. A container can currently have a maximum of 10 components inside of it.
   class ContainerBuilder
-    include Components
     # Set the integer ID of this component.
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
@@ -482,7 +504,7 @@ class Discordrb::Webhooks::View
 
     # Sets the colour of the bar to the side of the embed to something new.
     # @param value [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
-    # hexadecimal, R/G/B decimal, or nil to clear the embeds colour form.
+    # hexadecimal, R/G/B decimal, or nil if the container should have no color.
     def colour=(value)
       if value.nil?
         @colour = nil
@@ -559,7 +581,7 @@ class Discordrb::Webhooks::View
     # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
     # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
     def file(id: nil, file: nil, spoiler: false)
-      builder = File.new(file: file, spoiler: spoiler, id: id)
+      builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
 
       yield builder if block_given?
 
