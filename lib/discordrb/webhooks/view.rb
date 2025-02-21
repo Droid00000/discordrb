@@ -511,7 +511,7 @@ class Discordrb::Webhooks::View
     # @!visibility hidden
     def initialize(file:, spoiler: nil, id: nil)
       @id = id
-      @file = file.is_a?(UnfurledMedia) ? file : UnfurleMedia.new(file)
+      @file = file.is_a?(UnfurledMedia) ? file : UnfurledMedia.new(file)
       @spoiler = spoiler
     end
 
