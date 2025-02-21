@@ -411,9 +411,9 @@ class Discordrb::Webhooks::View
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [Boolean, nil] Whether this argument should be spoilered. Defaults to false.
     def gallery_item(media:, description: nil, spoiler: nil)
-      media = UnfurledMedia.new(media).to_h unless media.is_a?(UnfurledMedia)
+      media = UnfurledMedia.new(media) unless media.is_a?(UnfurledMedia)
 
-      @items << { media: media, description: description, spoiler: spoiler }.compact
+      @items << { media: media.to_h, description: description, spoiler: spoiler }.compact
     end
 
     # @!visibility hidden
