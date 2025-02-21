@@ -294,6 +294,10 @@ class Discordrb::Webhooks::View
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
 
+    # Set the content of this component.
+    # @return [String] Content of this component.
+    attr_accessor :text
+
     # @!visibility hidden
     def initialize(text:, id: nil)
       @text = text
@@ -302,7 +306,7 @@ class Discordrb::Webhooks::View
 
     # @!visibility private
     def to_h
-      { type: COMPONENT_TYPES[:text_display], text: @text, id: @id }.compact
+      { type: COMPONENT_TYPES[:text_display], content: @text, id: @id }.compact
     end
   end
 
