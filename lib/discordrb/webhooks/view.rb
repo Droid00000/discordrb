@@ -285,7 +285,7 @@ class Discordrb::Webhooks::View
 
   # @!visibility private
   def to_a
-    [@rows.map(&:to_h), @components.map(&:to_h)].reject(&:empty?)
+    [@rows.map(&:to_h), *@components].reject(&:empty?)
   end
 
   # A text display component allows you to send text.
