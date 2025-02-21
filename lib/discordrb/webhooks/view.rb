@@ -350,7 +350,7 @@ class Discordrb::Webhooks::View
     attr_accessor :id
 
     # @!visibility hidden
-    def initialize(url:, id: nil)
+    def initialize(url, id: nil)
       @url = url
       @id = id
     end
@@ -366,7 +366,7 @@ class Discordrb::Webhooks::View
   class ComponentFile
     # The URL of this file.
     # @return [String] attachment://<filename> of this file.
-    attr_accessor :url
+    attr_accessor :file
 
     # If this file should be spoilered.
     # @return [Boolean, nil] If this file is a spoiler or not.
