@@ -245,7 +245,7 @@ module Discordrb
       # Mapping of thumbnail types.
       THUMBNAIL = {
         button: 1,
-        thumbnail: 2,
+        thumbnail: 2
       }.freeze
 
       # @return [Array<TextDisplay>]
