@@ -445,10 +445,10 @@ class Discordrb::Webhooks::View
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [Boolean, nil] Whether this argument should be spoilered. Defaults to false.
     def thumbnail(media:, description: nil, spoiler: nil)
-      media = UnfurledMedia.new(media).to_h unless media.is_a?(UnfurledMedia)
+      media = UnfurledMedia.new(media) unless media.is_a?(UnfurledMedia)
 
       @accessory = { type: COMPONENT_TYPES[:thumbnail],
-                     media: media,
+                     media: media.to_h,
                      description: description,
                      spoiler: spoiler }.compact
     end
