@@ -200,9 +200,10 @@ class Discordrb::Webhooks::View
     # @!visibility hidden
     def initialize(id: nil, components: [], colour: nil, spoiler: nil)
       @components = components
-      @colour = colour
       @spoiler = spoiler
       @id = id
+
+      process_color(colour)
 
       yield self if block_given?
     end
@@ -211,21 +212,7 @@ class Discordrb::Webhooks::View
     # @param value [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
     # hexadecimal, R/G/B decimal, or nil if the container should have no color.
     def colour=(value)
-      if value.nil?
-        @colour = nil
-      elsif value.is_a? Integer
-        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
-
-        @colour = value
-      elsif value.is_a? String
-        self.colour = value.delete('#').to_i(16)
-      elsif value.is_a? Array
-        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
-
-        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
-      else
-        self.colour = value.to_i
-      end
+      process_color(value)
     end
 
     alias_method :color=, :colour=
@@ -311,6 +298,29 @@ class Discordrb::Webhooks::View
         accent_color: @colour,
         spoiler: @spoiler,
         components: @components.map(&:to_h) }.compact
+    end
+
+    private
+
+    # @!visibility private
+    # @note for internal use only
+    # Process the color into an integer value.
+    def process_color(value)
+      if value.nil?
+        @colour = nil
+      elsif value.is_a? Integer
+        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
+
+        @colour = value
+      elsif value.is_a? String
+        self.colour = value.delete('#').to_i(16)
+      elsif value.is_a? Array
+        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
+
+        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
+      else
+        self.colour = value.to_i
+      end
     end
   end
 

@@ -18,6 +18,20 @@ module Discordrb
         SelectMenu.new(data, bot)
       when Webhooks::Modal::COMPONENT_TYPES[:text_input]
         TextInput.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:section]
+        Section.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:text_display]
+        TextDisplay.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:thumbnail]
+        Thumbnail.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:media_gallery]
+        MediaGallery.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:file]
+        ComponentFile.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:seperator]
+        Seperator.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:container]
+        Container.new(data, bot)
       end
     end
 
@@ -223,6 +237,236 @@ module Discordrb
 
       def required?
         @required
+      end
+    end
+
+    # Sections allow you to group text display components with an accessory.
+    class Section
+      # Mapping of thumbnail types.
+      THUMBNAIL = {
+        button: 1,
+        thumbnail: 2,
+      }.freeze
+
+      # @return [Array<TextDisplay>]
+      attr_reader :components
+
+      # @return [Button, Thumbnail]
+      attr_reader :accessory
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @components = data['components'].map { |component| TextDisplay.new(component, bot) }
+        @accessory = case data['accessory']['type']
+                      when THUMBNAIL[:button]
+                        Button.new(data['accessory'], bot)
+                      when THUMBNAIL[:thumbnail]
+                        Thumbnail.new(data['accessory'], bot)
+                      end
+      end
+
+      # @return [Boolean] If the accessory is a button or not.
+      def button?
+        @accessory.is_a?(Button)
+      end
+
+      # @return [Boolean] If the accessory is a thumbnail or not.
+      def thumbnail?
+        @accessory.is_a?(Thumbnail)
+      end
+    end
+
+    class UnfurledMedia
+      # Map of loading states.
+      STATES = {
+        unknown: 0,
+        loading: 1,
+        loaded: 2,
+        not_found: 3
+      }.freeze
+
+      # @return [String] the URL this attachment can be downloaded at.
+      attr_reader :url
+
+      # @return [String] the attachment's proxy URL - I'm not sure what exactly this does, but I think it has something to
+      #   do with CDNs.
+      attr_reader :proxy_url
+
+      # @return [Integer] the width of an image file, in pixels, or `nil` if the file is not an image.
+      attr_reader :width
+
+      # @return [Integer] the height of an image file, in pixels, or `nil` if the file is not an image.
+      attr_reader :height
+
+      # @return [Symbol] The loading state of this unfurled media object.
+      attr_reader :loading_state
+
+      # @return [String] the attachment's media type.
+      attr_reader :content_type
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @url = data['url']
+        @proxy_url = data['proxy_url']
+        @width = data['width']
+        @height = data['height']
+        @content_type = data['content_type']
+        @loading_state = STATES.key(data['loading_states'])
+      end
+
+      # @!method unknown?
+      #   @return [Boolean] whether the loading state is unknown.
+      # @!method loading?
+      #   @return [Boolean] whether the unfurled media is still loading.
+      # @!method not_found?
+      #   @return [Boolean] Whether the unfurled media couldn't be found.
+      # @!method loaded?
+      #   @return [Boolean] whether the unfurled media has finished loading.
+      STATES.each do |name|
+        define_method ("#{name}?") do
+          @loading_state == name
+        end
+      end
+    end
+
+    # Seperators allow you to divide other components with a barrier.
+    class Seperator
+      # Small spacing size
+      SMALL = 1
+
+      # Large spacing size
+      LARGE = 2
+
+      # @return [Boolean]
+      attr_reader :divider
+      alias_method :divider?, :divider
+
+      # @return [Symbol]
+      attr_reader :spacing
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @divider = data['divider']
+        @spacing = data['spacing'] == SMALL ? :small : :large
+      end
+
+      # @return [Boolean] If the spacing is small.
+      def small?
+        @spacing == :small
+      end
+
+      # @return [Boolean] If the spacing is large.
+      def large?
+        @spacing == :large
+      end
+    end
+
+    # A media gallery is a collection of images, videos, or GIFs that can be grouped into a gallery grid.
+    class MediaGallery
+      # A media Gallery item.
+      class Item
+        # @return [UnfurledMedia]
+        attr_reader :media
+
+        # @return [String, nil]
+        attr_reader :description
+
+        # @return [Boolean]
+        attr_reader :spoiler
+        alias_method :spoiler?, :spoiler
+
+        # @!visibility private
+        def initialize(data, bot)
+          @bot = bot
+          @media = UnfurledMedia.new(data['media'], bot)
+          @description = data['description']
+          @spoiler = data['spoiler']
+        end
+      end
+
+      # @return [Array<Item>]
+      attr_reader :items
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @items = data['items'].map { |item_data| Item.new(item_data, bot) }
+      end
+    end
+
+    # Thumbnails are containers for media. They can have alt text, and be spoilered.
+    class Thumbnail
+      # @return [UnfurledMedia]
+      attr_reader :media
+
+      # @return [String, nil]
+      attr_reader :description
+
+      # @return [Boolean]
+      attr_reader :spoiler
+      alias_method :spoiler?, :spoiler
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @media = UnfurledMedia.new(data['media'], bot)
+        @description = data['description']
+        @spoiler = data['spoiler']
+      end
+    end
+
+    # Containers allow you to group together other components. You can add an accent color and spoiler them.
+    class Container
+      # @return [ColourRGB, nil]
+      attr_reader :color
+      alias_method :colour, :color
+
+      # @return [Boolean]
+      attr_reader :spoiler
+      alias_method :spoiler?, :spoiler
+
+      # @return [Array<Component>]
+      attr_reader :components
+
+      # @!visibility private
+      def initialize(data, bot)
+        @spoiler = data['spoiler']
+        @colour = data['accent_color'] ? ColourRGB.new(data['accent_color']) : nil
+        @components = data['components'].map { |component| Components.from_data(component, bot) }
+      end
+    end
+
+    # File components allow you to send a file. You can spoiler these files as well.
+    class ComponentFile
+      # @return [UnfurledMedia]
+      attr_reader :file
+
+      # @return [Boolean]
+      attr_reader :spoiler
+      alias_method :spoiler?
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @file = UnfurledMedia.new(data['file'], bot)
+        @spoiler = data['spoiler']
+      end
+    end
+
+    # Text displays are a lightweight container for text.
+    class TextDisplay
+      # @return [String]
+      attr_reader :content
+      alias_method :text, :content
+      alias_method :to_s, :content
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @content = data['content']
       end
     end
   end

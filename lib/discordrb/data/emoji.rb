@@ -71,7 +71,7 @@ module Discordrb
     # Converts this Emoji into a hash that can be sent back to Discord in other endpoints.
     # @return [Hash] A hash representation of this emoji.
     def to_h
-      id.nil? { name: name } : { id: id }
+      id.nil? ? { name: name } : { id: id }
     end
 
     # @!visibility private
