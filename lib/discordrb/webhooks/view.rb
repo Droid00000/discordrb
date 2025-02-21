@@ -468,8 +468,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              else
-                emoji&.to_h
+              when Emoji, Reaction
+                emoji.id ? { id: emoji.id } : { name: emoji.name }
               end
 
       @accessory = { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
