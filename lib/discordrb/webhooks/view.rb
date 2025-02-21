@@ -61,8 +61,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              when Reaction, Emoji
-                emoji.id ? { id: emoji.id } : { name: emoji.name }
+              else
+                emoji&.to_h
               end
 
       @components << { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
@@ -161,8 +161,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              when Reaction, Emoji
-                emoji.id ? { id: emoji.id } : { name: emoji.name }
+              else
+                emoji&.to_h
               end
 
       @options << { label: label, value: value, description: description, emoji: emoji, default: default }
@@ -179,6 +179,138 @@ class Discordrb::Webhooks::View
         custom_id: @custom_id,
         disabled: @disabled
       }
+    end
+  end
+
+  # This builder can be used to construct a container. A container can hold several other types of components
+  # including other action rows. A container can currently have a maximum of 10 components inside of it.
+  class ContainerBuilder
+    # Set the integer ID of this component.
+    # @return [Integer, nil] integer ID of this component.
+    attr_accessor :id
+
+    # @return [Integer, nil] the colour of the bar to the side, in decimal form.
+    attr_reader :colour
+    alias_method :color, :colour
+
+    # If this container be spoilered.
+    # @return [Boolean, nil] If this container is a spoiler or not.
+    attr_accessor :spoiler
+
+    # @!visibility hidden
+    def initialize(id: nil, components: [], colour: nil, spoiler: nil)
+      @components = components
+      @colour = colour
+      @spoiler = spoiler
+      @id = id
+
+      yield self if block_given?
+    end
+
+    # Sets the colour of the bar to the side of the embed to something new.
+    # @param value [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
+    # hexadecimal, R/G/B decimal, or nil if the container should have no color.
+    def colour=(value)
+      if value.nil?
+        @colour = nil
+      elsif value.is_a? Integer
+        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
+
+        @colour = value
+      elsif value.is_a? String
+        self.colour = value.delete('#').to_i(16)
+      elsif value.is_a? Array
+        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
+
+        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
+      else
+        self.colour = value.to_i
+      end
+    end
+
+    alias_method :color=, :colour=
+
+    # Add a text display component to this container.
+    # @param id [Integer, nil] Integer ID of this component.
+    # @param text [String] Set the text display of this component.
+    # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
+    def text_display(id: nil, text: nil)
+      builder = TextDisplay.new(text: text, id: id)
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    # Add a section to this container.
+    # @param id [Integer, nil] Integer ID of this section component.
+    # @param components [Array<Components>] Optional array of text display components.
+    # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
+    # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
+    def section(id: nil, components: [], accessory: nil)
+      builder = Section.new(components: components, accessory: accessory, id: id)
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    # Add a media gallery to this container.
+    # @param id [Integer, nil] Integer ID of this media gallery component.
+    # @param items [Array<Hash>] Array of media gallery components to include.
+    # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
+    def media_gallery(id: nil, items: [])
+      builder = MediaGallery.new(items: items, id: id)
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    # Add a seperator to this container.
+    # @param id [Integer, nil] Integer ID of this seperator component.
+    # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
+    # @param spacing [Integer, nil] The amount of spacing for this seperator component.
+    # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
+    def seperator(id: nil, divider: true, spacing: nil)
+      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    # Add a file to this container.
+    # @param id [Integer, nil] Integer ID of this file component.
+    # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
+    # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
+    # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
+    def file(id: nil, file: nil, spoiler: false)
+      builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    # Add an action row to this container, this allows for some interesting nesting.
+    # @yieldparam builder [RowBuilder] The row builder object is yielded to allow for addition of components.
+    def row
+      builder = RowBuilder.new
+
+      yield builder if block_given?
+
+      @components << builder
+    end
+
+    alias_method :action_row, :row
+
+    # @!visibility hidden
+    def to_h
+      { type: COMPONENT_TYPES[:container],
+        accent_color: @colour,
+        spoiler: @spoiler,
+        components: @components.map(&:to_h) }.compact
     end
   end
 
@@ -214,7 +346,7 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # Add a section component.
@@ -227,7 +359,7 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # Add a media gallery component.
@@ -239,7 +371,7 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # Add a seperator component.
@@ -252,7 +384,7 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # Add a file component.
@@ -265,7 +397,7 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # Add a container component.
@@ -280,12 +412,12 @@ class Discordrb::Webhooks::View
 
     yield builder if block_given?
 
-    @components << builder.to_h
+    @components << builder
   end
 
   # @!visibility private
   def to_a
-    [@rows.map(&:to_h), *@components].reject(&:empty?)
+    [@rows.map(&:to_h), *@components.map(&:to_h)].reject(&:empty?)
   end
 
   # A text display component allows you to send text.
@@ -468,8 +600,8 @@ class Discordrb::Webhooks::View
       emoji = case emoji
               when Integer, String
                 emoji.to_i.positive? ? { id: emoji } : { name: emoji }
-              when Emoji, Reaction
-                emoji.id ? { id: emoji.id } : { name: emoji.name }
+              else
+                emoji&.to_h
               end
 
       @accessory = { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
@@ -478,138 +610,6 @@ class Discordrb::Webhooks::View
     # @!visibility hidden
     def to_h
       { type: COMPONENT_TYPES[:section], components: @components, accessory: @accessory }.compact
-    end
-  end
-
-  # This builder can be used to construct a container. A container can hold several other types of components
-  # including other action rows. A container can currently have a maximum of 10 components inside of it.
-  class ContainerBuilder
-    # Set the integer ID of this component.
-    # @return [Integer, nil] integer ID of this component.
-    attr_accessor :id
-
-    # @return [Integer, nil] the colour of the bar to the side, in decimal form.
-    attr_reader :colour
-    alias_method :color, :colour
-
-    # If this container be spoilered.
-    # @return [Boolean, nil] If this container is a spoiler or not.
-    attr_accessor :spoiler
-
-    # @!visibility hidden
-    def initialize(id: nil, components: [], colour: nil, spoiler: nil)
-      @components = components
-      @colour = colour
-      @spoiler = spoiler
-      @id = id
-
-      yield self if block_given?
-    end
-
-    # Sets the colour of the bar to the side of the embed to something new.
-    # @param value [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
-    # hexadecimal, R/G/B decimal, or nil if the container should have no color.
-    def colour=(value)
-      if value.nil?
-        @colour = nil
-      elsif value.is_a? Integer
-        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
-
-        @colour = value
-      elsif value.is_a? String
-        self.colour = value.delete('#').to_i(16)
-      elsif value.is_a? Array
-        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
-
-        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
-      else
-        self.colour = value.to_i
-      end
-    end
-
-    alias_method :color=, :colour=
-
-    # Add a text display component to this container.
-    # @param id [Integer, nil] Integer ID of this component.
-    # @param text [String] Set the text display of this component.
-    # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
-    def text_display(id: nil, text: nil)
-      builder = TextDisplay.new(text: text, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    # Add a section to this container.
-    # @param id [Integer, nil] Integer ID of this section component.
-    # @param components [Array<Components>] Optional array of text display components.
-    # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
-    # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
-    def section(id: nil, components: [], accessory: nil)
-      builder = Section.new(components: components, accessory: accessory, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    # Add a media gallery to this container.
-    # @param id [Integer, nil] Integer ID of this media gallery component.
-    # @param items [Array<Hash>] Array of media gallery components to include.
-    # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
-    def media_gallery(id: nil, items: [])
-      builder = MediaGallery.new(items: items, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    # Add a seperator to this container.
-    # @param id [Integer, nil] Integer ID of this seperator component.
-    # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
-    # @param spacing [Integer, nil] The amount of spacing for this seperator component.
-    # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
-    def seperator(id: nil, divider: true, spacing: nil)
-      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    # Add a file to this container.
-    # @param id [Integer, nil] Integer ID of this file component.
-    # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
-    # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
-    # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
-    def file(id: nil, file: nil, spoiler: false)
-      builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    # Add an action row to this container, this allows for some interesting nesting.
-    # @yieldparam builder [RowBuilder] The row builder object is yielded to allow for addition of components.
-    def row
-      builder = RowBuilder.new
-
-      yield builder if block_given?
-
-      @components << builder.to_h
-    end
-
-    alias_method :action_row, :row
-
-    # @!visibility hidden
-    def to_h
-      { type: COMPONENT_TYPES[:container],
-        accent_color: @colour,
-        spoiler: @spoiler,
-        components: @components }.compact
     end
   end
 end
