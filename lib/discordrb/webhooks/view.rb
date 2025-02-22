@@ -436,9 +436,9 @@ class Discordrb::Webhooks::View
       end
 
       # Add a text display component to this section.
-      # @param content [String] Content of the component.
-      def text_display(content:, id: nil)
-        @components << { type: COMPONENT_TYPES[:text_display], content: content, id: id }.compact
+      # @param text [String] Content of the component.
+      def text_display(text:, id: nil)
+        @components << { type: COMPONENT_TYPES[:text_display], content: text, id: id }.compact
       end
 
       # Set the accessory to a thumbnail for this media gallery collection.
