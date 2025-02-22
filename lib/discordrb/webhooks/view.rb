@@ -298,7 +298,7 @@ class Discordrb::Webhooks::View
       attr_accessor :text
 
       # @!visibility hidden
-      def initialize(text = nil, id: nil)
+      def initialize(text = nil, id = nil)
         @text = text
         @id = id
       end
@@ -498,7 +498,7 @@ class Discordrb::Webhooks::View
       attr_accessor :spoiler
 
       # @!visibility hidden
-      def initialize(id: nil, components: [], colour: nil, spoiler: nil)
+      def initialize(id = nil, components = [], colour = nil, spoiler = nil)
         @components = components
         @spoiler = spoiler
         @id = id
