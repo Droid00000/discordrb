@@ -27,7 +27,7 @@ module Discordrb
       when Webhooks::View::COMPONENT_TYPES[:media_gallery]
         MediaGallery.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:file]
-        ComponentFile.new(data, bot)
+        FileComponent.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:seperator]
         Seperator.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:container]
@@ -277,6 +277,8 @@ module Discordrb
       end
     end
 
+    # Unfurled media objects allow you to specify an arbitrary url or attachment://<filename> reference.
+    # They include metadata about height, width and content type, and the loading state.
     class UnfurledMedia
       # Map of loading states.
       STATES = {
@@ -439,7 +441,7 @@ module Discordrb
     end
 
     # File components allow you to send a file. You can spoiler these files as well.
-    class ComponentFile
+    class FileComponent
       # @return [UnfurledMedia]
       attr_reader :file
 
