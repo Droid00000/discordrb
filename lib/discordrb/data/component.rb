@@ -447,7 +447,7 @@ module Discordrb
 
       # @return [Boolean]
       attr_reader :spoiler
-      alias_method :spoiler?
+      alias_method :spoiler?, :spoiler
 
       # @!visibility private
       def initialize(data, bot)
