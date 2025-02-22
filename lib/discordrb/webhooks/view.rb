@@ -32,7 +32,8 @@ class Discordrb::Webhooks::View
   }.freeze
 
   # Possible size values for seperators.
-  SIZE = {
+  # @see https://discord.com/developers/docs/interactions/message-components#seperator-spacing-size
+  SEPERATOR_SIZES = {
     small: 1,
     large: 2
   }.freeze
@@ -184,7 +185,7 @@ class Discordrb::Webhooks::View
 
   # This builder can be used to construct a container. A container can hold several other types of components
   # including other action rows. A container can currently have a maximum of 10 components inside of it.
-  class ContainerBuilder
+  class Container
     # Set the integer ID of this component.
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
@@ -222,7 +223,7 @@ class Discordrb::Webhooks::View
     # @param text [String] Set the text display of this component.
     # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
     def text_display(id: nil, text: nil)
-      builder = TextDisplay.new(text: text, id: id)
+      builder = TextDisplay.new(text, id)
 
       yield builder if block_given?
 
@@ -235,7 +236,7 @@ class Discordrb::Webhooks::View
     # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
     # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
     def section(id: nil, components: [], accessory: nil)
-      builder = Section.new(components: components, accessory: accessory, id: id)
+      builder = Section.new(components, accessory, id)
 
       yield builder if block_given?
 
@@ -247,7 +248,7 @@ class Discordrb::Webhooks::View
     # @param items [Array<Hash>] Array of media gallery components to include.
     # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
     def media_gallery(id: nil, items: [])
-      builder = MediaGallery.new(items: items, id: id)
+      builder = MediaGallery.new(items, id)
 
       yield builder if block_given?
 
@@ -260,7 +261,7 @@ class Discordrb::Webhooks::View
     # @param spacing [Integer, nil] The amount of spacing for this seperator component.
     # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
     def seperator(id: nil, divider: true, spacing: nil)
-      builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+      builder = Seperator.new(divider, spacing, id)
 
       yield builder if block_given?
 
@@ -273,7 +274,7 @@ class Discordrb::Webhooks::View
     # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
     # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
     def file(id: nil, file: nil, spoiler: false)
-      builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
+      builder = ComponentFile.new(file, spoiler, id)
 
       yield builder if block_given?
 
@@ -347,63 +348,63 @@ class Discordrb::Webhooks::View
     @rows << new_row
   end
 
-  # Add a text display component.
+  # Add a text display component to this container.
   # @param id [Integer, nil] Integer ID of this component.
   # @param text [String] Set the text display of this component.
   # @yieldparam builder [Section] The text display object is yielded to allow for modification of attributes.
   def text_display(id: nil, text: nil)
-    builder = TextDisplay.new(text: text, id: id)
+    builder = TextDisplay.new(text, id)
 
     yield builder if block_given?
 
     @components << builder
   end
 
-  # Add a section component.
+  # Add a section to this container.
   # @param id [Integer, nil] Integer ID of this section component.
   # @param components [Array<Components>] Optional array of text display components.
   # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
   # @yieldparam builder [Section] The section object is yielded to allow for modification of attributes.
   def section(id: nil, components: [], accessory: nil)
-    builder = Section.new(components: components, accessory: accessory, id: id)
+    builder = Section.new(components, accessory, id)
 
     yield builder if block_given?
 
     @components << builder
   end
 
-  # Add a media gallery component.
+  # Add a media gallery to this container.
   # @param id [Integer, nil] Integer ID of this media gallery component.
   # @param items [Array<Hash>] Array of media gallery components to include.
   # @yieldparam builder [MediaGallery] The media gallery object is yielded to allow for modification of attributes.
   def media_gallery(id: nil, items: [])
-    builder = MediaGallery.new(items: items, id: id)
+    builder = MediaGallery.new(items, id)
 
     yield builder if block_given?
 
     @components << builder
   end
 
-  # Add a seperator component.
+  # Add a seperator to this container.
   # @param id [Integer, nil] Integer ID of this seperator component.
   # @param divider [Boolean, nil] Whether this seperator is a divider. Defaults to true.
   # @param spacing [Integer, nil] The amount of spacing for this seperator component.
   # @yieldparam builder [Seperator] The seperator object is yielded to allow for modification of attributes.
   def seperator(id: nil, divider: true, spacing: nil)
-    builder = Seperator.new(divider: divider, spacing: spacing, id: id)
+    builder = Seperator.new(divider, spacing, id)
 
     yield builder if block_given?
 
     @components << builder
   end
 
-  # Add a file component.
+  # Add a file to this container.
   # @param id [Integer, nil] Integer ID of this file component.
   # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
   # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
   def file(id: nil, file: nil, spoiler: false)
-    builder = ComponentFile.new(file: file, spoiler: spoiler, id: id)
+    builder = ComponentFile.new(file, spoiler, id)
 
     yield builder if block_given?
 
@@ -418,7 +419,7 @@ class Discordrb::Webhooks::View
   # @param spoiler [Boolean] Whether this container should be spoilered. Defaults to false.
   # @yieldparam builder [ContainerBuilder] The container object is yielded to allow for modification of attributes.
   def container(id: nil, components: [], colour: nil, spoiler: false)
-    builder = ContainerBuilder.new(id: id, components: components, colour: colour, spoiler: spoiler)
+    builder = Container.new(id, components, colour, spoiler)
 
     yield builder if block_given?
 
@@ -441,7 +442,7 @@ class Discordrb::Webhooks::View
     attr_accessor :text
 
     # @!visibility hidden
-    def initialize(text:, id: nil)
+    def initialize(text = nil, id: nil)
       @text = text
       @id = id
     end
@@ -459,16 +460,16 @@ class Discordrb::Webhooks::View
     attr_accessor :divider
 
     # @!visibility hidden
-    def initialize(divider: nil, spacing: nil, id: nil)
-      @spacing = SIZE[spacing] || spacing
+    def initialize(divider = nil, spacing = nil, id = nil)
+      @spacing = SEPERATOR_SIZES[spacing] || spacing
       @divider = divider
       @id = id
     end
 
     # Set the spacing of this builder.
-    # @param space [Symbol, Integer] The space of the component. See {SIZE}.
+    # @param space [Symbol, Integer] The space of the component. See {SEPERATOR_SIZES}.
     def spacing=(space)
-      @spacing = SIZE[space] || space
+      @spacing = SEPERATOR_SIZES[space] || space
     end
 
     # @!visibility hidden
@@ -492,7 +493,7 @@ class Discordrb::Webhooks::View
     attr_accessor :id
 
     # @!visibility hidden
-    def initialize(url, id: nil)
+    def initialize(url, id = nil)
       @url = url
       @id = id
     end
@@ -506,10 +507,6 @@ class Discordrb::Webhooks::View
   # A file component lets you send a file. Only attachment://<filename> references
   # are currently supported at the time of writing.
   class ComponentFile
-    # The URL of this file.
-    # @return [String] attachment://<filename> of this file.
-    attr_accessor :file
-
     # If this file should be spoilered.
     # @return [Boolean, nil] If this file is a spoiler or not.
     attr_accessor :spoiler
@@ -519,16 +516,22 @@ class Discordrb::Webhooks::View
     attr_accessor :id
 
     # @!visibility hidden
-    def initialize(file:, spoiler: nil, id: nil)
+    def initialize(file = nil, spoiler = nil, id = nil)
       @id = id
       @file = file.is_a?(UnfurledMedia) ? file : UnfurledMedia.new(file)
       @spoiler = spoiler
     end
 
+    # Set the file URL of this component.
+    # @param file [UnfurledMedia, String] An un-furled media object, or a string URL.
+    def file=(file)
+      @file = file.is_a?(UnfurledMedia) ? file : UnfurledMedia.new(file)
+    end
+
     # @!visibility hidden
     def to_h
       { type: COMPONENT_TYPES[:file],
-        file: @file,
+        file: @file.to_h,
         spoiler: @spoiler,
         id: @id }.compact
     end
@@ -541,7 +544,7 @@ class Discordrb::Webhooks::View
     attr_accessor :id
 
     # @!visibility hidden
-    def initialize(items: [], id: nil)
+    def initialize(items = [], id = nil)
       @id = nil
       @items = items
 
@@ -570,7 +573,7 @@ class Discordrb::Webhooks::View
     attr_accessor :id
 
     # @!visibility hidden
-    def initialize(components: [], accessory: nil, id: nil)
+    def initialize(components = [], accessory = nil, id = nil)
       @components = components
       @accessory = accessory
       @id = id

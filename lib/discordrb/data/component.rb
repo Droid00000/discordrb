@@ -286,23 +286,22 @@ module Discordrb
         not_found: 3
       }.freeze
 
-      # @return [String] the URL this attachment can be downloaded at.
+      # @return [String] The URL this attachment can be downloaded at.
       attr_reader :url
 
-      # @return [String] the attachment's proxy URL - I'm not sure what exactly this does, but I think it has something to
-      #   do with CDNs.
+      # @return [String] The attachment's proxied URL.
       attr_reader :proxy_url
 
-      # @return [Integer] the width of an image file, in pixels, or `nil` if the file is not an image.
+      # @return [Integer] The width of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :width
 
-      # @return [Integer] the height of an image file, in pixels, or `nil` if the file is not an image.
+      # @return [Integer] The height of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :height
 
       # @return [Symbol] The loading state of this unfurled media object.
       attr_reader :loading_state
 
-      # @return [String] the attachment's media type.
+      # @return [String] The attachment's media type.
       attr_reader :content_type
 
       # @!visibility private
