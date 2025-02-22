@@ -242,8 +242,8 @@ module Discordrb
 
     # Sections allow you to group text display components with an accessory.
     class Section
-      # Mapping of thumbnail types.
-      THUMBNAIL = {
+      # Mapping of accessory types.
+      ACCESSORY = {
         button: 1,
         thumbnail: 2
       }.freeze
@@ -259,11 +259,11 @@ module Discordrb
         @bot = bot
         @components = data['components'].map { |component| TextDisplay.new(component, bot) }
         @accessory = case data['accessory']['type']
-                      when THUMBNAIL[:button]
-                        Button.new(data['accessory'], bot)
-                      when THUMBNAIL[:thumbnail]
-                        Thumbnail.new(data['accessory'], bot)
-                      end
+                     when ACCESSORY[:button]
+                       Button.new(data['accessory'], bot)
+                     when ACCESSORY[:thumbnail]
+                       Thumbnail.new(data['accessory'], bot)
+                     end
       end
 
       # @return [Boolean] If the accessory is a button or not.
@@ -325,7 +325,7 @@ module Discordrb
       # @!method loaded?
       #   @return [Boolean] whether the unfurled media has finished loading.
       STATES.each do |name|
-        define_method ("#{name}?") do
+        define_method("#{name}?") do
           @loading_state == name
         end
       end
@@ -333,11 +333,11 @@ module Discordrb
 
     # Seperators allow you to divide other components with a barrier.
     class Seperator
-      # Small spacing size
-      SMALL = 1
-
-      # Large spacing size
-      LARGE = 2
+      # Mapping of spacing sizes.
+      SIZE = {
+        small: 1,
+        large: 2
+      }.freeze
 
       # @return [Boolean]
       attr_reader :divider
@@ -350,7 +350,7 @@ module Discordrb
       def initialize(data, bot)
         @bot = bot
         @divider = data['divider']
-        @spacing = data['spacing'] == SMALL ? :small : :large
+        @spacing = SIZE.key(data['spacing'])
       end
 
       # @return [Boolean] If the spacing is small.
@@ -393,7 +393,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @items = data['items'].map { |item_data| Item.new(item_data, bot) }
+        @items = data['items'].map { |item| Item.new(item, bot) }
       end
     end
 
@@ -434,7 +434,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @spoiler = data['spoiler']
-        @colour = data['accent_color'] ? ColourRGB.new(data['accent_color']) : nil
+        @colour = data['accent_color'] ? ColorRGB.new(data['accent_color']) : nil
         @components = data['components'].map { |component| Components.from_data(component, bot) }
       end
     end
@@ -461,7 +461,6 @@ module Discordrb
       # @return [String]
       attr_reader :content
       alias_method :text, :content
-      alias_method :to_s, :content
 
       # @!visibility private
       def initialize(data, bot)
