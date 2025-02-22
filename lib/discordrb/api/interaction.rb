@@ -10,7 +10,7 @@ module Discordrb::API::Interaction
     data = { tts: tts, content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, components: components }.compact
 
     print(components)
-    
+
     Discordrb::API.request(
       :interactions_iid_token_callback,
       interaction_id,
@@ -45,7 +45,7 @@ module Discordrb::API::Interaction
   # Edit the original response to an interaction.
   # https://discord.com/developers/docs/interactions/slash-commands#edit-original-interaction-response
   def edit_original_interaction_response(interaction_token, application_id, content = nil, embeds = nil, allowed_mentions = nil, components = nil, flags = nil)
-    Discordrb::API::Webhook.token_edit_message(interaction_token, application_id, '@original', content, embeds, allowed_mentions, components)
+    Discordrb::API::Webhook.token_edit_message(interaction_token, application_id, '@original', content, embeds, allowed_mentions, components, flags)
   end
 
   # Delete the original response to an interaction.
