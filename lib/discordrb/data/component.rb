@@ -27,7 +27,7 @@ module Discordrb
       when Webhooks::View::COMPONENT_TYPES[:media_gallery]
         MediaGallery.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:file]
-        FileComponent.new(data, bot)
+        File.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:seperator]
         Seperator.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:container]
@@ -242,28 +242,21 @@ module Discordrb
 
     # Sections allow you to group text display components with an accessory.
     class Section
-      # Mapping of accessory types.
-      ACCESSORY = {
-        button: 1,
-        thumbnail: 2
-      }.freeze
+      # @return [Integer] ID of this section.
+      attr_reader :id
 
-      # @return [Array<TextDisplay>]
-      attr_reader :components
-
-      # @return [Button, Thumbnail]
+      # @return [Button, Thumbnail] The accessory of this section.
       attr_reader :accessory
 
+      # @return [Array<TextDisplay>] Array of components in this section.
+      attr_reader :components
+    
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @components = data['components'].map { |component| TextDisplay.new(component, bot) }
-        @accessory = case data['accessory']['type']
-                     when ACCESSORY[:button]
-                       Button.new(data['accessory'], bot)
-                     when ACCESSORY[:thumbnail]
-                       Thumbnail.new(data['accessory'], bot)
-                     end
+        @id = data['id']
+        @accessory = Components.from_data(data['accessory'], bot)
+        @components = data['components'].map { |component| Components.from_data(component, bot) }
       end
 
       # @return [Boolean] If the accessory is a button or not.
@@ -281,13 +274,13 @@ module Discordrb
     # They include metadata about height, width and content type, and the loading state.
     class UnfurledMedia
       # Map of loading states.
-      STATES = {
+      LOADING_STATES = {
         unknown: 0,
         loading: 1,
         loaded: 2,
         not_found: 3
       }.freeze
-
+  
       # @return [String] The URL this attachment can be downloaded at.
       attr_reader :url
 
@@ -300,7 +293,7 @@ module Discordrb
       # @return [Integer] The height of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :height
 
-      # @return [Symbol] The loading state of this unfurled media object.
+      # @return [Symbol] The media's loading state.
       attr_reader :loading_state
 
       # @return [String] The attachment's media type.
@@ -314,7 +307,7 @@ module Discordrb
         @width = data['width']
         @height = data['height']
         @content_type = data['content_type']
-        @loading_state = STATES.key(data['loading_states'])
+        @loading_state = LOADING_STATES.key(data['loading_state'])
       end
 
       # @!method unknown?
@@ -325,7 +318,7 @@ module Discordrb
       #   @return [Boolean] Whether the unfurled media couldn't be found.
       # @!method loaded?
       #   @return [Boolean] whether the unfurled media has finished loading.
-      STATES.each do |name|
+      LOADING_STATES.each do |name|
         define_method("#{name}?") do
           @loading_state == name
         end
@@ -334,24 +327,22 @@ module Discordrb
 
     # Seperators allow you to divide other components with a barrier.
     class Seperator
-      # Mapping of spacing sizes.
-      SIZE = {
-        small: 1,
-        large: 2
-      }.freeze
+      # @return [Integer] ID of this seperator.
+      attr_reader :id
 
-      # @return [Boolean]
+      # @return [Boolean] If this seperator is a divider or not.
       attr_reader :divider
       alias_method :divider?, :divider
 
-      # @return [Symbol]
+      # @return [Symbol] If this seperator has `large` or `small` spacing.
       attr_reader :spacing
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @divider = data['divider']
-        @spacing = SIZE.key(data['spacing'])
+        @spacing = Webhooks::View::SEPERATOR_SIZES.key(data['spacing'])
       end
 
       # @return [Boolean] If the spacing is small.
@@ -369,13 +360,13 @@ module Discordrb
     class MediaGallery
       # A media Gallery item.
       class Item
-        # @return [UnfurledMedia]
+        # @return [UnfurledMedia] Media of this gallery item.
         attr_reader :media
 
-        # @return [String, nil]
+        # @return [String, nil] Alt text/description of this item.
         attr_reader :description
 
-        # @return [Boolean]
+        # @return [Boolean] If this gallery item is spoilered.
         attr_reader :spoiler
         alias_method :spoiler?, :spoiler
 
@@ -388,31 +379,39 @@ module Discordrb
         end
       end
 
-      # @return [Array<Item>]
+      # @return [Integer] ID of this gallery.
+      attr_reader :id
+      
+      # @return [Array<Item>] Array of media gallery items.
       attr_reader :items
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @items = data['items'].map { |item| Item.new(item, bot) }
       end
     end
 
     # Thumbnails are containers for media. They can have alt text, and be spoilered.
     class Thumbnail
-      # @return [UnfurledMedia]
+      # @return [Integer] ID of this thumbnail.
+      attr_reader :id
+
+      # @return [UnfurledMedia] Media item of this thumbnail.
       attr_reader :media
 
-      # @return [String, nil]
+      # @return [String, nil] Alt text/description of this thumbnail.
       attr_reader :description
 
-      # @return [Boolean]
+      # @return [Boolean] If this thumbnail is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @media = UnfurledMedia.new(data['media'], bot)
         @description = data['description']
         @spoiler = data['spoiler']
@@ -421,19 +420,23 @@ module Discordrb
 
     # Containers allow you to group together other components. You can add an accent color and spoiler them.
     class Container
-      # @return [ColourRGB, nil]
+      # @return [Integer] ID of this container.
+      attr_reader :id
+  
+      # @return [ColourRGB, nil] The accent color of this thumbnail, or nil if there isn't one.
       attr_reader :color
       alias_method :colour, :color
 
-      # @return [Boolean]
+      # @return [Boolean] If this container is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
-      # @return [Array<Component>]
+      # @return [Array<Component>] Components included within this container.
       attr_reader :components
 
       # @!visibility private
       def initialize(data, bot)
+        @id = data['id']
         @spoiler = data['spoiler']
         @colour = data['accent_color'] ? ColorRGB.new(data['accent_color']) : nil
         @components = data['components'].map { |component| Components.from_data(component, bot) }
@@ -441,17 +444,21 @@ module Discordrb
     end
 
     # File components allow you to send a file. You can spoiler these files as well.
-    class FileComponent
-      # @return [UnfurledMedia]
+    class File
+      # @return [Integer] ID of this file.
+      attr_reader :id
+
+      # @return [UnfurledMedia] The attached file.
       attr_reader :file
 
-      # @return [Boolean]
+      # @return [Boolean] If this file is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @file = UnfurledMedia.new(data['file'], bot)
         @spoiler = data['spoiler']
       end
@@ -459,13 +466,17 @@ module Discordrb
 
     # Text displays are a lightweight container for text.
     class TextDisplay
-      # @return [String]
+      # @return [Integer] ID of this text display.
+      attr_reader :id
+
+      # @return [String] The content within this text display.
       attr_reader :content
       alias_method :text, :content
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @content = data['content']
       end
     end

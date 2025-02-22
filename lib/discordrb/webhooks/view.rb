@@ -258,7 +258,7 @@ class Discordrb::Webhooks::View
   # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
   def file(id: nil, file: nil, spoiler: false)
-    builder = Builder::FileComponent.new(file, spoiler, id)
+    builder = Builder::File.new(file, spoiler, id)
 
     yield builder if block_given?
 
@@ -362,7 +362,7 @@ class Discordrb::Webhooks::View
 
     # A file component lets you send a file. Only attachment://<filename> references
     # are currently supported at the time of writing.
-    class FileComponent
+    class File
       # If this file should be spoilered.
       # @return [Boolean, nil] If this file is a spoiler or not.
       attr_accessor :spoiler
@@ -573,7 +573,7 @@ class Discordrb::Webhooks::View
       # @param spoiler [Boolean, nil] If this file should be spoilered. Defaults to false.
       # @yieldparam builder [File] The file object is yielded to allow for modification of attributes.
       def file(id: nil, file: nil, spoiler: false)
-        builder = FileComponent.new(file, spoiler, id)
+        builder = File.new(file, spoiler, id)
 
         yield builder if block_given?
 
