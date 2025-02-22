@@ -116,13 +116,13 @@ module Discordrb::API::Webhook
 
   # Edit a webhook message via webhook token
   # https://discord.com/developers/docs/resources/webhook#edit-webhook-message
-  def token_edit_message(webhook_token, webhook_id, message_id, content = nil, embeds = nil, allowed_mentions = nil, components = nil)
+  def token_edit_message(webhook_token, webhook_id, message_id, content = nil, embeds = nil, allowed_mentions = nil, components = nil, flags = nil)
     Discordrb::API.request(
       :webhooks_wid_messages,
       webhook_id,
       :patch,
       "#{Discordrb::API.api_base}/webhooks/#{webhook_id}/#{webhook_token}/messages/#{message_id}",
-      { content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components }.to_json,
+      { content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components, flags: flags }.to_json,
       content_type: :json
     )
   end
