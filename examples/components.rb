@@ -11,8 +11,8 @@ bot.register_application_command(:components, 'New Components!', server_id: ENV.
 end
 
 bot.application_command(:components) do |event|
-  # The emojis hash from the event's server is fetched, then call
-  # .values to convert the hash into an array of its values (emojis).
+  # The emojis hash from the event's server is fetched, then .values
+  # is called to convert the hash into an array of its values (emojis).
   # We can then map each emoji into a string  with the format of:
   # "mention - name **{Integer}**".
   emojis = event.server.emojis.values.map do |emoji|
