@@ -22,8 +22,8 @@ bot.application_command(:components) do |event|
     # We don't have to do this, since all components besides buttons
     # and select menus can be used as top level components.
     view.container(id: 100) do |container|
-      # A section must have either a thumbnail or a button. This is the only case
-      # where a button can be used without being in an action row.
+      # A section must have either a thumbnail or a button. This is currently
+      # the only case where a button can be used without being in an action row.
       container.section do |section|
         section.thumbnail(media: event.server.icon_url)
         section.text_display(text: "### Emoji Statistics for #{event.server.name}")

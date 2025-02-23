@@ -311,13 +311,13 @@ module Discordrb
       end
 
       # @!method unknown?
-      #   @return [Boolean] whether the loading state is unknown.
+      #   @return [true, false] whether the loading state is unknown.
       # @!method loading?
-      #   @return [Boolean] whether the unfurled media is still loading.
+      #   @return [true, false] whether the unfurled media is still loading.
       # @!method not_found?
-      #   @return [Boolean] Whether the unfurled media couldn't be found.
+      #   @return [true, false] Whether the unfurled media couldn't be found.
       # @!method loaded?
-      #   @return [Boolean] whether the unfurled media has finished loading.
+      #   @return [true, false] whether the unfurled media has finished loading.
       LOADING_STATES.each do |name|
         define_method("#{name}?") do
           @loading_state == name
@@ -330,7 +330,7 @@ module Discordrb
       # @return [Integer] ID of this seperator.
       attr_reader :id
 
-      # @return [Boolean] If this seperator is a divider or not.
+      # @return [true, false] If this seperator is a divider or not.
       attr_reader :divider
       alias_method :divider?, :divider
 
@@ -345,12 +345,12 @@ module Discordrb
         @spacing = Webhooks::View::SEPERATOR_SIZES.key(data['spacing'])
       end
 
-      # @return [Boolean] If the spacing is small.
+      # @return [true, false] If the spacing is small.
       def small?
         @spacing == :small
       end
 
-      # @return [Boolean] If the spacing is large.
+      # @return [true, false] If the spacing is large.
       def large?
         @spacing == :large
       end
@@ -366,7 +366,7 @@ module Discordrb
         # @return [String, nil] Alt text/description of this item.
         attr_reader :description
 
-        # @return [Boolean] If this gallery item is spoilered.
+        # @return [true, false] If this gallery item is spoilered.
         attr_reader :spoiler
         alias_method :spoiler?, :spoiler
 
@@ -404,7 +404,7 @@ module Discordrb
       # @return [String, nil] Alt text/description of this thumbnail.
       attr_reader :description
 
-      # @return [Boolean] If this thumbnail is spoilered or not.
+      # @return [true, false] If this thumbnail is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
@@ -427,7 +427,7 @@ module Discordrb
       attr_reader :color
       alias_method :colour, :color
 
-      # @return [Boolean] If this container is spoilered or not.
+      # @return [true, false] If this container is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
@@ -451,7 +451,7 @@ module Discordrb
       # @return [UnfurledMedia] The attached file.
       attr_reader :file
 
-      # @return [Boolean] If this file is spoilered or not.
+      # @return [true, false] If this file is spoilered or not.
       attr_reader :spoiler
       alias_method :spoiler?, :spoiler
 
