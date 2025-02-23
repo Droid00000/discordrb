@@ -250,7 +250,7 @@ module Discordrb
 
       # @return [Array<TextDisplay>] Array of components in this section.
       attr_reader :components
-    
+
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
@@ -280,23 +280,23 @@ module Discordrb
         loaded: 2,
         not_found: 3
       }.freeze
-  
+
       # @return [String] The URL this attachment can be downloaded at.
       attr_reader :url
 
-      # @return [String] The attachment's proxied URL.
+      # @return [String, nil] The attachment's proxied URL.
       attr_reader :proxy_url
 
-      # @return [Integer] The width of an image file, in pixels, or `nil` if the file is not an image.
+      # @return [Integer, nil] The width of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :width
 
-      # @return [Integer] The height of an image file, in pixels, or `nil` if the file is not an image.
+      # @return [Integer, nil] The height of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :height
 
       # @return [Symbol] The media's loading state.
       attr_reader :loading_state
 
-      # @return [String] The attachment's media type.
+      # @return [String, nil] The attachment's media type.
       attr_reader :content_type
 
       # @!visibility private
@@ -381,7 +381,7 @@ module Discordrb
 
       # @return [Integer] ID of this gallery.
       attr_reader :id
-      
+
       # @return [Array<Item>] Array of media gallery items.
       attr_reader :items
 
@@ -422,7 +422,7 @@ module Discordrb
     class Container
       # @return [Integer] ID of this container.
       attr_reader :id
-  
+
       # @return [ColourRGB, nil] The accent color of this thumbnail, or nil if there isn't one.
       attr_reader :color
       alias_method :colour, :color

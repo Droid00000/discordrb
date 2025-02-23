@@ -65,8 +65,8 @@ module Discordrb::Events
     # (see Interaction#edit_response)
     def edit_response(content: nil, embeds: nil, allowed_mentions: nil, components: nil, attachments: nil, new_components: false, &block)
       @interaction.edit_response(
-       content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components,
-       attachments: attachments, new_components: new_components, &block
+        content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components,
+        attachments: attachments, new_components: new_components, &block
       )
     end
 
