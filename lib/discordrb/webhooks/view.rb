@@ -626,6 +626,7 @@ class Discordrb::Webhooks::View
   end
 
   # @!visibility private
+  # @return [Array<Hash>]
   def to_a
     @components.map(&:to_h)
   end
