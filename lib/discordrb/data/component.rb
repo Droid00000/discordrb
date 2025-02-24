@@ -424,8 +424,8 @@ module Discordrb
       attr_reader :id
 
       # @return [ColourRGB, nil] The accent color of this thumbnail, or nil if there isn't one.
-      attr_reader :color
-      alias_method :colour, :color
+      attr_reader :colour
+      alias_method :color, :colour
 
       # @return [true, false] If this container is spoilered or not.
       attr_reader :spoiler
