@@ -444,7 +444,7 @@ class Discordrb::Webhooks::View
 
     # Add a file to this container.
     # @param id [Integer, nil] Integer ID of this file component.
-    # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
+    # @param file [String, nil] An attachment://<filename> reference.
     # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
     # @yieldparam builder [FileBuilder] The file object is yielded to allow for modification of attributes.
     def file(id: nil, file: nil, spoiler: false)
@@ -570,7 +570,7 @@ class Discordrb::Webhooks::View
 
   # Add a file to this container.
   # @param id [Integer, nil] Integer ID of this file component.
-  # @param file [String, nil] A attachment://<filename> reference.
+  # @param file [String, nil] An attachment://<filename> reference.
   # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [FileBuilder] The file object is yielded to allow for modification of attributes.
   def file(id: nil, file: nil, spoiler: false)
