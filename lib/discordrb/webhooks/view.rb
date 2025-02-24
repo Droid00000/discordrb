@@ -237,24 +237,6 @@ class Discordrb::Webhooks::View
     end
   end
 
-  # Unfurled media items allow you to specifiy a URL or `attachment://file.png` refrence.
-  # Upon being sent to Discord, this returns a full object, similar to an attatchment.
-  class UnfurledMediaBuilder
-    # The URL that this media item links to.
-    # @return [String] The URL of of this media item.
-    attr_accessor :url
-
-    # @!visibility hidden
-    def initialize(url)
-      @url = url
-    end
-
-    # @!visibility hidden
-    def to_h
-      { url: @url }.compact
-    end
-  end
-
   # A file component lets you send a file. Only attachment://<filename> references
   # are currently supported at the time of writing.
   class FileBuilder
@@ -269,22 +251,22 @@ class Discordrb::Webhooks::View
     # @!visibility hidden
     def initialize(file = nil, spoiler = nil, id = nil)
       @id = id
-      @file = file.is_a?(UnfurledMediaBuilder) ? file : UnfurledMediaBuilder.new(file)
+      @file = { url: file }
       @spoiler = spoiler
     end
 
     # Set the file URL of this component.
-    # @param file [UnfurledMedia, String] An un-furled media object, or a string URL.
+    # @param file [String] attachment://<filename> reference.
     def file=(file)
-      @file = file.is_a?(UnfurledMediaBuilder) ? file : UnfurledMediaBuilder.new(file)
+      @file[:url] = file
     end
 
     # @!visibility hidden
     def to_h
       { type: COMPONENT_TYPES[:file],
-        file: @file.to_h,
+        id: @id,
         spoiler: @spoiler,
-        id: @id }.compact
+        file: @file }.compact
     end
   end
 
@@ -305,13 +287,11 @@ class Discordrb::Webhooks::View
     end
 
     # Add a gallery item to this media gallery collection.
-    # @param media [UnfurledMedia, String] The unfurled-media item or a URL.
+    # @param media [String] The URL of this media item.
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
     def gallery_item(media:, description: nil, spoiler: nil)
-      media = UnfurledMediaBuilder.new(media) unless media.is_a?(UnfurledMediaBuilder)
-
-      @items << { media: media.to_h, description: description, spoiler: spoiler }.compact
+      @items << { media: { url: media }, description: description, spoiler: spoiler }.compact
     end
 
     # @!visibility hidden
@@ -342,16 +322,11 @@ class Discordrb::Webhooks::View
     end
 
     # Set the accessory to a thumbnail for this media gallery collection.
-    # @param media [UnfurledMedia, String] The unfurled-media item or a URL.
+    # @param media [String] The URL of the media item for this thumbnail.
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
     def thumbnail(media:, description: nil, spoiler: nil)
-      media = UnfurledMediaBuilder.new(media) unless media.is_a?(UnfurledMediaBuilder)
-
-      @accessory = { type: COMPONENT_TYPES[:thumbnail],
-                     media: media.to_h,
-                     description: description,
-                     spoiler: spoiler }.compact
+      @accessory = { type: COMPONENT_TYPES[:thumbnail], media: { url: media }, description: description, spoiler: spoiler }.compact
     end
 
     # Set the accessory to a button for this media gallery collection.
@@ -593,7 +568,7 @@ class Discordrb::Webhooks::View
 
   # Add a file to this container.
   # @param id [Integer, nil] Integer ID of this file component.
-  # @param file [String, UnfurledMedia, nil] An UnfurledMedia object, or attachment://<filename> reference.
+  # @param file [String, nil] A attachment://<filename> reference.
   # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [FileBuilder] The file object is yielded to allow for modification of attributes.
   def file(id: nil, file: nil, spoiler: false)
