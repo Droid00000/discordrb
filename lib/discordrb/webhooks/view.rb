@@ -294,6 +294,8 @@ class Discordrb::Webhooks::View
       @items << { media: { url: media }, description: description, spoiler: spoiler }.compact
     end
 
+    alias_method :item, :gallery_item
+
     # @!visibility hidden
     def to_h
       { type: COMPONENT_TYPES[:media_gallery], items: @items }
