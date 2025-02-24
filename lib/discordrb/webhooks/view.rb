@@ -465,8 +465,6 @@ class Discordrb::Webhooks::View
       @components << builder
     end
 
-    alias_method :action_row, :row
-
     # @!visibility hidden
     def to_h
       { type: COMPONENT_TYPES[:container],
