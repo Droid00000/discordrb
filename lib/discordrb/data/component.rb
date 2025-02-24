@@ -436,6 +436,7 @@ module Discordrb
 
       # @!visibility private
       def initialize(data, bot)
+        @bot = bot
         @id = data['id']
         @spoiler = data['spoiler']
         @colour = data['accent_color'] ? ColourRGB.new(data['accent_color']) : nil
