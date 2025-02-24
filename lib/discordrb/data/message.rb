@@ -384,7 +384,7 @@ module Discordrb
 
     # The inspect method is overwritten to give more useful output
     def inspect
-      "<Message content=\"#{@content}\" id=#{@id} timestamp=#{@timestamp} author=#{@author} channel=#{@channel} components=#{@components}>"
+      "<Message content=\"#{@content}\" id=#{@id} timestamp=#{@timestamp} author=#{@author} channel=#{@channel}>"
     end
 
     # @return [String] a URL that a user can use to navigate to this message in the client
