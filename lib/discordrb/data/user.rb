@@ -125,7 +125,7 @@ module Discordrb
       @public_flags = data['public_flags'] || 0
 
       @bot_account = false
-      @bot_account = true if data['bot']
+      @bot_account = data['bot']
 
       @webhook_account = false
       @webhook_account = true if data['_webhook']
