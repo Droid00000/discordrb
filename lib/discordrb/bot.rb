@@ -1176,6 +1176,31 @@ module Discordrb
       server.update_emoji_data(data)
     end
 
+    # Internal handler for GUILD_SOUNDBOARD_SOUND_DELETE
+    def delete_guild_soundboard_sound(data)
+      server = @servers[data['guild_id'].to_i]
+      server.soundboard_sounds.delete(data['sound_id'].to_i)
+    end
+
+    # Internal handler for GUILD_SOUNDBOARD_SOUND_CREATE
+    def create_guild_soundboard_sound(data)
+      server = @servers[data['guild_id'].to_i]
+      sound = Sound.new(data, self, server)
+      server.soundboard_sounds[sound.id] = sound
+    end
+
+    # Internal handler for SOUNDBOARD_SOUNDS
+    def chunk_guild_soundboard_sounds(data)
+      server = @servers[data['guild_id'].to_i]
+      server.__send__(:process_soundboard_sounds, data['soundboard_sounds'])
+    end
+
+    # Internal handler for GUIDL_SOUNDBOARD_SOUND_UPDATE
+    def update_guild_soundboard_sound(data)
+      server = @servers[data['guild_id'].to_i]
+      server.soundboard_sounds[data['sound_id'].to_i].update_from(data)
+    end
+
     # Internal handler for MESSAGE_CREATE
     def create_message(data); end
 
@@ -1640,6 +1665,23 @@ module Discordrb
 
         event = ThreadMembersUpdateEvent.new(data, self)
         raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUND_CREATE
+        create_guild_soundboard_sound(data)
+
+        event = SoundboardSoundCreateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUND_UPDATE
+        update_guild_soundboard_sound(data)
+
+        event = SoundboardSoundUpdateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUND_DELETE
+        delete_guild_soundboard_sound(data)
+
+        event = SoundboardSoundDeleteeEvent.new(data, self)
+        raise_event(event)
+      when :SOUNDBOARD_SOUNDS
+        chunk_guild_soundboard_sounds(data)
       else
         # another event that we don't support yet
         debug "Event #{type} has been received but is unsupported. Raising UnknownEvent"

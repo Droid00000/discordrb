@@ -569,4 +569,64 @@ module Discordrb::API::Server
       Authorization: token
     )
   end
+
+  # https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds
+  def soundboard_sounds(token, server_id)
+    Discordrb::API.request(
+      :guilds_sid_sounds,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds",
+      Authorization: token
+    )
+  end
+
+  # https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound
+  def soundboard_sound(token, server_id, sound_id)
+    Discordrb::API.request(
+      :guilds_sid_sounds_sid,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds/#{sound_id}",
+      Authorization: token
+    )
+  end
+
+  # https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound
+  def create_soundboard_sound(token, server_id, name, sound, volume = nil, emoji_id = nil, emoji_name = nil)
+    Discordrb::API.request(
+      :guilds_sid_sounds_sid,
+      server_id,
+      :post,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds",
+      { name: name, sound: sound, volume: volume, emoji_id: emoji_id, emoji_name: emoji_name }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
+  # https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound
+  def update_soundboard_sound(token, server_id, sound_id, name, volume, emoji_id, emoji_name, reason = nil)
+    Discordrb::API.request(
+      :guilds_sid_sounds_sid,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds/#{sound_id}",
+      { name: name, volume: volume, emoji_id: emoji_id, emoji_name: emoji_name }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
+  # https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound
+  def delete_soundboard_sound(token, server_id, sound_id, reason = nil)
+    Discordrb::API.request(
+      :guilds_sid_sounds_sid,
+      server_id,
+      :delete,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds/#{sound_id}",
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
 end

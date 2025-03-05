@@ -231,6 +231,11 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
+  # @param sound_id [String, Integer]
+  def soundboard_sound(sound_id)
+    "#{cdn_url}/soundboard-sounds/#{sound_id}"
+  end
+
   # Login to the server
   def login(email, password)
     request(

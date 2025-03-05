@@ -61,6 +61,11 @@ module Discordrb
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
 
+    # Soundboard sounds in this server.
+    # @return [Hash<Integer => Sound>] Hash of soundboard sounds by iD.
+    attr_reader :soundboard_sounds
+    alias_method :sounds, :soundboard_sounds
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -866,6 +871,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_soundboard_sounds(new_data['soundboard_sounds']) if new_data['soundboard_sounds']
     end
 
     # Adds a channel to this server's cache
@@ -981,6 +987,18 @@ module Discordrb
 
       voice_states.each do |element|
         update_voice_state(element)
+      end
+    end
+
+    def process_soundboard_sounds(sounds)
+      @soundboard_sounds_by_id = {}
+      @soundboard_sounds = {}
+
+      return unless sounds
+
+      sounds.each do |element|
+        sound = Sound.new(element, @bot, self)
+        @soundboard_sounds[sound.id] = sound
       end
     end
   end
