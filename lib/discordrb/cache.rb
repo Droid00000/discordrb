@@ -259,11 +259,11 @@ module Discordrb
     end
 
     # Request all the soundboard sounds for an array of servers.
-    # @param servers [Array<Server, Integer>] Servers of their IDs you want to request sounds for.
+    # @param servers [Array<Server, Integer>] The `Servers` or server ID's for which soundboard sounds should be requested.
     def request_soundboard_sounds(servers)
-      servers = [servers].flatten.map(&:resolve_id)
+      servers = [*servers].map(&:resolve_id)
 
-      @gateway.send_request_soundboard_sounds(servers)
+      @gateway.send_request_sounds(servers)
     end
   end
 end

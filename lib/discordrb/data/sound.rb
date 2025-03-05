@@ -52,9 +52,11 @@ module Discordrb
     def emoji=(emoji)
       case emoji
       when Integer, String
-        emoji.to_i.positive? ? update_data(emoji_id: emoji.to_i) : update_data(emoji_name: emoji.to_s)
+        emoji.to_i.positive? ? update_data(emoji_id: emoji) : update_data(emoji_name: emoji)
+      when Reaction, Emoji
+        emoji.id.nil? ? update_data(emoji_name: emoji.id) : update_data(emoji_id: emoji.id)
       else
-        emoji.id.nil? ? update_data(emoji_name: emoji) : update_data(emoji_id: emoji)
+        @emoji.is_a?(String) ? update_data(emoji_name: emoji) : update_data(emoji_id: emoji)
       end
     end
 

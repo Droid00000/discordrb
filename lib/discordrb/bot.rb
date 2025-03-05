@@ -1198,7 +1198,7 @@ module Discordrb
     # Internal handler for GUIDL_SOUNDBOARD_SOUND_UPDATE
     def update_guild_soundboard_sound(data)
       server = @servers[data['guild_id'].to_i]
-      server.soundboard_sounds[data['sound_id'].to_i].update_from(data)
+      server.soundboard_sounds[data['sound_id'].to_i].update_sound_data(data)
     end
 
     # Internal handler for MESSAGE_CREATE

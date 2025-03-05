@@ -62,7 +62,7 @@ module Discordrb
     attr_reader :boost_level
 
     # Soundboard sounds in this server.
-    # @return [Hash<Integer => Sound>] Hash of soundboard sounds by iD.
+    # @return [Hash<Integer => Sound>] Hash of soundboard sounds by ID.
     attr_reader :soundboard_sounds
     alias_method :sounds, :soundboard_sounds
 
