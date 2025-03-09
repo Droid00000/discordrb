@@ -57,6 +57,9 @@ module Discordrb
     # @return [Array<ActionRow>]
     attr_reader :components
 
+    # @return [Integer]
+    attr_reader :context
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -76,6 +79,7 @@ module Discordrb
               end
       @token = data['token']
       @version = data['version']
+      @context = data['context']
       @components = @data['components']&.map { |component| Components.from_data(component, @bot) }&.compact || []
     end
 
