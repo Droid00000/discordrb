@@ -43,12 +43,14 @@ class Discordrb::Webhooks::View
   # and dropdowns have a weight of 5.
   class RowBuilder
     # @!visibility private
-    def initialize
+    def initialize(id = nil)
+      @id = id
       @components = []
     end
 
     # Add a button to this action row.
     # @param style [Symbol, Integer] The button's style type. See {BUTTON_STYLES}
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param label [String, nil] The text label for the button. Either a label or emoji must be provided.
     # @param emoji [#to_h, String, Integer] An emoji ID, or unicode emoji to attach to the button. Can also be a object
     #   that responds to `#to_h` which returns a hash in the format of `{ id: Integer, name: string }`.
@@ -56,7 +58,7 @@ class Discordrb::Webhooks::View
     #   There is a limit of 100 characters to each custom_id.
     # @param disabled [true, false] Whether this button is disabled and shown as greyed out.
     # @param url [String, nil] The URL, when using a link style button.
-    def button(style:, label: nil, emoji: nil, custom_id: nil, disabled: nil, url: nil)
+    def button(style:, id: nil, label: nil, emoji: nil, custom_id: nil, disabled: nil, url: nil)
       style = BUTTON_STYLES[style] || style
 
       emoji = case emoji
@@ -66,20 +68,21 @@ class Discordrb::Webhooks::View
                 emoji&.to_h
               end
 
-      @components << { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
+      @components << { type: COMPONENT_TYPES[:button], id: id, label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }.compact
     end
 
     # Add a select string to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
     #   There is a limit of 100 characters to each custom_id.
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param options [Array<Hash>] Options that can be selected in this menu. Can also be provided via the yielded builder.
     # @param placeholder [String, nil] Default text to show when no entries are selected.
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
     # @yieldparam builder [SelectMenuBuilder]
-    def string_select(custom_id:, options: [], placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
-      builder = SelectMenuBuilder.new(custom_id, options, placeholder, min_values, max_values, disabled, select_type: :string_select)
+    def string_select(custom_id:, options: [], id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
+      builder = SelectMenuBuilder.new(custom_id, id, options, placeholder, min_values, max_values, disabled, select_type: :string_select)
 
       yield builder if block_given?
 
@@ -91,57 +94,62 @@ class Discordrb::Webhooks::View
     # Add a select user to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
     #   There is a limit of 100 characters to each custom_id.
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param placeholder [String, nil] Default text to show when no entries are selected.
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    def user_select(custom_id:, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
-      @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :user_select).to_h
+    def user_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
+      @components << SelectMenuBuilder.new(custom_id, id, [], placeholder, min_values, max_values, disabled, select_type: :user_select).to_h
     end
 
     # Add a select role to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
     #   There is a limit of 100 characters to each custom_id.
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param placeholder [String, nil] Default text to show when no entries are selected.
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    def role_select(custom_id:, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
-      @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :role_select).to_h
+    def role_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
+      @components << SelectMenuBuilder.new(custom_id, id, [], placeholder, min_values, max_values, disabled, select_type: :role_select).to_h
     end
 
     # Add a select mentionable to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
     #   There is a limit of 100 characters to each custom_id.
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param placeholder [String, nil] Default text to show when no entries are selected.
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    def mentionable_select(custom_id:, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
-      @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :mentionable_select).to_h
+    def mentionable_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
+      @components << SelectMenuBuilder.new(custom_id, id, [], placeholder, min_values, max_values, disabled, select_type: :mentionable_select).to_h
     end
 
     # Add a select channel to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
     #   There is a limit of 100 characters to each custom_id.
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param placeholder [String, nil] Default text to show when no entries are selected.
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    def channel_select(custom_id:, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
-      @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :channel_select).to_h
+    def channel_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil)
+      @components << SelectMenuBuilder.new(custom_id, id, [], placeholder, min_values, max_values, disabled, select_type: :channel_select).to_h
     end
 
     # @!visibility private
     def to_h
-      { type: COMPONENT_TYPES[:action_row], components: @components }
+      { id: @id, type: COMPONENT_TYPES[:action_row], components: @components }.compact
     end
   end
 
   # A builder to assist in adding options to select menus.
   class SelectMenuBuilder
     # @!visibility hidden
-    def initialize(custom_id, options = [], placeholder = nil, min_values = nil, max_values = nil, disabled = nil, select_type: :string_select)
+    def initialize(custom_id, id = nil, options = [], placeholder = nil, min_values = nil, max_values = nil, disabled = nil, select_type: :string_select)
+      @id = id
       @custom_id = custom_id
       @options = options
       @placeholder = placeholder
@@ -173,13 +181,14 @@ class Discordrb::Webhooks::View
     def to_h
       {
         type: COMPONENT_TYPES[@select_type],
+        id: @id,
         options: @options,
         placeholder: @placeholder,
         min_values: @min_values,
         max_values: @max_values,
         custom_id: @custom_id,
         disabled: @disabled
-      }
+      }.compact
     end
   end
 
@@ -333,6 +342,7 @@ class Discordrb::Webhooks::View
 
     # Set the accessory to a button for this media gallery collection.
     # @param style [Symbol, Integer] The button's style type. See {BUTTON_STYLES}
+    # @param id [Integer] Integer ID for this component. This is not to be confused with custom_id.
     # @param label [String, nil] The text label for the button. Either a label or emoji must be provided.
     # @param emoji [#to_h, String, Integer] An emoji ID, or unicode emoji to attach to the button. Can also be a object
     # that responds to `#to_h` which returns a hash in the format of `{ id: Integer, name: string }`.
@@ -340,7 +350,7 @@ class Discordrb::Webhooks::View
     # There is a limit of 100 characters to each custom_id.
     # @param disabled [true, false] Whether this button is disabled and shown as greyed out.
     # @param url [String, nil] The URL, when using a link style button.
-    def button(style:, label: nil, emoji: nil, custom_id: nil, disabled: nil, url: nil)
+    def button(style:, id: nil, label: nil, emoji: nil, custom_id: nil, disabled: nil, url: nil)
       style = BUTTON_STYLES[style] || style
 
       emoji = case emoji
@@ -350,7 +360,7 @@ class Discordrb::Webhooks::View
                 emoji&.to_h
               end
 
-      @accessory = { type: COMPONENT_TYPES[:button], label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }
+      @accessory = { type: COMPONENT_TYPES[:button], id: id, label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }.compact
     end
 
     # @!visibility hidden
@@ -456,9 +466,10 @@ class Discordrb::Webhooks::View
     end
 
     # Add an action row to this container, this allows for some interesting nesting.
+    # @param id [Integer] ID of this action row.
     # @yieldparam builder [RowBuilder] The row builder object is yielded to allow for addition of components.
-    def row
-      builder = RowBuilder.new
+    def row(id: nil)
+      builder = RowBuilder.new(id)
 
       yield builder if block_given?
 
@@ -507,9 +518,10 @@ class Discordrb::Webhooks::View
   end
 
   # Add a new ActionRow to the view
+  # @param id [Integer] ID of this action row.
   # @yieldparam [RowBuilder]
-  def row
-    new_row = RowBuilder.new
+  def row(id: nil)
+    new_row = RowBuilder.new(id)
 
     yield new_row
 

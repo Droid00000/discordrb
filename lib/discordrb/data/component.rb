@@ -39,12 +39,16 @@ module Discordrb
     class ActionRow
       include Enumerable
 
+      # @return [Integer]
+      attr_reader :id
+
       # @return [Array<Button>]
       attr_reader :components
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @components = data['components'].map { |component_data| Components.from_data(component_data, @bot) }
       end
 
@@ -73,6 +77,9 @@ module Discordrb
 
     # An interactable button component.
     class Button
+      # @return [Integer]
+      attr_reader :id
+
       # @return [String]
       attr_reader :label
 
@@ -95,6 +102,7 @@ module Discordrb
       def initialize(data, bot)
         @bot = bot
 
+        @id = data['id']
         @label = data['label']
         @style = data['style']
         @custom_id = data['custom_id']
@@ -155,6 +163,9 @@ module Discordrb
         end
       end
 
+      # @return [Integer]
+      attr_reader :id
+
       # @return [String]
       attr_reader :custom_id
 
@@ -174,6 +185,7 @@ module Discordrb
       def initialize(data, bot)
         @bot = bot
 
+        @id = data['id']
         @max_values = data['max_values']
         @min_values = data['min_values']
         @placeholder = data['placeholder']
@@ -189,6 +201,9 @@ module Discordrb
       SHORT = 1
       # Multi-line text input
       PARAGRAPH = 2
+
+      # @return [Integer]
+      attr_reader :id
 
       # @return [String]
       attr_reader :custom_id
@@ -217,6 +232,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
+        @id = data['id']
         @style = data['style'] == SHORT ? :short : :paragraph
         @label = data['label']
         @min_length = data['min_length']
@@ -293,11 +309,14 @@ module Discordrb
       # @return [Integer, nil] The height of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :height
 
-      # @return [Symbol] The media's loading state.
+      # @return [Symbol, nil] The media's loading state.
       attr_reader :loading_state
 
-      # @return [String, nil] The attachment's media type.
+      # @return [String, nil] The media's content type.
       attr_reader :content_type
+
+      # @return [Integer, nil] Flags for this media.
+      attr_reader :flags
 
       # @!visibility private
       def initialize(data, bot)
@@ -306,6 +325,7 @@ module Discordrb
         @proxy_url = data['proxy_url']
         @width = data['width']
         @height = data['height']
+        @flags = data['flags']
         @content_type = data['content_type']
         @loading_state = LOADING_STATES.key(data['loading_state'])
       end
