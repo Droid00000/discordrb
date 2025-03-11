@@ -614,7 +614,8 @@ module Discordrb::API::Server
       "#{Discordrb::API.api_base}/guilds/#{server_id}/soundboard-sounds/#{sound_id}",
       { name: name, volume: volume, emoji_id: emoji_id, emoji_name: emoji_name }.to_json,
       content_type: :json,
-      Authorization: token
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
     )
   end
 

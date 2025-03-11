@@ -601,6 +601,27 @@ module Discordrb
       response.map { |mem| Member.new(mem, self, @bot) }
     end
 
+    # Create a soundboard sound on this server.
+    # @param name [String] 2-32 character name of this soundboard sound.
+    # @param sound [String, #read] A base64 encoded string with the sound data, or an object that responds to `#read`.
+    # @param volume [Integer] Integer between 1 and 2, representing the volume of the sound.
+    # @param emoji [String, Integer, Emoji] Unicode emoji, or custom emoji of this sound.
+    # @param reason [String, nil] The reason for creating this emoji.
+    def create_soundboard_sound(name:, sound:, volume: nil, emoji: nil, reason: nil)
+      sound = sound.respond_to?(:read) ? encode_file(sound) : sound
+
+      emoji = case emoji
+              when Integer, String
+                emoji.to_i.zero? ? e_name = emoji : e_id = emoji
+              when respond_to?(:to_h)
+                emoji.id ? e_id = emoji.id : e_name = emoji
+              end
+
+      data = API::Server.create_soundboard_sound(@bot.token, @id, name, sound, volume, e_id, e_name, reason)
+      sound = Sound.new(JSON.parse(data), @bot, self)
+      @soundboard_sounds[sound.id] = sound
+    end
+
     # Retrieve banned users from this server.
     # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
     # @param before_id [Integer] Consider only users before given user id.
@@ -991,7 +1012,6 @@ module Discordrb
     end
 
     def process_soundboard_sounds(sounds)
-      @soundboard_sounds_by_id = {}
       @soundboard_sounds = {}
 
       return unless sounds

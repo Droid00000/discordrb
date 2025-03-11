@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # A soundboard sound.
+  # A soundboard sound that can be played in a voice channel.
   class Sound
     include IDObject
 
@@ -10,9 +10,6 @@ module Discordrb
 
     # @return [Integer] The volume of this sound. Ranges between 0-1.
     attr_reader :volume
-
-    # @return [Integer, String] The ID of the custom emoji of this sound, or the unicode emoji.
-    attr_reader :emoji
 
     # @return [Server, nil] The server of this sound, or nil if this sound isn't from a server.
     attr_reader :server
@@ -28,11 +25,13 @@ module Discordrb
     def initialize(data, bot, server = nil)
       @bot = bot
       @server = server
+      @name = data['name']
       @id = data['sound_id']
       @volume = data['volume']
       @available = data['available']
-      @user = bot.ensure_user(data['user'])
-      @emoji = data['emoji_id']&.to_i || data['emoji_name']
+      @emoji_name = data['emoji_name']
+      @emoji_id = data['emoji_id']&.to_i
+      @user = data['user'] ? bot.ensure_user(data['user']) : nil
     end
 
     # Set the name of this sound.
@@ -47,17 +46,24 @@ module Discordrb
       update_data(volume: volume)
     end
 
+    # @return [Integer, String, Emoji, nil] Unicode emoji, emoji object, or ID if the emoji's server is unknown.
+    def emoji
+      @emoji_name || @bot.emoji(@emoji_id) || @emoji_id
+    end
+
     # Set the emoji of this sound.
     # @param [Integer, String, Emoji, nil]
     def emoji=(emoji)
-      case emoji
-      when Integer, String
-        emoji.to_i.positive? ? update_data(emoji_id: emoji) : update_data(emoji_name: emoji)
-      when Reaction, Emoji
-        emoji.id.nil? ? update_data(emoji_name: emoji.id) : update_data(emoji_id: emoji.id)
-      else
-        @emoji.is_a?(String) ? update_data(emoji_name: emoji) : update_data(emoji_id: emoji)
-      end
+      emoji = case emoji
+              when Integer, String
+                emoji.to_i.zero? ? e_name = emoji : e_id = emoji
+              when respond_to?(:to_h)
+                emoji.id ? e_id = emoji.id : e_name = emoji
+              else
+                @emoji_id ? e_id = emoji : e_name = emoji
+              end
+
+      update_data(emoji_name: e_name, emoji_id: e_id)
     end
 
     # URL of this soundboard sound.
@@ -75,18 +81,20 @@ module Discordrb
 
     # @!visibility hidden
     def update_sound_data(data)
-      @name = data['name'] if data['name']
-      @volume = data['volume'] if data['volume']
-      @emoji data['emoji_id'] || data['emoji_name'] if data['emoji_id'] || data['emoji_name']
+      @name = data['name'] || @name
+      @volume = data['volume'] || @volume
+      @emoji_id = data['emoji_id'] if data.key?('emoji_id')
+      @emoji_name = data['emoji_name'] if data.key?('emoji_name')
     end
 
     # @!visibility hidden
-    def update_data(new_data)
-      update_sound_data(JSON.parse(API::Server.update_soundboard_sound(@bot.token, @server.id, @id,
-                                                                       new_data[:name] || @name,
-                                                                       new_data[:volume] || @volume,
-                                                                       new_data[:emoji_id] || @emoji,
-                                                                       new_data[:emoji_name] || @emoji)))
+    def update_data(data)
+      update_sound_data(JSON.parse(API::Server.update_soundboard_sound(@bot.token,
+                                                                       @server.id, @id,
+                                                                       data[:name] || @name,
+                                                                       data[:volume] || @volume,
+                                                                       data.key?(:emoji_id) ? data[:emoji_id] : @emoji_id,
+                                                                       data.key?(:emoji_name) ? data[:emoji_name] : @emoji_name)))
     end
   end
 end
