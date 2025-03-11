@@ -87,8 +87,8 @@ module Discordrb
     HEARTBEAT_ACK = 11
 
     # **Sent**: This opcode identifies packets used to retrieve soundboard sounds from an array of servers.
-    # There is a REST endpoint available for this as well, but it only allows the retrival of a single servers
-    # sounds. (Sending this is never necessary for a gateway client to behave correctly)
+    # There is a similar REST endpoint available as well, if you only want to retrieve sounds from a single
+    # server. (Sending this is never necessary for a gateway client to behave correctly)
     REQUEST_SOUNDS = 31
   end
 

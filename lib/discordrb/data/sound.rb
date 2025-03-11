@@ -81,8 +81,10 @@ module Discordrb
 
     # @!visibility hidden
     def update_sound_data(data)
-      @name = data['name'] || @name
-      @volume = data['volume'] || @volume
+      data.transform_keys(&:to_s)
+      
+      @name = data['name']
+      @volume = data['volume']
       @emoji_id = data['emoji_id'] if data.key?('emoji_id')
       @emoji_name = data['emoji_name'] if data.key?('emoji_name')
     end
