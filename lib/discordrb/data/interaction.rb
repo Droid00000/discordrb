@@ -484,7 +484,7 @@ module Discordrb
       # @param min_length [Integer] A minimum length for option value.
       # @param max_length [Integer] A maximum length for option value.
       # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
-      # @param autocomplete [true, false] Whether this option can dynamically show options.
+      # @param autocomplete [true, false] Whether this option can dynamically show choices.
       # @return (see #option)
       def string(name, description, required: nil, min_length: nil, max_length: nil, choices: nil, autocomplete: nil)
         option(TYPES[:string], name, description,
@@ -497,7 +497,7 @@ module Discordrb
       # @param min_value [Integer] A minimum value for option.
       # @param max_value [Integer] A maximum value for option.
       # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
-      # @param autocomplete [true, false] Whether this option can dynamically show options.
+      # @param autocomplete [true, false] Whether this option can dynamically show choices.
       # @return (see #option)
       def integer(name, description, required: nil, min_value: nil, max_value: nil, choices: nil, autocomplete: nil)
         option(TYPES[:integer], name, description,
@@ -551,7 +551,7 @@ module Discordrb
       # @param required [true, false] Whether this option must be provided.
       # @param min_value [Float] A minimum value for option.
       # @param max_value [Float] A maximum value for option.
-      # @param autocomplete [true, false] Whether this option can dynamically show options.
+      # @param autocomplete [true, false] Whether this option can dynamically show choices.
       # @return (see #option)
       def number(name, description, required: nil, min_value: nil, max_value: nil, choices: nil, autocomplete: nil)
         option(TYPES[:number], name, description,
