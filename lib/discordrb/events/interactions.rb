@@ -509,15 +509,18 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       super
-      
+
       @choices = {}
 
       options = data['data']['options']
 
-      options = if options[0]['type'] == 2
-                  options[0]['options'][0]['options']
-                elsif == 1
+      options = case options[0]['type']
+                when 1
                   options[0]['options']
+                when 2
+                  options[0]['options'][0]['options']
+                else
+                  options
                 end
 
       @focused = options.find { |opt| opt.key?('focused') }['name']
