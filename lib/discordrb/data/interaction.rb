@@ -269,7 +269,7 @@ module Discordrb
     # @param choices [Array<Hash>, Hash] Array of autocomplete choices to show the user.
     def show_autocomplete_choices(choices)
       choices = choices.map { |name, value| { name: name, value: value } } unless choices.is_a?(Array)
-      Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete], nil, nil, nil, nil, nil, nil, nil, nil, choices)
+      Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete], nil, nil, nil, nil, nil, nil, nil, choices)
       nil
     end
 

@@ -642,8 +642,8 @@ module Discordrb
     # @option attributes [String, Symbol] :subcommand a subcommand name to match against. 
     # @option attributes [String, Symbol] :subcommand_group a subcommand group to match against. 
     # @option attributes [String, Regexp] :command_name A command name to match against.
-    def autocomplete(name, attributes = {}, &block)
-      attributes[:name] = name
+    def autocomplete(name = nil, attributes = {}, &block)
+      attributes[:name] = name unless name.nil?
       register_event(AutocompleteEvent, attributes, block)
     end
 
