@@ -635,6 +635,18 @@ module Discordrb
       register_event(ChannelSelectEvent, attributes, block)
     end
 
+    # This **event** is raised whenever an autocomplete interaction is created.
+    # @param name [String, Symbol] An option name to match against.
+    # @param attributes [Hash] The event's attributes.
+    # @option command_id [String, Integer] :command_id a command ID to match against.
+    # @option attributes [String, Symbol] :subcommand a subcommand name to match against. 
+    # @option attributes [String, Symbol] :subcommand_group a subcommand group to match against. 
+    # @option attributes [String, Regexp] :command_name A command name to match against.
+    def autocomplete(name, attributes = {}, &block)
+      attributes[:name] = name
+      register_event(AutocompleteEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.
