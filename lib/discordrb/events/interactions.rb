@@ -483,7 +483,7 @@ module Discordrb::Events
   end
 
   # Event handler for an autocomplete option choices.
-  class AutocompleteEventHandler < ComponentEventHandler
+  class AutocompleteEventHandler < InteractionCreateEventHandler
     def matches?(event)
       return false unless super
       return false unless event.is_a?(AutocompleteEvent)
@@ -492,7 +492,7 @@ module Discordrb::Events
         matches_all(@attributes[:name], event.focused) { |a, e| a&.to_s == e },
         matches_all(@attributes[:command_id], event.command_id) { |a, e| a&.to_i == e},
         matches_all(@attributes[:subcommand], event.subcommand) { |a, e| a&.to_sym == e },
-        matches_all(@attributes[:command_name], event.command_name) { |a, e| a.to_sym == e },
+        matches_all(@attributes[:command_name], event.command_name) { |a, e| a&.to_sym == e },
         matches_all(@attributes[:subcommand_group], event.subcommand_group) { |a, e| a&.to_sym == e }
       ].reduce(&:&)
     end
