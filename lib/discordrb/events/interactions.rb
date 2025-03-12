@@ -498,7 +498,7 @@ module Discordrb::Events
     end
   end
 
-  # An event for an autocoplete option choice.
+  # An event for an autocomplete option choice.
   class AutocompleteEvent < ApplicationCommandEvent
     # @return [String] Name of the currently focused option.
     attr_reader :focused
@@ -519,6 +519,8 @@ module Discordrb::Events
                   options[0]['options']
                 when 2
                   options[0]['options'][0]['options']
+                else
+                  options
                 end
 
       @focused = options.find { |opt| opt.key?('focused') }['name']
