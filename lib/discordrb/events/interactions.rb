@@ -546,6 +546,8 @@ module Discordrb::Events
       @focused = options.find { |opt| opt.key?("focused") }["name"]
 
       @options = options.to_h { |opt| [opt["name"], opt["options"] || opt["value"]] }
+
+      puts @focused
     end
 
     # Respond to this interaction with autocomplete choices.
