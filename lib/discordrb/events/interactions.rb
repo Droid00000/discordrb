@@ -490,7 +490,7 @@ module Discordrb::Events
 
       [
         matches_all(@attributes[:name], event.focused) { |a, e| a&.to_s == e },
-        matches_all(@attributes[:command_id], event.command_id) { |a, e| a&.to_i == e},
+        matches_all(@attributes[:command_id], event.command_id) { |a, e| a&.to_i == e },
         matches_all(@attributes[:subcommand], event.subcommand) { |a, e| a&.to_sym == e },
         matches_all(@attributes[:command_name], event.command_name) { |a, e| a&.to_sym == e },
         matches_all(@attributes[:subcommand_group], event.subcommand_group) { |a, e| a&.to_sym == e }
@@ -503,7 +503,7 @@ module Discordrb::Events
     # @return [String] Name of the currently focused option.
     attr_reader :focused
 
-    # @return [Hash] Currently filled out options.
+    # @return [Hash] Arguments provided to the command, mapped as `Name => Value`.
     attr_reader :options
 
     # @return [Symbol] The name of the command.
@@ -543,11 +543,9 @@ module Discordrb::Events
         options = options['options']
       end
 
-      @focused = options.find { |opt| opt.key?("focused") }["name"]
+      @focused = options.find { |opt| opt.key?('focused') }['name']
 
-      @options = options.to_h { |opt| [opt["name"], opt["options"] || opt["value"]] }
-
-      puts @focused
+      @options = options.to_h { |opt| [opt['name'], opt['options'] || opt['value']] }
     end
 
     # Respond to this interaction with autocomplete choices.
