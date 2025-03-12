@@ -499,24 +499,9 @@ module Discordrb::Events
   end
 
   # An event for an autocoplete option choice.
-  class AutocompleteEvent < InteractionCreateEvent
+  class AutocompleteEvent < ApplicationCommandEvent
     # @return [String] Name of the currently focused option.
     attr_reader :focused
-
-    # @return [Hash] Arguments provided to the command, mapped as `Name => Value`.
-    attr_reader :options
-
-    # @return [Symbol] The name of the command.
-    attr_reader :command_name
-
-    # @return [Integer] The ID of the command.
-    attr_reader :command_id
-
-    # @return [Symbol, nil] The name of the subcommand group relevant to this event.
-    attr_reader :subcommand_group
-
-    # @return [Symbol, nil] The name of the subcommand relevant to this event.
-    attr_reader :subcommand
 
     # @return [Hash] An empty hash that can be used to return choices by adding K/V pairs.
     attr_reader :choices
@@ -527,25 +512,13 @@ module Discordrb::Events
 
       @choices = {}
 
-      options = data['data']['options']
-      @command_id = data['data']['id']
-      @command_name = data['data']['name'].to_sym
-
-      case options[0]['type']
-      when 2
-        options = options[0]
-        @subcommand_group = options['name'].to_sym
-        @subcommand = options['options'][0]['name'].to_sym
-        options = options['options'][0]['options']
-      when 1
-        options = options[0]
-        @subcommand = options['name'].to_sym
-        options = options['options']
-      end
+      options = if data['data']['options'][0]['type'] == 2
+                  options[0]['options'][0]['options']
+                else
+                  options[0]['options']
+                end
 
       @focused = options.find { |opt| opt.key?('focused') }['name']
-
-      @options = options.to_h { |opt| [opt['name'], opt['options'] || opt['value']] }
     end
 
     # Respond to this interaction with autocomplete choices.
