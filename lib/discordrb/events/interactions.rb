@@ -528,8 +528,8 @@ module Discordrb::Events
       @choices = {}
 
       options = data['data']['options']
-      @command_id = command_data['id']
-      @command_name = command_data['name'].to_sym
+      @command_id = data['data']['id']
+      @command_name = data['data']['name'].to_sym
 
       case options[0]['type']
       when 2
