@@ -519,8 +519,6 @@ module Discordrb::Events
                   options[0]['options']
                 when 2
                   options[0]['options'][0]['options']
-                else
-                  options
                 end
 
       @focused = options.find { |opt| opt.key?('focused') }['name']
