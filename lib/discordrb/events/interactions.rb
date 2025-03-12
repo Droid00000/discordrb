@@ -509,12 +509,14 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       super
-
+      
       @choices = {}
 
-      options = if data['data']['options'][0]['type'] == 2
+      options = data['data']['options']
+
+      options = if options[0]['type'] == 2
                   options[0]['options'][0]['options']
-                else
+                elsif == 1
                   options[0]['options']
                 end
 
