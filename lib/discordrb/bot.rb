@@ -1603,7 +1603,7 @@ module Discordrb
 
           event = ModalSubmitEvent.new(data, self)
           raise_event(event)
-        when INTERACTION::TYPES[:autocomplete]
+        when Interaction::TYPES[:autocomplete]
 
           event = AutocompleteEvent.new(data, self)
           raise_event(event)
