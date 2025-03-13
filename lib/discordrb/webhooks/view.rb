@@ -598,8 +598,8 @@ class Discordrb::Webhooks::View
   # hexadecimal, R/G/B decimal, or nil if the container should have no color.
   # @param spoiler [true, false] Whether this container should be spoilered. Defaults to false.
   # @yieldparam builder [ContainerBuilder] The container object is yielded to allow for modification of attributes.
-  def container(id: nil, components: [], colour: nil, spoiler: false)
-    builder = ContainerBuilder.new(id, components, colour, spoiler)
+  def container(id: nil, components: [], colour: nil, color: nil, spoiler: false)
+    builder = ContainerBuilder.new(id, components, colour || color, spoiler)
 
     yield builder if block_given?
 
