@@ -569,4 +569,3 @@ module Discordrb::API::Server
       Authorization: token
     )
   end
-end

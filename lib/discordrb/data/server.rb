@@ -61,6 +61,10 @@ module Discordrb
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
 
+    # @return [Hash<Integer => Sticker>] a hash of all the stickers available on this server.
+    attr_reader :stickers
+    alias_method :sticker, :stickers
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -68,6 +72,7 @@ module Discordrb
       @id = data['id'].to_i
       @members = {}
       @voice_states = {}
+      @stickers = {}
       @emoji = {}
 
       process_channels(data['channels'])
@@ -805,6 +810,25 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
+    # Create a new sticker in this server.
+    # @param file [File] PNG, APNG, GIF, or Lottie JSON file, max 512 KB.
+    # @param name [String] 2-30 character name of the sticker to create.
+    # @param description [String, nil] 2-100 character description of the sticker.
+    # @param tags [Array<String>, String] Suggestion tags for the sticker (max 200 characters)
+    # @param reason [String, nil] The reason for creating this sticker.
+    # @return [Sticker]The newly created sticker.
+    def create_sticker(file:, name:, tags:, description: nil, reason: nil)
+      raise ArgumentError, "File must be a file-like object!" unless file.is_a?(File)
+
+      description = "" if description.nil?
+
+      tags = tags.join(", ") if tags.is_a?(Array)
+
+      response = API::Sticker.add_sticker(@bot.token, @id, file, name, description, tags, reason)
+      sticker = Sticker.new(JSON.parse(response), @bot, self)
+      @stickers[sticker.id] = sticker
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
@@ -866,6 +890,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_stickers(new_data['stickers']) if new_data['stickers']
     end
 
     # Adds a channel to this server's cache
@@ -981,6 +1006,15 @@ module Discordrb
 
       voice_states.each do |element|
         update_voice_state(element)
+      end
+    end
+
+    def process_stickers(stickers)
+      return unless stickers
+
+      stickers.each do |element|
+        sticker = Sticker.new(element, @bot, self)
+        @stickers[sticker.id] = sticker
       end
     end
   end

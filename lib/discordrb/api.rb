@@ -223,6 +223,11 @@ module Discordrb::API
     "#{cdn_url}/app-assets/#{application_id}/achievements/#{achievement_id}/icons/#{icon_hash}.#{format}"
   end
 
+  # Make a sticker file URL from sticker ID
+  def sticker_file_url(sticker_id, format)
+    "#{cdn_url}/stickers/#{sticker_id}.#{format}"
+  end
+
   # @param role_id [String, Integer]
   # @param icon_hash [String]
   # @param format ['webp', 'png', 'jpeg']

@@ -257,5 +257,29 @@ module Discordrb
 
       users
     end
+
+    # Gets a sticker by its ID.
+    # @param id [Integer, String] The sticker ID that should be resolved.
+    # @param server [Server, nil] An optional server for which to search the sticker for.
+    # @return [Sticker, nil] The sticker identified by the ID, or `nil` if it couldn't be found.
+    def sticker(id, server = nil)
+      id = id.resolve_id
+
+      stickers = @servers.values.map(&:stickers).reduce(&:merge)
+
+      return @stickers[id] if @stickers[id]
+
+      LOGGER.out("Resolving sticker: #{id}")
+
+      begin
+        response = API::Sticker.sticker(token, id)
+      rescue Discordrb::Errors::UnknownUser
+        return nil
+      end
+
+      sticker = Sticker.new(JSON.parse(response), self, server)
+      sticker.server.stickers[sticker.id] = sticker
+      sticker
+    end
   end
 end

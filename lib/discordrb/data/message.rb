@@ -167,6 +167,8 @@ module Discordrb
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
+
+      @stickers = data['sticker_items'] || data['stickers'] || []
     end
 
     # Replies to this message with the specified content.
@@ -286,11 +288,30 @@ module Discordrb
       @emoji = @bot.parse_mentions(@content).select { |el| el.is_a? Discordrb::Emoji }
     end
 
+    # @return [Array<Sticker>, nil] the stickers that were used in this message.
+    def sticker
+      return nil if @stickers.empty?
+
+      return @stickers if @stickers.instance_of?(Sticker)
+
+      @stickers = @stickers.map { |sticker| @bot.sticker(sticker['id']) }
+    end
+
+    alias_method :stickers, :sticker
+
     # Check if any emoji were used in this message.
     # @return [true, false] whether or not any emoji were used
     def emoji?
       emoji&.empty?
     end
+
+    # Check if any stickers were used in this message.
+    # @return [true, false] Whether or not any stickers were used.
+    def sticker?
+      @sticker.any?
+    end
+
+    alias_method :stickers?, :sticker
 
     # Check if any reactions were used in this message.
     # @return [true, false] whether or not this message has reactions
