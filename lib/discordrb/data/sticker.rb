@@ -41,9 +41,6 @@ module Discordrb
     alias_method :usable?, :usable
     alias_method :available?, :usable
 
-    # @return [Server, Integer, nil] The server this sticker originates from.
-    attr_reader :server
-
     # @return [User, nil] The user that uploaded this sticker, or nil.
     attr_reader :creator
 
