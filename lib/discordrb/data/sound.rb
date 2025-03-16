@@ -79,6 +79,15 @@ module Discordrb
       @server.soundboard_sounds.delete(@id)
     end
 
+    # ID based comparison
+    def ==(other)
+      return false unless other.is_a?(Sound)
+      
+      Discordrb.id_compare(@id, other)
+    end
+
+    alias_method :eql?, :==
+
     # @!visibility hidden
     def update_sound_data(data)
       data.transform_keys(&:to_s)
