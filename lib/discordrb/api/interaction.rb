@@ -9,6 +9,8 @@ module Discordrb::API::Interaction
   def create_interaction_response(interaction_token, interaction_id, type, content = nil, tts = nil, embeds = nil, allowed_mentions = nil, flags = nil, components = nil, attachments = nil, choices = nil)
     data = { tts: tts, content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, components: components, choices: choices }.compact
 
+    print("#{data}\n")
+
         body = if attachments
              files = [*0...attachments.size].zip(attachments).to_h
              { **files, payload_json: { type: type, data: body }.to_json }
