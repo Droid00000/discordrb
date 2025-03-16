@@ -7,9 +7,9 @@ module Discordrb::API::Interaction
   # Respond to an interaction.
   # https://discord.com/developers/docs/interactions/slash-commands#create-interaction-response
   def create_interaction_response(interaction_token, interaction_id, type, content = nil, tts = nil, embeds = nil, allowed_mentions = nil, flags = nil, components = nil, attachments = nil)
-    body = { tts: tts, content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, components: components }.compact
+    data = { tts: tts, content: content, embeds: embeds, allowed_mentions: allowed_mentions, flags: flags, components: components }.compact
 
-    body = if attachments
+        body = if attachments
              files = [*0...attachments.size].zip(attachments).to_h
              { **files, payload_json: { type: type, data: body }.to_json }
            else

@@ -585,7 +585,7 @@ module Discordrb
 
     # Deletes a permission overwrite for this channel
     # @param target [Member, User, Role, Profile, Recipient, String, Integer] What permission overwrite to delete
-    #   @param reason [String] The reason the for the overwrite deletion.
+    # @param reason [String] The reason the for the overwrite deletion.
     def delete_overwrite(target, reason = nil)
       raise 'Tried deleting a overwrite for an invalid target' unless target.is_a?(Member) || target.is_a?(User) || target.is_a?(Role) || target.is_a?(Profile) || target.is_a?(Recipient) || target.respond_to?(:resolve_id)
 

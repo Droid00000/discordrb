@@ -73,6 +73,9 @@ module Discordrb
     # @return [Array<Component>] Interaction components for this message.
     attr_reader :components
 
+    # @return [Array<Hash>]
+    attr_reader :stickers
+ 
     # @return [Integer] flags set on the message.
     attr_reader :flags
 
@@ -164,6 +167,9 @@ module Discordrb
       @components = []
       @components = data['components'].map { |component_data| Components.from_data(component_data, @bot) } if data['components']
 
+
+      @stickers = data['stickers'] || data['sticker_items'] || []
+  
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil

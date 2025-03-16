@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'rest-client'
+require 'tempfile'
+require 'faraday'
 require 'zlib'
 
 require 'discordrb/events/message'
@@ -558,6 +560,7 @@ module Discordrb
       type = url ? 1 : activity_type
 
       activity_obj = activity || url ? { 'name' => activity, 'url' => url, 'type' => type } : nil
+
       @gateway.send_status_update(status, since, activity_obj, afk)
 
       # Update the status in the cache
@@ -833,7 +836,7 @@ module Discordrb
     #       end
     #     end
     #   end
-    def register_application_command(name, description, server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil)
+    def register_application_command(name, description, server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, integration_types: nil, name_localizations: nil, description_localizations: nil)
       type = ApplicationCommand::TYPES[type] || type
 
       builder = Interactions::OptionBuilder.new
@@ -841,9 +844,9 @@ module Discordrb
       yield(builder, permission_builder) if block_given?
 
       resp = if server_id
-               API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, name_localizations, description_localizations)
              else
-               API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, integration_types, name_localizations, description_localizations)
              end
       cmd = ApplicationCommand.new(JSON.parse(resp), self, server_id)
 
@@ -858,7 +861,7 @@ module Discordrb
 
     # @yieldparam [OptionBuilder]
     # @yieldparam [PermissionBuilder]
-    def edit_application_command(command_id, server_id: nil, name: nil, description: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil)
+    def edit_application_command(command_id, server_id: nil, name: nil, description: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, name_localizations: nil, description_localizations: nil)
       type = ApplicationCommand::TYPES[type] || type
 
       builder = Interactions::OptionBuilder.new
@@ -867,9 +870,9 @@ module Discordrb
       yield(builder, permission_builder) if block_given?
 
       resp = if server_id
-               API::Application.edit_guild_command(@token, profile.id, server_id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.edit_guild_command(@token, profile.id, server_id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, name_localizations, description_localizations)
              else
-               API::Application.edit_global_command(@token, profile.id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.edit_global_command(@token, profile.id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, name_localizations, description_localizations)
              end
       cmd = ApplicationCommand.new(JSON.parse(resp), self, server_id)
 
@@ -1452,6 +1455,11 @@ module Discordrb
 
         event = ChannelRecipientRemoveEvent.new(data, self)
         raise_event(event)
+
+      when :CHANNEL_PINS_UPDATE
+        event = ChannelPinsUpdateEvent.new(data, self)
+        raise_event(event)
+
       when :GUILD_MEMBER_ADD
         add_guild_member(data)
 

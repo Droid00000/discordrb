@@ -635,6 +635,15 @@ module Discordrb
       register_event(ChannelSelectEvent, attributes, block)
     end
 
+    # This **event** is raised whenever a message is pinned or unpinned.
+    # @param attributes [Hash] The event's attributes.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [ChannelPinsUpdateEvent] The event that was raised.
+    # @return [ChannelPinsUpdateEventHandler] The event handler that was registered.
+    def channel_pins_update(attributes = {}, &block)
+      register_event(ChannelPinsUpdateEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.
