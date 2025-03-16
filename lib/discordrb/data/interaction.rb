@@ -251,7 +251,7 @@ module Discordrb
 
     # Add support for autocomplete responses.
     def create_autocomplete_response(options)
-      Discordrb::API::Interaction.create_interaction_response(@token, @id, 8, nil, nil, nil, nil, nil, nil, options)
+      Discordrb::API::Interaction.create_interaction_response(@token, @id, 8, nil, nil, nil, nil, nil, nil, nil, options)
     end
 
     # @param message [String, Integer, InteractionMessage, Message] The message created by this interaction to be edited.
