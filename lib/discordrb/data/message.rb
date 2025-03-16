@@ -73,6 +73,9 @@ module Discordrb
     # @return [Array<Component>]
     attr_reader :components
 
+    # @return [Array<Hash>]
+    attr_reader :stickers
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -157,6 +160,8 @@ module Discordrb
 
       @components = []
       @components = data['components'].map { |component_data| Components.from_data(component_data, @bot) } if data['components']
+
+      @stickers = data['stickers'] || data['sticker_items'] || []
     end
 
     # Replies to this message with the specified content.
