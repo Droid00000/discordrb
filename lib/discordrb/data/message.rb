@@ -167,12 +167,13 @@ module Discordrb
       @components = []
       @components = data['components'].map { |component_data| Components.from_data(component_data, @bot) } if data['components']
 
-
       @stickers = data['stickers'] || data['sticker_items'] || []
   
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
+
+      @poll = data['poll']
     end
 
     # Replies to this message with the specified content.
