@@ -54,13 +54,13 @@ module Discordrb
     # @return [Hash] The interaction data.
     attr_reader :data
 
-    # @return [Array<ActionRow>]
+    # @return [Array<Component>] Components associated with this interaction.
     attr_reader :components
     
-    # @return [Symbol]
+    # @return [Symbol] Preferred locale of the user that initiated the interaction.
     attr_reader :locale
 
-    # @return [Symbol, nil]
+    # @return [Symbol, nil] Preferred locale of the server this interaction originates from.
     attr_reader :server_locale
     
     # @!visibility private
@@ -83,7 +83,7 @@ module Discordrb
       @token = data['token']
       @version = data['version']
       @components = @data['components']&.map { |component| Components.from_data(component, @bot) }&.compact || []
-      @locale = data['locale'].to_sym
+      @locale = data['locale']&.to_sym
       @server_locale = data['guild_locale']&.to_sym
     end
 
