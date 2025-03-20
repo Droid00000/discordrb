@@ -56,7 +56,13 @@ module Discordrb
 
     # @return [Array<ActionRow>]
     attr_reader :components
+    
+    # @return [Symbol]
+    attr_reader :locale
 
+    # @return [Symbol, nil]
+    attr_reader :server_locale
+    
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -77,6 +83,8 @@ module Discordrb
       @token = data['token']
       @version = data['version']
       @components = @data['components']&.map { |component| Components.from_data(component, @bot) }&.compact || []
+      @locale = data['locale'].to_sym
+      @server_locale = data['guild_locale']&.to_sym
     end
 
     # Respond to the creation of this interaction. An interaction must be responded to or deferred,
