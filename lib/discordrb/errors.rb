@@ -240,5 +240,8 @@ module Discordrb
 
     # Reaction Blocked
     ReactionBlocked = Code(90_001)
+
+    # Max emoji limit reached
+    MaxEmojiLimitReached = Code(30008)
   end
 end
