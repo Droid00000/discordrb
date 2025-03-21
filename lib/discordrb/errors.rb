@@ -244,6 +244,9 @@ module Discordrb
     # Max emoji limit reached
     MaxEmojiLimitReached = Code(30008)
 
+    # Max animated emojis reached
+    MaxAnimatedEmojiLimitReached = Code(30018)
+
     # Invalid asset
     InvalidAsset = Code(50138)
   end
