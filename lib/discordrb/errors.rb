@@ -34,6 +34,7 @@ module Discordrb
       # @param message [String] the message to use
       # @param errors [Hash] API errors
       def initialize(message, errors = nil)
+        puts "#{message} || #{errors}"
         @message = message
 
         @errors = errors ? flatten_errors(errors) : []
