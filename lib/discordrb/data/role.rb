@@ -38,6 +38,9 @@ module Discordrb
     # @return [Tags, nil] The role tags
     attr_reader :tags
 
+    # @return [Integer] The flags for this role.
+    attr_reader :flags
+
     # @return [String, nil] The unicode emoji of this role, or nil.
     attr_reader :unicode_emoji
 
@@ -112,6 +115,8 @@ module Discordrb
 
       @tags = Tags.new(data['tags']) if data['tags']
 
+      @flags = data['flags']
+
       @unicode_emoji = data['unicode_emoji']
     end
 
@@ -139,6 +144,7 @@ module Discordrb
       @position = other.position
       @managed = other.managed
       @icon = other.icon
+      @flags = other.flags
       @unicode_emoji = other.unicode_emoji
     end
 
@@ -150,6 +156,7 @@ module Discordrb
       @hoist = new_data['hoist'] unless new_data['hoist'].nil?
       @hoist = new_data[:hoist] unless new_data[:hoist].nil?
       @colour = new_data[:colour] || (new_data['color'] ? ColourRGB.new(new_data['color']) : @colour)
+      @flags = new_data[:flags] || new_data['flags'] || @flags
       @unicode_emoji = new_data[:unicode_emoji] if new_data.key?(:unicode_emoji)
       @unicode_emoji = new_data['unicode_emoji'] if new_data.key?('unicode_emoji')
     end
@@ -198,6 +205,12 @@ module Discordrb
       Discordrb::API.role_icon_url(@id, @icon, format)
     end
 
+    # Get the icon that a role has displayed.
+    # @return [String, nil] Custom role icon URL, the unicode emoji, or nil.
+    def display_icon
+      icon_url || @unicode_emoji
+    end
+
     alias_method :color=, :colour=
 
     # Changes this role's permissions to a fixed bitfield. This allows setting multiple permissions at once with just
@@ -243,7 +256,7 @@ module Discordrb
 
     # The inspect method is overwritten to give more useful output
     def inspect
-      "<Role name=#{@name} permissions=#{@permissions.inspect} hoist=#{@hoist} colour=#{@colour.inspect} server=#{@server.inspect} position=#{@position} mentionable=#{@mentionable} unicode_emoji=#{@unicode_emoji}>"
+      "<Role name=#{@name} permissions=#{@permissions.inspect} hoist=#{@hoist} colour=#{@colour.inspect} server=#{@server.inspect} position=#{@position} mentionable=#{@mentionable} unicode_emoji=#{@unicode_emoji} flags=#{@flags}>"
     end
 
     private
