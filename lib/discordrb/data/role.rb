@@ -150,7 +150,8 @@ module Discordrb
       @hoist = new_data['hoist'] unless new_data['hoist'].nil?
       @hoist = new_data[:hoist] unless new_data[:hoist].nil?
       @colour = new_data[:colour] || (new_data['color'] ? ColourRGB.new(new_data['color']) : @colour)
-      @unicode_emoji = new_data[:unicode_emoji] || new_data['unicode_emoji'] || @unicode_emoji
+      @unicode_emoji = new_data[:unicode_emoji] if new_data.key?(:unicode_emoji)
+      @unicode_emoji = new_data['unicode_emoji'] if new_data.key?('unicode_emoji')
     end
 
     # Sets the role name to something new
