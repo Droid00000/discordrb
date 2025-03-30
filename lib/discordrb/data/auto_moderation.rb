@@ -104,6 +104,7 @@ module Discordrb
         @channel ||= @bot.channel(@channel_id)
       end
 
+      # @!visibility private
       def to_h
         {
           type: ACTION_TYPES[@type],
@@ -120,29 +121,11 @@ module Discordrb
     def initialize(data, bot, server = nil)
       @bot = bot
       @id = data['id'].to_i
-      @name = data['name']
-      @enabled = data['enabled']
-      @server_id = data['guild_id']&.to_i
       @creator_id = data['creator_id']&.to_i
-
-      @event_type = EVENT_TYPES.key[data['event_type']]
-
+      @server_id = server || data['guild_id']&.to_i
       @trigger_type = TRIGGER_TYPES.key[data['trigger_type']]
 
-      @actions = data['actions'].map { |action| Action.new(action, bot) }
-
-      @exempt_role_ids = data['exempt_roles'].map(&:to_i)
-
-      @exempt_channel_ids = data['exempt_channels'].map(&:to_i)
-
-      @metadata = data['trigger_metadata']
-
-      @regex_patterns = @metadata['regex_patterns']
-      @keyword_filter = @metadata['keyword_filter']
-      @allowed_keywords = @metadata['allow_list']
-      @mention_limit = @metadata['mention_total_limit']
-      @preset_type = TRIGGER_PRESETS.key[@metadata['preset']]
-      @mention_raid = @metadata['mention_raid_protection_enabled']
+      update_rule_data(data)
     end
 
     # Get the server this rule originates from.
@@ -151,22 +134,22 @@ module Discordrb
       @server ||= @bot.server(@server_id)
     end
 
-    # Get the user who created this automod rule.
-    # @return [User] The user who created this automod rule.
-    def creator
-      @creator ||= (server.member(@creator_id) || @bot.user(@creator_id))
-    end
-
     # Get a list of roles that are exempt from this automod rule.
     # @return [Array<Role>] Roles that are ignored by this automod rule.
     def exempt_roles
-      @exempt_channels ||= @exempt_role_ids.map { |role| server.role(role) }
+      @exempt_role_ids.map { |role| server.role(role) }
     end
 
     # Get a list of channels that are exempt from this automod rule.
     # @return [Array<Channel>] Channels that are ignored by this automod rule.
     def exempt_channels
-      @exempt_channels ||= @exempt_channel_ids.map { |channel| @bot.channel(channel) }
+      @exempt_channel_ids.map { |channel| @bot.channel(channel) }
+    end
+
+    # Get the user who created this automod rule.
+    # @return [User] The user who created this automod rule.
+    def creator
+      @creator ||= (server.member(@creator_id) || @bot.user(@creator_id))
     end
 
     # Check if something is exempt from thing auto moderation rule.
@@ -186,31 +169,31 @@ module Discordrb
     # Update the name of this rule.
     # @param name [String] New name of the rule.
     def name=(name)
-      update_rule_data(name: name)
+      update_data(name: name)
     end
 
     # Update whether this rule is enabled or not.
     # @param enabled [Boolean] Whether this rule should be enabled or not.
     def enabled=(enabled)
-      update_rule_data(enabled: enabled)
+      update_data(enabled: enabled)
     end
 
     # Update the event type of this rule.
     # @param type [Integer, Symbol] New event type of the rule.
     def event_type=(type)
-      update_rule_data(event_type: EVENT_TYPES[type] || type)
+      update_data(event_type: EVENT_TYPES[type] || type)
     end
 
     # Set the exempt roles of this rule.
     # @param roles [Array<Role, Integer>] An array of roles or their ID's.
     def exempt_roles=(roles)
-      update_rule_data(exempt_roles: roles.map(&:resolve_id))
+      update_data(exempt_roles: roles.map(&:resolve_id))
     end
 
     # Set the exempt channels of this rule.
     # @param channels [Array<Channel, Integer>] An array of channels or their ID's.
     def exempt_channels=(channels)
-      update_rule_data(exempt_channels: channels.map(&:resolve_id))
+      update_data(exempt_channels: channels.map(&:resolve_id))
     end
 
     # @param enabled [Boolean] Whether automatic mention raids should be detected.
@@ -274,7 +257,7 @@ module Discordrb
     # @note for internal use only
     # Update the metadata object
     def update_metadata(data)
-      update_rule_data(trigger_metadata: @metadata.merge!(data))
+      update_data(trigger_metadata: @metadata.merge!(data))
     end
 
     # @!visibility private
@@ -302,14 +285,14 @@ module Discordrb
         @actions << data
       end
 
-      update_rule_data(actions: @actions.map(&:to_h))
+      update_data(actions: @actions.map(&:to_h))
     end
 
     # @!visibility private
     # @note for internal use only
     # API call to update the rule data with new data
-    def update_rule_data(data)
-      update_data(JSON.parse(API::Server.modify_auto_moderation_rule(@bot.token, @server.id, @id,
+    def update_data(data)
+      update_rule_data(JSON.parse(API::Server.modify_auto_moderation_rule(@bot.token, @server.id, @id,
                                                                      data[:name], data[:event_type],
                                                                      data[:trigger_metadata], data[:actions],
                                                                      data[:enabled], data[:exempt_roles], data[:exempt_channels])))
@@ -322,17 +305,16 @@ module Discordrb
       @name = data['name']
       @enabled = data['enabled']
       @event_type = EVENT_TYPES.key[data['event_type']]
-      @creator = bot.member(@server, data['creator_id']) || @bot.user(data['creator_id'])
       @actions = data['actions'].map { |action| Action.new(action, @bot) }
-      @exempt_roles = data['exempt_roles'].map { |id| @server.role(id) }
-      @exempt_channels = data['exempt_channels'].map { |id| bot.channel(id, @server) }
+      @exempt_role_ids = data['exempt_roles'].map(&:resolve_id)
+      @exempt_channel_ids = data['exempt_channels'].map(&:resolve_id)
 
       @metadata = data['trigger_metadata']
       @regex_patterns = @metadata['regex_patters']
       @keyword_filters = @metadata['keyword_filter']
       @allowed_keywords = @metadata['alow_list']
       @mention_limit = @metadata['mention_total_limit']
-      @preset_type = TRIGGER_PRESETS.invert[@metadata['preset']]
+      @preset_type = TRIGGER_PRESETS.key[@metadata['preset']]
       @mention_raid = @metadata['mention_raid_protection_enabled']
     end
 
