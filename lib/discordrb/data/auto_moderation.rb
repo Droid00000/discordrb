@@ -274,7 +274,7 @@ module Discordrb
       if action.nil?
         @actions << Action.new(data.transform_keys(&:to_s))
       # If the user is passing in nil for the last attribute
-      # this would mean that the user is trying to remove the 
+      # this would mean that the user is trying to remove the
       # action, so we can just remove the action here.
       elsif data.except(:type).compact.empty?
         @actions = (@actions - [action])
@@ -293,9 +293,9 @@ module Discordrb
     # API call to update the rule data with new data
     def update_data(data)
       update_rule_data(JSON.parse(API::Server.modify_auto_moderation_rule(@bot.token, @server.id, @id,
-                                                                     data[:name], data[:event_type],
-                                                                     data[:trigger_metadata], data[:actions],
-                                                                     data[:enabled], data[:exempt_roles], data[:exempt_channels])))
+                                                                          data[:name], data[:event_type],
+                                                                          data[:trigger_metadata], data[:actions],
+                                                                          data[:enabled], data[:exempt_roles], data[:exempt_channels])))
     end
 
     # @!visibility private
