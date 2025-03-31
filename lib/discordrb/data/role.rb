@@ -213,7 +213,7 @@ module Discordrb
     end
 
     # Set the icon this role is displaying.
-    # @note Setting icon to nil will remove it's unicode emoji **and** its custom icon.
+    # @note Setting icon to nil will remove the unicode emoji **and** the custom icon.
     # @param icon [File, String, nil] File like object that responds to #read, unicode emoji, or nil.
     def display_icon=(icon)
       return update_role_data(unicode_emoji: nil, icon: nil) if icon.nil? 
