@@ -35,7 +35,7 @@ module Discordrb
     # @return [String, nil] The icon hash for this role.
     attr_reader :icon
 
-    # @return [Tags, nil] The role tags
+    # @return [Tags, nil] The role tags.
     attr_reader :tags
 
     # @return [Integer] The flags for this role.
@@ -206,9 +206,19 @@ module Discordrb
     end
 
     # Get the icon that a role has displayed.
-    # @return [String, nil] Custom role icon URL, the unicode emoji, or nil.
+    # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
+    # @return [String, nil] Icon URL, the unicode emoji, or nil if this role doesn't have any icon.
     def display_icon
-      icon_url || @unicode_emoji
+      icon_url || unicode_emoji
+    end
+
+    # Set the icon this role is displaying.
+    # @note Setting icon to nil will remove it's unicode emoji **and** its custom icon.
+    # @param icon [File, String, nil] File like object that responds to #read, unicode emoji, or nil.
+    def display_icon=(icon)
+      return update_role_data(unicode_emoji: nil, icon: nil) if icon.nil? 
+
+      icon.respond_to?(:read) ? self.icon = icon : self.unicode_emoji = icon
     end
 
     alias_method :color=, :colour=
