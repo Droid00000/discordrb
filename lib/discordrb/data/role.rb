@@ -206,15 +206,15 @@ module Discordrb
     end
 
     # Get the icon that a role has displayed.
-    # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
     # @return [String, nil] Icon URL, the unicode emoji, or nil if this role doesn't have any icon.
+    # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
     def display_icon
       icon_url || unicode_emoji
     end
 
     # Set the icon this role is displaying.
-    # @note Setting icon to nil will remove the unicode emoji **and** the custom icon.
     # @param icon [File, String, nil] File like object that responds to #read, unicode emoji, or nil.
+    # @note Setting the icon to nil will remove the unicode emoji **and** the custom icon.
     def display_icon=(icon)
       return update_role_data(unicode_emoji: nil, icon: nil) if icon.nil? 
 
