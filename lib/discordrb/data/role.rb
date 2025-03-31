@@ -218,7 +218,7 @@ module Discordrb
     def display_icon=(icon)
       return update_role_data(unicode_emoji: nil, icon: nil) if icon.nil? 
 
-      icon.respond_to?(:read) ? self.icon = icon : self.unicode_emoji = icon
+      icon.respond_to?(:read) ? self.icon = icon : update_role_data(unicode_emoji: icon, icon: nil)
     end
 
     alias_method :color=, :colour=
