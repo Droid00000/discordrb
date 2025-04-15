@@ -109,7 +109,7 @@ module Discordrb::Commands
         spaces_allowed: attributes[:spaces_allowed].nil? ? false : attributes[:spaces_allowed],
 
         # Webhooks allowed to trigger commands
-        webhook_commands: attributes[:webhook_commands].nil? ? true : attributes[:webhook_commands],
+        webhook_commands: attributes[:webhook_commands].nil? || attributes[:webhook_commands],
 
         channels: attributes[:channels] || [],
 

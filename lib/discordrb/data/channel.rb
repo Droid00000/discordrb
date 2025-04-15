@@ -22,7 +22,28 @@ module Discordrb
       private_thread: 12,
       stage_voice: 13,
       directory: 14,
-      forum: 15
+      forum: 15,
+      media: 16
+    }.freeze
+
+    # Map of layout types
+    LAYOUT_TYPES = {
+      not_set: 0,
+      list_view: 1,
+      gallery_view: 2
+    }.freeze
+
+    # Map of sort order types
+    SORT_TYPES = {
+      latest_activity: 0,
+      creation_date: 1
+    }.freeze
+
+    # Map of channel flags
+    FLAGS = {
+      pinned: 1 << 1,
+      requires_tag: 1 << 4,
+      hide_media_download_options: 1 << 15
     }.freeze
 
     # @return [String] this channel's name.
@@ -93,6 +114,27 @@ module Discordrb
     #   a thread.
     attr_reader :invitable
 
+    # @return [Integer, nil] Flags for this channel.
+    attr_reader :flags
+
+    # @return [Integer, nil] For thread channels, similar to message_count but doesn't de-increment on message deletion.
+    attr_reader :total_messages_sent
+
+    # @return [Array<Tag>, nil] For forum and media channels, tags that can be applied onto created threads.
+    attr_reader :available_tags
+
+    # @return [Emoji, String, nil] For forum and media channels, the emoji to show in the add reaction button on a thread.
+    attr_reader :default_reaction_emoji
+
+    # @return [Integer, nil] For thread channels, the initial rate_limit_per_user to set on newly created threads in a channel.
+    attr_reader :thread_rate_limit_per_user
+
+    # @return [Symbol, Integer, nil] For forum and media channels, the default sort order type used to order posts.
+    attr_reader :default_sort_order
+
+    # @return [Symbol, Integer, nil] For media channels, the default forum layout view used to display posts.
+    attr_reader :default_forum_layout
+
     # @return [true, false] whether or not this channel is a PM or group channel.
     def private?
       pm? || group?
@@ -106,6 +148,29 @@ module Discordrb
     # @return [Recipient, nil] the recipient of the private messages, or nil if this is not a PM channel
     def recipient
       @recipients.first if pm?
+    end
+
+    # A tag that is able to be applied to a thread in a `FORUM` or `MEDIA` channel.
+    class Tag
+      include IDObject
+
+      # @return [String] The name of this tag.
+      attr_reader :name
+
+      # @return [true, false] If this tag requires the `MANAGE_THREADS` permission to add or remove.
+      attr_reader :moderated
+
+      # @returun [String, Emoji, nil] The custom emoji or unicode emoji of this tag, or nil for no emoji.
+      attr_reader :emoji
+
+      # @!visibility hidden
+      def initialize(data, bot)
+        @bot = bot
+        @id = data['id']
+        @name = data['name']
+        @moderated = data['moderated']
+        @emoji = data['emoji_id'] ? bot.emoji(data['emoji_id']) : data['emoji_name']
+      end
     end
 
     # @!visibility private
@@ -156,6 +221,30 @@ module Discordrb
       if (member = data['member'])
         @member_join = Time.iso8601(member['join_timestamp'])
         @member_flags = member['flags']
+      end
+
+      @flags = data['flags'] || 0
+      @total_messages_sent = data['total_messages_sent']
+
+      @applied_tags = data['applied_tags']
+
+      @available_tags = data['available_tags']&.map { |tag| Tag.new(tag, bot) }
+      @thread_rate_limit_per_user = data['default_thread_rate_limit_per_user']
+
+      if (emoji = data['default_reaction_emoji'])
+        @default_reaction_emoji = if emoji['emoji_id']
+                                    bot.emoji(emoji['emoji_id'])
+                                  else
+                                    emoji['emoji_name']
+                                  end
+      end
+
+      if (sort_order = data['default_sort_order'])
+        @default_sort_order = SORT_TYPES.key(sort_order) || sort_order
+      end
+
+      if (layout_order = data['default_forum_layout'])
+        @default_forum_layout = LAYOUT_TYPES.key(layout_order) || layout_order
       end
 
       process_permission_overwrites(data['permission_overwrites'])
@@ -224,6 +313,26 @@ module Discordrb
       @type == 12
     end
 
+    # @return [true, false] whether or not this channel is a stage channel.
+    def stage?
+      @type == 13
+    end
+
+    # @return [true, false] whether or not this channel is a directory channel.
+    def directory?
+      @type == 14
+    end
+
+    # @return [true, false] whether or not this channel is a forum channel.
+    def forum?
+      @type == 15
+    end
+
+    # @return [true, false] whether or not this channel is a media channel.
+    def media?
+      @type == 16
+    end
+
     # @return [true, false] whether or not this channel is a thread.
     def thread?
       news_thread? || public_thread? || private_thread?
@@ -235,6 +344,16 @@ module Discordrb
     end
 
     alias_method :parent, :category
+
+    # Get the applied tags on this forum or media thread.
+    # @return [Array<Tag>] Tags that have been applied onto this thread.
+    def applied_tags
+      return @available_tags if @available_tags.first&.is_a?(Tag) || @available_tags.nil?
+
+      tags = parent&.available_tags
+
+      @available_tags.map! { |id| tags&.find { |tag| tag.id == id.resolve_id } }
+    end
 
     # Sets this channels parent category
     # @param channel [Channel, String, Integer] the target category channel, or its ID
@@ -606,6 +725,13 @@ module Discordrb
       @nsfw = other.nsfw
       @parent_id = other.parent_id
       @rate_limit_per_user = other.rate_limit_per_user
+      @flags = other.flags
+      @total_messages_sent = other.total_messages_sent
+      @available_tags = other.available_tags
+      @default_reaction_emoji = other.default_reaction_emoji
+      @thread_rate_limit_per_user = other.thread_rate_limit_per_user
+      @default_sort_order = other.default_sort_order
+      @default_forum_layout = other.default_forum_layout
     end
 
     # The list of users currently in this channel. For a voice channel, it will return all the members currently
@@ -859,6 +985,35 @@ module Discordrb
       Channel.new(JSON.parse(data), @bot, @server)
     end
 
+    # Create a thread in a forum or media channel.
+    # @param name [String] 1-100 character name of the thread.
+    # @param auto_archive_duration [60, 1440, 4320, 10080, nil] How long before a thread is automatically archived.
+    # @param rate_limit_per_user [Integer amount of seconds between (0-21600) a user has to wait before sending another message.
+    # @param content [String, nil] Message content for the the first message in the forum thread.
+    # @param embeds [Hash, Discordrb::Webhooks::Embed, Array<Hash>, Array<Discordrb::Webhooks::Embed> nil] The rich embed(s) to append to this message.
+    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings.
+    # @param components [View, Array<Hash>, nil] Interaction components to associate with this message.
+    # @param attachments [Array<File>, nil] Files that can be referenced in embeds via `attachment://file.png`
+    # @param flags [Integer, nil] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12) and IS_COMPONENTS_V2 (1 << 15) can be set.
+    # @param stickers [Array<Integer>, nil] Sticker IDs to associate with this messages.
+    # @param tags [Array<Tag, Integer, String>, nil] Array of forum tags to apply onto the created thread.
+    # @param reason [String, nil] The reason for creating this thread.
+    # @return [Array<Channel, Message>] Returns an array where the first value is the newly created thread channel, and the second value is the newly created message.
+    def create_forum_post(name, auto_archive_duration: nil, rate_limit_per_user: nil, content: nil, embeds: nil, allowed_mentions: nil, components: nil, stickers: nil, attachments: nil, flags: 0, tags: nil, reason: nil)
+      allowed_mentions = { parse: [] } if allowed_mentions == false
+
+      message = {
+        content: content, embeds: embeds&.map(&:to_hash), allowed_mentions: allowed_mentions&.to_hash,
+        components: components&.to_a, sticker_ids: stickers&.map(&:resolve_id), flags: flags, attachments: attachments
+      }
+
+      data = JSON.parse(API::Channel.start_thread_in_forum_or_media_channel(@bot.token, @id, name, message.compact, auto_archive_duration, rate_limit_per_user, tags&.map(&:resolve_id), reason))
+
+      [Channel.new(data, @bot, @server), Message.new(data['message'], @bot)]
+    end
+
+    alias_method :start_forum_thread, :create_forum_post
+
     # @!group Threads
 
     # Join this thread.
@@ -888,6 +1043,18 @@ module Discordrb
     end
 
     # @!endgroup
+
+    # @!method pinned?
+    #   @return [true, false] whether this thread is pinned to the top of the media or forum channel.
+    # @!method requires_tag?
+    #   @return [true, false] whether tags need to specified when creating a thread in a media or forum channel.
+    # @!method hide_media_download_options?
+    #   @return [true, false] whether embedded media download options are hiddeen in a media channel.
+    FLAGS.each do |name, bits|
+      define_method("#{name}?") do
+        @flags.anybits?(bits)
+      end
+    end
 
     # The default `inspect` method is overwritten to give more useful output.
     def inspect
@@ -978,7 +1145,8 @@ module Discordrb
                                                 new_nsfw,
                                                 overwrites,
                                                 new_data[:parent_id] || @parent_id,
-                                                new_data[:rate_limit_per_user] || @rate_limit_per_user))
+                                                new_data[:rate_limit_per_user] || @rate_limit_per_user,
+                                                new_data[:flags] || @flags))
       update_data(response)
     end
 

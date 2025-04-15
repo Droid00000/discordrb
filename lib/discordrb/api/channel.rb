@@ -465,13 +465,13 @@ module Discordrb::API::Channel
 
   # Start a thread based off a channel message.
   # https://discord.com/developers/docs/resources/channel#start-thread-with-message
-  def start_thread_with_message(token, channel_id, message_id, name, auto_archive_duration)
+  def start_thread_with_message(token, channel_id, message_id, name, auto_archive_duration, rate_limit_per_user = nil)
     Discordrb::API.request(
       :channels_cid_messages_mid_threads,
       channel_id,
       :post,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/#{message_id}/threads",
-      { name: name, auto_archive_duration: auto_archive_duration }.to_json,
+      { name: name, auto_archive_duration: auto_archive_duration, rate_limit_per_user: rate_limit_per_user }.to_json,
       Authorization: token,
       content_type: :json
     )
@@ -479,13 +479,13 @@ module Discordrb::API::Channel
 
   # Start a thread without an associated message.
   # https://discord.com/developers/docs/resources/channel#start-thread-without-message
-  def start_thread_without_message(token, channel_id, name, auto_archive_duration, type = 11)
+  def start_thread_without_message(token, channel_id, name, auto_archive_duration, type = 11, invitable = true, rate_limit_per_user = nil)
     Discordrb::API.request(
       :channels_cid_threads,
       channel_id,
       :post,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/threads",
-      { name: name, auto_archive_duration: auto_archive_duration, type: type },
+      { name: name, auto_archive_duration: auto_archive_duration, type: type, invitable: invitable, rate_limit_per_user: rate_limit_per_user },
       Authorization: token,
       content_type: :json
     )
@@ -606,6 +606,31 @@ module Discordrb::API::Channel
       :get,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/users/@me/threads/archived/private?#{query}",
       Authorization: token
+    )
+  end
+
+  # Start a thread in a forum or media channel.
+  # https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel
+  def start_thread_in_forum_or_media_channel(token, channel_id, name, message, auto_archive_duration = nil, rate_limit_per_user = nil, _applied_tags = nil, reason = nil)
+    body = { name: name, auto_archive_duration: auto_archive_duration, type: type, invitable: invitable, rate_limit_per_user: rate_limit_per_user }.compact
+
+    headers = { Authorization: token, 'X-Audit-Log-Reason': reason }
+    headers[:content_type] = :json unless message[:attachments]
+
+    body = if (attachments = message[:attachments])
+             files = [*0...attachments.size].zip(attachments).to_h
+             { **files, payload_json: body.to_json }
+           else
+             body.to_json
+           end
+
+    Discordrb::API.request(
+      :channels_cid_threads,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/threads",
+      body,
+      *headers
     )
   end
 end
