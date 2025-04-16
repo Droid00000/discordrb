@@ -79,6 +79,13 @@ module Discordrb
     # @return [Channel, nil] The thread that was started from this message, or nil.
     attr_reader :thread
 
+    # @return [Array<Hash>] The stickers sent in this message.
+    attr_reader :stickers
+
+    # @return [Hash, nil] The poll contained in this message, or nil if this doesn't have a poll.
+    attr_reader :poll
+    alias_method :poll?, :poll
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -167,6 +174,9 @@ module Discordrb
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
+
+      @stickers = data['sticker_items'] || data['stickers'] || []
+      @poll = data['poll']
     end
 
     # Replies to this message with the specified content.
