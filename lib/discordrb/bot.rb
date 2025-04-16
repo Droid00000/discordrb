@@ -527,7 +527,7 @@ module Discordrb
             end
           end
         elsif /(?<animated>^a|^${0}):(?<name>\w+):(?<id>\d+)/ =~ mention
-          array_to_return << (emoji(id) || Emoji.new({ 'animated' => !animated.nil?, 'name' => name, 'id' => id }, self, nil))
+          array_to_return << (emoji(id) || Emoji.new({ 'animated' => animated != '', 'name' => name, 'id' => id }, self, nil))
         end
       end
       array_to_return
@@ -1607,6 +1607,10 @@ module Discordrb
         when Interaction::TYPES[:modal_submit]
 
           event = ModalSubmitEvent.new(data, self)
+          raise_event(event)
+        when Interaction::TYPES[:autocomplete]
+
+          event = AutocompleteEvent.new(data, self)
           raise_event(event)
         end
       when :WEBHOOKS_UPDATE

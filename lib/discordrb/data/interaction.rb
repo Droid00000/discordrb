@@ -11,6 +11,7 @@ module Discordrb
       ping: 1,
       command: 2,
       component: 3,
+      autocomplete: 4,
       modal_submit: 5
     }.freeze
 
@@ -22,6 +23,7 @@ module Discordrb
       deferred_message: 5,
       deferred_update: 6,
       update_message: 7,
+      autocomplete: 8,
       modal: 9
     }.freeze
 
@@ -270,6 +272,14 @@ module Discordrb
     # @param message [Integer, String, InteractionMessage, Message] The message created by this interaction to be deleted.
     def delete_message(message)
       Discordrb::API::Webhook.token_delete_message(@token, @application_id, message.resolve_id)
+      nil
+    end
+
+    # Show autocomplete choices as a response.
+    # @param choices [Array<Hash>, Hash] Array of autocomplete choices to show the user.
+    def show_autocomplete_choices(choices)
+      choices = choices.map { |name, value| { name: name, value: value } } unless choices.is_a?(Array)
+      Discordrb::API::Interaction.create_interaction_response(@token, @id, CALLBACK_TYPES[:autocomplete], nil, nil, nil, nil, nil, nil, nil, choices)
       nil
     end
 
