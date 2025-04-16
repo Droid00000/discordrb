@@ -250,10 +250,13 @@ module Discordrb
     # @param embeds [Array<Hash, Webhooks::Embed>] The embeds for the message.
     # @param allowed_mentions [Hash, AllowedMentions] Mentions that can ping on this message.
     # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`.
+    # @param new_components [true, false] Whether this message includes any V2 components. Enabling this disables use content and embeds.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the method overwrite builder data.
-    def edit_message(message, content: nil, embeds: nil, allowed_mentions: nil, components: nil, attachments: nil)
+    def edit_message(message, content: nil, embeds: nil, allowed_mentions: nil, components: nil, attachments: nil, new_components: false)
       builder = Discordrb::Webhooks::Builder.new
       view = Discordrb::Webhooks::View.new
+
+      flags = (1 << 15) if new_components
 
       prepare_builder(builder, content, embeds, allowed_mentions)
       yield builder, view if block_given?
@@ -262,7 +265,7 @@ module Discordrb
       data = builder.to_json_hash
 
       resp = Discordrb::API::Webhook.token_edit_message(
-        @token, @application_id, message.resolve_id, data[:content], data[:embeds], data[:allowed_mentions], components.to_a, attachments
+        @token, @application_id, message.resolve_id, data[:content], data[:embeds], data[:allowed_mentions], components.to_a, attachments, flags
       )
       Interactions::Message.new(JSON.parse(resp), @bot, @interaction)
     end

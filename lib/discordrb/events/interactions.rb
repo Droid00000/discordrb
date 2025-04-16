@@ -85,8 +85,11 @@ module Discordrb::Events
     end
 
     # (see Interaction#edit_message)
-    def edit_message(message, content: nil, embeds: nil, allowed_mentions: nil, attachments: nil, &block)
-      @interaction.edit_message(message, content: content, embeds: embeds, allowed_mentions: allowed_mentions, attachments: attachments, &block)
+    def edit_message(message, content: nil, embeds: nil, allowed_mentions: nil, attachments: nil, new_components: false, &block)
+      @interaction.edit_message(
+        message, content: content, embeds: embeds, allowed_mentions: allowed_mentions,
+                 attachments: attachments, new_components: new_components, &block
+      )
     end
 
     # (see Interaction#delete_message)
