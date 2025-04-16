@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rest-client'
+require 'tempfile'
 require 'zlib'
 
 require 'discordrb/events/message'
@@ -834,7 +835,7 @@ module Discordrb
     #       end
     #     end
     #   end
-    def register_application_command(name, description, server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil)
+    def register_application_command(name, description, server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, integration_types: nil, name_localizations: nil, description_localizations: nil)
       type = ApplicationCommand::TYPES[type] || type
 
       builder = Interactions::OptionBuilder.new
@@ -842,9 +843,9 @@ module Discordrb
       yield(builder, permission_builder) if block_given?
 
       resp = if server_id
-               API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, name_localizations, description_localizations)
              else
-               API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts)
+               API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions, contexts, integration_types, name_localizations, description_localizations)
              end
       cmd = ApplicationCommand.new(JSON.parse(resp), self, server_id)
 
