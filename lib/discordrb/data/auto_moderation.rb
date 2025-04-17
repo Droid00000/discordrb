@@ -38,15 +38,6 @@ module Discordrb
     # @return [String] The name of this rule.
     attr_reader :name
 
-    # @return [Integer] The ID of the server this rule is for.
-    attr_reader :server_id
-
-    # @return [Integer] The ID of the creator of this rule.
-    attr_reader :creator_id
-
-    # @return [Symbol] The event type of this rule.
-    attr_reader :event_type
-
     # @return [Symbol] The trigger type of this rule.
     attr_reader :trigger_type
 
@@ -78,14 +69,8 @@ module Discordrb
 
     # Wrapper for actions.
     class Actions
-      # @return [Symbol] The type of action.
-      attr_reader :type
-
       # @return [String, nil] The custom message shown when messages are blocked.
       attr_reader :message
-
-      # @return [Integer, nil] The ID of the channel where alerts will be logged.
-      attr_reader :channel_id
 
       # @return [Integer, nil] The timeout duration for this action. Max 4 weeks.
       attr_reader :timeout_duration
@@ -93,7 +78,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @type = ACTION_TYPES.key[data['type']]
+        @type = data['type']
         @message = data['metatadata']['custom_message']
         @channel_id = data['metatadata']['channel_id']&.to_i
         @timeout_duration = data['metatadata']['duration_seconds']
@@ -104,21 +89,14 @@ module Discordrb
         @channel ||= @bot.channel(@channel_id)
       end
 
-      # @!visibility private
-      def to_h
-        {
-          type: ACTION_TYPES[@type],
-          metadata: {
-            custom_message: @message,
-            channel_id: @channel_id,
-            timeout_duration: @timeout_duration
-          }.compact,
-        }.reject(&:empty?)
+      # @return [Symbol] The type of action.
+      def type
+        ACTION_TYPES.key(@type)
       end
     end
 
     # @!visibility private
-    def initialize(data, bot, server = nil)
+    def initialize(data, bot)
       @bot = bot
       @id = data['id'].to_i
       @creator_id = data['creator_id']&.to_i
@@ -129,34 +107,40 @@ module Discordrb
     end
 
     # Get the server this rule originates from.
-    # @return [Server, nil] The server this rule comes from.
+    # @return [Server] The server this rule comes from.
     def server
-      @server ||= @bot.server(@server_id)
+      @bot.server(@server)
     end
 
-    # Get a list of roles that are exempt from this automod rule.
-    # @return [Array<Role>] Roles that are ignored by this automod rule.
-    def exempt_roles
-      @exempt_role_ids.map { |role| server.role(role) }
-    end
-
-    # Get a list of channels that are exempt from this automod rule.
-    # @return [Array<Channel>] Channels that are ignored by this automod rule.
-    def exempt_channels
-      @exempt_channel_ids.map { |channel| @bot.channel(channel) }
+    # The event type of this rule.
+    # @return [Symbol] See {EVENT_TYPES}.
+    def event_type
+      EVENT_TYPES.key(@event_type)
     end
 
     # Get the user who created this automod rule.
     # @return [User] The user who created this automod rule.
     def creator
-      @creator ||= (server.member(@creator_id) || @bot.user(@creator_id))
+      @creator ||= @bot.user(@creator_id)
+    end
+
+    # Get a list of roles that are exempt from this automod rule.
+    # @return [Array<Role>] Roles that are ignored by this automod rule.
+    def exempt_roles
+      @exempt_roles ||= @exempt_role_ids.map { |role| server.role(role) }
+    end
+
+    # Get a list of channels that are exempt from this automod rule.
+    # @return [Array<Channel>] Channels that are ignored by this automod rule.
+    def exempt_channels
+      @exempt_channels ||= @exempt_channel_ids.map { |channel| @bot.channel(channel) }
     end
 
     # Check if something is exempt from thing auto moderation rule.
     # @param object [Integer, String, Role, Channel] The object to check for.
     # @return [true, false] Whether the given object is exempt from this rule or not.
     def exempt?(object)
-      (exempt_roles + exempt_channels).map(&:resolve_id).include?(object.resolve_id)
+      (@exempt_channel_ids + @exempt_role_ids).include?(object.resolve_id)
     end
 
     # Deletes this auto moderation rule.
@@ -303,18 +287,19 @@ module Discordrb
     # Update the rule data with new data
     def update_data(data)
       @name = data['name']
+      @server = data['guild_id']
       @enabled = data['enabled']
-      @event_type = EVENT_TYPES.key[data['event_type']]
+      @event_type = data['event_type']
+      @exempt_role_ids = data['exempt_roles'].map(&:to_i)
+      @exempt_channel_ids = data['exempt_channels'].map(&:to_i)
       @actions = data['actions'].map { |action| Action.new(action, @bot) }
-      @exempt_role_ids = data['exempt_roles'].map(&:resolve_id)
-      @exempt_channel_ids = data['exempt_channels'].map(&:resolve_id)
 
       @metadata = data['trigger_metadata']
+      @preset_type = @metadata['preset']
       @regex_patterns = @metadata['regex_patters']
       @keyword_filters = @metadata['keyword_filter']
       @allowed_keywords = @metadata['alow_list']
       @mention_limit = @metadata['mention_total_limit']
-      @preset_type = TRIGGER_PRESETS.key[@metadata['preset']]
       @mention_raid = @metadata['mention_raid_protection_enabled']
     end
 
@@ -364,39 +349,37 @@ module Discordrb
         @metadata[:preset] = PRESET_TYPES[type] || type
       end
 
-      # Set the exempt roles of this rule.
-      # @param roles [Array<Role, Integer>] An array of roles or their ID's.
+      # @param [Array<Role, Integer>] An array of roles or their ID's.
       def exempt_roles=(roles)
         @exempt_roles = roles&.map(&:resolve_id)
       end
 
-      # Set the exempt channels of this rule.
-      # @param channels [Array<Channel, Integer>] An array of channels or their ID's.
+      # @param [Array<Channel, Integer>] An array of channels or their ID's.
       def exempt_channels=(channels)
         @exempt_channels = channels&.map(&:resolve_id)
       end
 
-      # @param enabled [Boolean] Whether automatic mention raids should be detected.
+      # @param [Boolean] Whether automatic mention raids should be detected.
       def mention_raid=(enabled)
         @metadata[:mention_raid_protection_enabled] = enabled
       end
 
-      # @param keywords [Array<String>] Array of strings that shouldn't trigger this rule.
+      # @param [Array<String>] Array of strings that shouldn't trigger this rule.
       def allowed_keywords=(keywords)
         @metadata[:allow_list] = keywords
       end
 
-      # @param regex [Array<String>] Regex flavored patterns to trigger this rule.
-      def regex_patterns=(regex)
+      # @param [Array<String>] Regex flavored patterns to trigger this rule.
+      def regex_patterns=(patters)
         @metadata[:regex_patterns] = regex
       end
 
-      # @param keywords [Array<String>] Array of strings that should trigger this rule.
+      # @param [Array<String>] Array of strings that should trigger this rule.
       def keyword_filter=(keywords)
         @metadata[:keyword_filter] = keywords
       end
 
-      # @param limit [Integer] max number of unique mentions allowed per message. Max 50.
+      # @param [Integer] max number of unique mentions allowed per message. Max 50.
       def mention_limit=(limit)
         @metadata[:mention_total_limit] = limit
       end
@@ -408,9 +391,9 @@ module Discordrb
       # @param timeout_duration [Integer] The timeout duration of seconds. Max 2419200 seconds.
       # @param custom_message [String] 150 character message to be shown whenever a message is blocked.
       def add_action(type:, channel: nil, timeout_duration: nil, custom_message: nil)
-        metadata = { channel_id: channel&.resolve_id, duration_seconds: timeout_duration, custom_message: custom_message }.compact
+        metadata = { channel_id: channel&.resolve_id, duration_seconds: timeout_duration, custom_message: custom_message }
 
-        @actions << { type: ACTION_TYPES[type] || type, metadata: metadata.empty? ? nil : metadata.compact }.compact
+        @actions << { type: (ACTION_TYPES[type] || type), metadata: metadata.compact }
       end
 
       alias_method :action, :add_action
