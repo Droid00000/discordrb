@@ -598,17 +598,52 @@ module Discordrb
     end
 
     # Returns the auto moderation rules for this server. Requires the manage server permission.
-    # @return [Hash<Integer => AutoModerationRule>, nil] The auto moderation rules, or nil.
-    def auto_moderation_rules
-      return @auto_moderation_rules unless @auto_moderation_rules.empty?
+    # @return [Hash<Integer => AutoModerationRule>, nil] The auto moderation rules for this server.
+    def auto_moderation_rules(request: false)
+      # Return the rules if we already have them cached.
+      unless request
+        return @auto_moderation_rules if @auto_moderation_rules_chunked
+      end
 
       begin
         response = API::Server.get_auto_moderation_rules(@bot.token, @id)
-      rescue Errors::NoPermission
+      rescue Discordrb::Errors::NoPermission
         return nil
       end
 
       process_auto_moderation_rules(JSON.parse(response))
+
+      # Indicate that we've requested automod rules for this server.
+      @auto_moderation_rules_chunked = true
+
+      @auto_moderation_rules
+    end
+
+    # Get a single auto-moderation rule from this server.
+    # @param id [Integer, String] ID of the auto-moderation rule to get.
+    # @param request [true, false] Whether the rule should be requested from Discord.
+    # @return [AutoModerationRule] The auto-moderation rule, or nil if it can't be found.
+    def auto_moderation_rule(id, request: false)
+      rules = auto_moderation_rules(request: request)
+
+      rules[id.resolve_id] if rules
+    end
+
+    # Create an auto-moderation rule in this server.
+    # @yieldparam embed [AutoModerationRule::Builder] An auto-moderation rule builder.
+    # @return [AutoModerationRule] The resulting auto-moderation rule.
+    def create_auto_moderation_rule
+      yield((builder = AutoModerationRule::Builder.new))
+
+      builder = builder.to_h
+
+      response = JSON.parse(API::Server.create_auto_moderation_rule(@bot.token, @id, builder[:name], builder[:event_type],
+                                                                    builder[:trigger_type], builder[:trigger_metadata], builder[:actions],
+                                                                    builder[:enabled], builder[:exempt_roles], builder[:exempt_channels]))
+
+      rule = AutoModerationRule.new(JSON.parse(response), self, @bot)
+      @auto_moderation_rules[rule.id] = rule
+      rule
     end
 
     # Retrieve banned users from this server.
@@ -944,7 +979,7 @@ module Discordrb
     end
 
     def process_automod_rules(rules)
-      return nil if rules.empty?
+      return if rules.empty?
 
       rules.each do |rule|
         new_rule = AutoModerationRule.new(rule, @bot, self)
@@ -958,7 +993,7 @@ module Discordrb
     end
 
     def delete_automod_rule(rule)
-      id = rule.is_a?(Hash) ? rule['id'].to_i : rule
+      id = rule['id'].to_i if rule.is_a?(Hash)
       @auto_moderation_rules.delete(id)
     end
 
