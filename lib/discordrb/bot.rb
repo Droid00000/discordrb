@@ -1641,17 +1641,17 @@ module Discordrb
         event = ThreadMembersUpdateEvent.new(data, self)
         raise_event(event)
       when :AUTO_MODERATION_RULE_CREATE
-        @servers[data['guild_id'].to_i].add_automod_rule(data)
+        @servers[data['guild_id'].to_i]&.add_automod_rule(data)
         event = AutoModerationRuleCreateEvent.new(data, self)
         raise_event(event)
 
       when :AUTO_MODERATION_RULE_UPDATE
-        @servers[data['guild_id'].to_i].add_automod_rule(data)
+        @servers[data['guild_id'].to_i]&.add_automod_rule(data)
         event = AutoModerationRuleUpdateEvent.new(data, self)
         raise_event(event)
 
       when :AUTO_MODERATION_RULE_DELETE
-        @servers[data['guild_id'].to_i].delete_automod_rule(data)
+        @servers[data['guild_id'].to_i]&.delete_automod_rule(data)
         event = AutoModerationRuleDeleteEvent.new(data, self)
         raise_event(event)
 
