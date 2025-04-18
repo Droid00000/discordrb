@@ -121,12 +121,12 @@ module Discordrb
 
     # @return [Array<Role>] Get a list of roles that are exempt from this rule.
     def exempt_roles
-      @exempt_roles ||= @exempt_role_ids.map { |role| server.role(role) }
+      @exempt_roles.map { |role| server.role(role) }
     end
 
     # @return [Array<Channel>] Get a list of channels that are exempt from this rule.
     def exempt_channels
-      @exempt_channels ||= @exempt_channel_ids.map { |chan| @bot.channel(chan) }
+      @exempt_channels.map { |channel| @bot.channel(channel) }
     end
 
     # Check if something is exempt from this auto moderation rule.
@@ -208,7 +208,6 @@ module Discordrb
 
     # @!visibility private
     # @note for internal use only
-    # API call to update the rule data with new data
     def update_data(data)
       data = { trigger_metadata: @metatadata.merge(data) } if data.keys.any?(@metatadata.keys.map(&:to_sym))
 
@@ -220,7 +219,6 @@ module Discordrb
 
     # @!visibility private
     # @note for internal use only
-    # Update the rule data with new data
     def update_rule_data(data)
       @name = data['name']
       @enabled = data['enabled']
