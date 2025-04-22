@@ -793,6 +793,45 @@ module Discordrb
       end
     end
 
+    # Get all entitlements for the current application.
+    # @param user_id [Integer, String, User, nil] user ID to lookup entitlements for.
+    # @param skus [Array<Integer, String>] array of SKU IDs to check entitlements for.
+    # @param before [Integer, String, nil] get entitlements before this entitlement ID.
+    # @param after [Integer, String, nil] get entitlements after this entitlement ID.
+    # @param limit [Integer, nil] number of entitlements to return, 1-100. Defaults to 100.
+    # @param server_id [Integer, String, Server, nil] server ID to lookup entitlements for.
+    # @param exclude_ended [true, false, nil] if ended entitlements should be excluded. Defaults to false.
+    # @param exclude_deleted [true, false, nil] if deleted entitlements should be excluded. Defaults to false.
+    # @return [Array<Entitlement>]
+    def entitlements(user_id: nil, skus: nil, before: nil, after: nil, limit: nil, server_id: nil, exclude_ended: false, exclude_deleted: true)
+      response = API::Monetization.list_entitlements(@bot.token, profile.id, user_id&.resolve_id, skus&.map(&:resolve_id)&.join(', '),
+                                                     before, after, limit, server_id&.resolve_id, exclude_ended, exclude_deleted)
+
+      JSON.parse(response).map { |entitlement| Entitlement.new(entitlement, self) }
+    end
+
+    # Get a single entitlement for the current application.
+    # @param entitlement_id [Integer, String] The ID of the entitlement to lookup.
+    # @return [Entitlement] The entitlement for the given ID.
+    def entitlement(entitlement_id)
+      response = API::Monetization.get_entitlement(@bot.token, profile.id, entitlement_id.resolve_id)
+
+      Entitlement.new(JSON.parse(response), self)
+    end
+
+    # Create a test entitlement for the current application.
+    # @param sku_id [Integer, String] ID of the SKU to grant the entitlement to.
+    # @param owner_id [Integer, String] ID of the guild or user to grant the entitlement to.
+    # @param owner_type [Symbol, Integer] 1 for a guild subscription, 2 for a user subscription.
+    # @return [Entitlement]
+    def create_test_entitlement(sku_id:, owner_id:, owner_type:)
+      owner_type = Entitlement::OWNER_TYPES[owner_type] || owner_type
+
+      response = API::Monetization.create_test_entitlement(@bot.token, profile.id, sku_id.resolve_id, owner_id.resolve_id, owner_type)
+
+      Entitlement.new(JSON.parse(response), self)
+    end
+
     # Get all application commands.
     # @param server_id [String, Integer, nil] The ID of the server to get the commands from. Global if `nil`.
     # @return [Array<ApplicationCommand>]
@@ -1644,6 +1683,18 @@ module Discordrb
         end
 
         event = ThreadMembersUpdateEvent.new(data, self)
+        raise_event(event)
+      when :ENTITLEMENT_CREATE
+        event = EntitlementCreateEvent.new(data, self)
+
+        raise_event(event)
+      when :ENTITLEMENT_UPDATE
+        event = EntitlementUpdateEvent.new(data, self)
+
+        raise_event(event)
+      when :ENTITLEMENT_DELETE
+        event = EntitlementDeleteEvent.new(data, self)
+        
         raise_event(event)
       else
         # another event that we don't support yet

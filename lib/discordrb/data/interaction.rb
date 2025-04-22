@@ -57,6 +57,9 @@ module Discordrb
     # @return [Array<ActionRow>]
     attr_reader :components
 
+    # @return [Array<Entitlement>] Array of entitlements for the invoking user.
+    attr_reader :entitlements
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -77,6 +80,7 @@ module Discordrb
       @token = data['token']
       @version = data['version']
       @components = @data['components']&.map { |component| Components.from_data(component, @bot) }&.compact || []
+      @entitlements = data['entitlements']&.map { |entitlement| Entitlement.new(entitlement, @bot) } || []
     end
 
     # Respond to the creation of this interaction. An interaction must be responded to or deferred,
