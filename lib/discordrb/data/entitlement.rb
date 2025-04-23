@@ -82,8 +82,8 @@ module Discordrb
     #   @return [true, false] If this entitlement is a premium purchase.
     # @!method application_subscription?
     #   @return [true, false] If this entitlement is a application subscription.
-    TYPES.each do |name, value|
-      define_method("#{name}?") do
+    TYPES.each do |key, value|
+      define_method("#{key}?") do
         @type == value
       end
     end

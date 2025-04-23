@@ -1694,7 +1694,7 @@ module Discordrb
         raise_event(event)
       when :ENTITLEMENT_DELETE
         event = EntitlementDeleteEvent.new(data, self)
-        
+
         raise_event(event)
       else
         # another event that we don't support yet

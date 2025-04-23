@@ -13,7 +13,7 @@ module Discordrb::API::Monetization
       :applications_aid_entitlements,
       application_id,
       :get,
-      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements#{"?#{query}" if !query.empty?}",
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements#{"?#{query}" unless query.empty?}",
       Authorization: token
     )
   end
@@ -31,7 +31,7 @@ module Discordrb::API::Monetization
   end
 
   # Consume a single entitlement.
-  #https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement
+  # https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement
   def consume_entitlement(token, application_id, entitlement_id)
     Discordrb::API.request(
       :applications_aid_entitlements_eid,
