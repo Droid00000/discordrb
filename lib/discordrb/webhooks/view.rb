@@ -11,8 +11,14 @@ class Discordrb::Webhooks::View
     link: 5
   }.freeze
 
+  # Possible seperator size name and values.
+  SEPERATOR_SIZES = {
+    small: 1,
+    large: 2
+  }.freeze
+
   # Component types.
-  # @see https://discord.com/developers/docs/interactions/message-components#component-types
+  # @see https://discord.com/developers/docs/components/reference#component-object-component-types
   COMPONENT_TYPES = {
     action_row: 1,
     button: 2,
@@ -29,13 +35,6 @@ class Discordrb::Webhooks::View
     file: 13,
     seperator: 14,
     container: 17
-  }.freeze
-
-  # Possible size values for seperators.
-  # @see https://discord.com/developers/docs/interactions/message-components#seperator-sizes
-  SEPERATOR_SIZES = {
-    small: 1,
-    large: 2
   }.freeze
 
   # This builder is used when constructing an ActionRow. Button and select menu components must be within an action row, but this can
@@ -372,11 +371,11 @@ class Discordrb::Webhooks::View
   # This builder can be used to construct a container. A container can hold several other types of components
   # including other action rows. A container can currently have a maximum of 10 components inside of it.
   class ContainerBuilder
-    # Set the integer ID of this component.
+    # The integer ID of this component.
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
 
-    # @return [Integer, nil] the colour of the bar to the side, in decimal form.
+    # @return [Integer, nil] the colour of the bar on the side, in decimal form.
     attr_reader :colour
     alias_method :color, :colour
 
@@ -490,21 +489,14 @@ class Discordrb::Webhooks::View
     # @note for internal use only
     # Process the color into an integer value.
     def process_color(value)
-      if value.nil?
-        @colour = nil
-      elsif value.is_a? Integer
-        raise ArgumentError, 'Embed colour must be 24-bit!' if value >= 16_777_216
-
-        @colour = value
-      elsif value.is_a? String
-        self.colour = value.delete('#').to_i(16)
-      elsif value.is_a? Array
-        raise ArgumentError, 'Colour tuple must have three values!' if value.length != 3
-
-        self.colour = (value[0] << 16) | (value[1] << 8) | value[2]
-      else
-        self.colour = value.to_i
-      end
+      @colour = case value
+                when Array
+                  (value[0] << 16) | (value[1] << 8) | value[2]
+                when String
+                  value.delete('#').to_i(16)
+                else
+                  value&.to_i
+                end
     end
   end
 

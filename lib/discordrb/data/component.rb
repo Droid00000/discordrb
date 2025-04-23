@@ -287,16 +287,7 @@ module Discordrb
     end
 
     # Unfurled media objects allow you to specify an arbitrary url or attachment://<filename> reference.
-    # They include metadata about height, width and content type, and the loading state.
     class UnfurledMedia
-      # Map of loading states.
-      LOADING_STATES = {
-        unknown: 0,
-        loading: 1,
-        loaded: 2,
-        not_found: 3
-      }.freeze
-
       # @return [String] The URL this attachment can be downloaded at.
       attr_reader :url
 
@@ -309,14 +300,8 @@ module Discordrb
       # @return [Integer, nil] The height of an image file, in pixels, or `nil` if the file is not an image.
       attr_reader :height
 
-      # @return [Symbol, nil] The media's loading state.
-      attr_reader :loading_state
-
       # @return [String, nil] The media's content type.
       attr_reader :content_type
-
-      # @return [Integer, nil] Flags for this media.
-      attr_reader :flags
 
       # @!visibility private
       def initialize(data, bot)
@@ -325,23 +310,7 @@ module Discordrb
         @proxy_url = data['proxy_url']
         @width = data['width']
         @height = data['height']
-        @flags = data['flags']
         @content_type = data['content_type']
-        @loading_state = LOADING_STATES.key(data['loading_state'])
-      end
-
-      # @!method unknown?
-      #   @return [true, false] whether the loading state is unknown.
-      # @!method loading?
-      #   @return [true, false] whether the unfurled media is still loading.
-      # @!method not_found?
-      #   @return [true, false] Whether the unfurled media couldn't be found.
-      # @!method loaded?
-      #   @return [true, false] whether the unfurled media has finished loading.
-      LOADING_STATES.each do |name|
-        define_method("#{name}?") do
-          @loading_state == name
-        end
       end
     end
 
