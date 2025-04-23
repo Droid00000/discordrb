@@ -27,11 +27,11 @@ bot.application_command(:components) do |event|
       container.section do |section|
         section.thumbnail(media: event.server.icon_url)
         section.text_display(text: "### Emoji Statistics for #{event.server.name}")
-        section.text_display(text: 'These are the current fake emoji stats for your server.')
+        section.text_display(text: 'These are the fake emoji statistics for your server.')
       end
 
-      # If set to true, the accent color is set to the user's highest
-      # role color, otherwise the container won't have an accent color.
+      # If set to true, the accent color is set to the user's current
+      # color, otherwise the container won't have an accent color.
       container.color = event.user.color if event.options['color']
 
       # A seperator can appear as a thin, translucent, grey
@@ -54,10 +54,10 @@ bot.application_command(:components) do |event|
       # can be added as well, although selects and buttons still have to be nested
       # within an action row. but this can change in the future.
       container.row do |row|
-        row.select_menu(custom_id: 'emojis', placeholder: 'Pick a statistic type...', min_values: 1) do |options|
-          options.option(label: 'Reaction', value: 'Reaction', description: 'View reaction statistics.', emoji: emojis.sample)
-          options.option(label: 'Message', value: 'Message', description: 'View message statistics.', emoji: emojis.sample)
-          options.option(label: 'Lowest', value: 'Lowest', description: 'View the boring emojis.', emoji: emojis.sample)
+        row.select_menu(custom_id: 'emojis', placeholder: 'Pick a statistic type...', min_values: 1) do |menu|
+          menu.option(label: 'Reaction', value: 'Reaction', description: 'View reaction statistics.', emoji: emojis.pop)
+          menu.option(label: 'Message', value: 'Message', description: 'View message statistics.', emoji: emojis.pop)
+          menu.option(label: 'Lowest', value: 'Lowest', description: 'View the boring emojis.', emoji: emojis.pop)
         end
       end
     end
