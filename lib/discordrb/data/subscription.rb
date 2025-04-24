@@ -29,6 +29,7 @@ module Discordrb
 
     # @!visibility hidden
     def initalize(data, bot)
+      @bot = bot
       @id = data['id'].to_i
       @status = data['status']
 
@@ -41,7 +42,7 @@ module Discordrb
 
       @end_period = Time.iso8601(data['current_period_end'])
       @start_period = Time.iso8601(data['current_period_start'])
-      @canceled_at = Time.iso8601(data['canceled_at']) if data['canceled_at']
+      @canceled_at = data['canceled_at'] ?  Time.iso8601(data['canceled_at']) : nil
     end
 
     # @!method active?
@@ -50,8 +51,8 @@ module Discordrb
     #   @return [true, false] If this subcription is ending.
     # @!method inactive?
     #   @return [true, false] If this subcription is inactive.
-    STATUS_TYPES.each do |key, value|
-      define_method("#{key}?") do
+    STATUS_TYPES.each do |name, value|
+      define_method("#{name}?") do
         @type == value
       end
     end

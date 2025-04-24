@@ -66,4 +66,42 @@ module Discordrb::API::Monetization
       Authorization: token
     )
   end
+
+  # Get all SKU subscriptions.
+  # https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions
+  def list_sku_subscriptions(token, before, after, limit, user_id)
+    query = URI.encode_www_form({ before: before, after: after, limit: limit, user_id: user_id }.compact)
+
+    Discordrb::API.request(
+      :skus,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/skus?#{"?#{query}" unless query.empty?}",
+      Authorization: token
+    )
+  end
+
+  # Get a single SKU subscription.
+  # https://discord.com/developers/docs/resources/subscription#get-sku-subscription
+  def get_sku_subscription(token, subscription_id)
+    Discordrb::API.request(
+      :skus_sid,
+      subscription_id,
+      :get,
+      "#{Discordrb::API.api_base}/skus/subscriptions/#{subscription_id}",
+      Authorization: token
+    )
+  end
+
+  # Get all SKUs.
+  # https://discord.com/developers/docs/resources/sku#list-skus
+  def list_skus(token, application_id)
+    Discordrb::API.request(
+      :applications_aid_skus,
+      application_id,
+      :get,
+      "#{Discordrb::API.api_base}/applications/skus",
+      Authorization: token
+    )
+  end
 end

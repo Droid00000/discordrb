@@ -54,8 +54,8 @@ module Discordrb
     #   @return [true, false] If this SKU is a subcription.
     # @!method subscription_group?
     #   @return [true, false] If this SKU is a subscription group.
-    TYPES.each do |key, value|
-      define_method("#{key}?") do
+    TYPES.each do |name, value|
+      define_method("#{name}?") do
         @type == value
       end
     end
@@ -66,8 +66,8 @@ module Discordrb
     #   @return [true, false] If this SKU is a server subcription.
     # @!method user_subscription?
     #   @return [true, false] If this SKU is a user subscription.
-    FLAGS.each do |key, value|
-      define_method("#{key}?") do
+    FLAGS.each do |name, value|
+      define_method("#{name}?") do
         @flags.anybits?(value)
       end
     end

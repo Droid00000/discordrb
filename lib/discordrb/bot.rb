@@ -1696,6 +1696,18 @@ module Discordrb
         event = EntitlementDeleteEvent.new(data, self)
 
         raise_event(event)
+      when :SUBSCRIPTION_CREATE
+        event = SubscriptonCreateEvent.new(data, self)
+
+        raise_event(event)
+      when :SUBCRIPTION_UPDATE
+        event = SubscriptionUpdateEvent.new(data, self)
+
+        raise_event(event)
+      when :SUBSCRIPTION_DELETE
+        event = SubscriptionDeleteEvent.new(data, self)
+
+        raise_event(event)
       else
         # another event that we don't support yet
         debug "Event #{type} has been received but is unsupported. Raising UnknownEvent"

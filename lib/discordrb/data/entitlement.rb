@@ -82,8 +82,8 @@ module Discordrb
     #   @return [true, false] If this entitlement is a premium purchase.
     # @!method application_subscription?
     #   @return [true, false] If this entitlement is a application subscription.
-    TYPES.each do |key, value|
-      define_method("#{key}?") do
+    TYPES.each do |name, value|
+      define_method("#{name}?") do
         @type == value
       end
     end
@@ -117,7 +117,7 @@ module Discordrb
     # Deletes a currently-active test entitlement.
     # @note this will raise an error if the entitlement is not a test purchase.
     def delete
-      raise ArgumentError, "Type must be test_purchase (4)" unless test_purchase?
+      raise ArgumentError, 'Type must be test_purchase (4)' unless test_purchase?
 
       API::Monetization.delete_test_entitlement(@bot.token, @bot.profile.id, @id)
       @deleted = true

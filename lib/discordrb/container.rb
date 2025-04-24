@@ -646,6 +646,63 @@ module Discordrb
       register_event(ChannelPinsUpdateEvent, attributes, block)
     end
 
+    # This **event** is raised whenever an entitlement is created for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attrributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attrributes [String, Integer, SKU] :sku An SKU to match against.
+    # @option attrributes [String, Integer, Application] :application An application to match against.
+    # @option attrributes [String, Integer, User] :user A user to match against.
+    # @option attrributes [Symbol, Integer] :type A entitlement type to match against.
+    # @option attrributes [true, false] :deleted The deletion status to match against.
+    # @option attributes [Time] :start Matches a time for the entitlements start date.
+    # @option attributes [Time] :end Matches a time for the entitlements end date.
+    # @option attributes [Server, String, Integer] :server A server to match against.
+    # @option attributes [true, false] :consumed The consumption status to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementCreateEvent] The event that was raised.
+    # @return [EntitlementCreateEventHandler] The event handler that was registered.
+    def entitlement_create(attributes = {}, &block)
+      register_event(EntitlementCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an entitlement is updated for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attrributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attrributes [String, Integer, SKU] :sku An SKU to match against.
+    # @option attrributes [String, Integer, Application] :application An application to match against.
+    # @option attrributes [String, Integer, User] :user A user to match against.
+    # @option attrributes [Symbol, Integer] :type A entitlement type to match against.
+    # @option attrributes [true, false] :deleted The deletion status to match against.
+    # @option attributes [Time] :start Matches a time for the entitlements start date.
+    # @option attributes [Time] :end Matches a time for the entitlements end date.
+    # @option attributes [Server, String, Integer] :server A server to match against.
+    # @option attributes [true, false] :consumed The consumption status to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementUpdateEvent] The event that was raised.
+    # @return [EntitlementUpdateEventHandler] The event handler that was registered.
+    def entitlement_update(attributes = {}, &block)
+      register_event(EntitlementUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an entitlement is deleted for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attrributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attrributes [String, Integer, SKU] :sku An SKU to match against.
+    # @option attrributes [String, Integer, Application] :application An application to match against.
+    # @option attrributes [String, Integer, User] :user A user to match against.
+    # @option attrributes [Symbol, Integer] :type A entitlement type to match against.
+    # @option attrributes [true, false] :deleted The deletion status to match against.
+    # @option attributes [Time] :start Matches a time for the entitlements start date.
+    # @option attributes [Time] :end Matches a time for the entitlements end date.
+    # @option attributes [Server, String, Integer] :server A server to match against.
+    # @option attributes [true, false] :consumed The consumption status to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementDeleteEvent] The event that was raised.
+    # @return [EntitlementDeleteEventHandler] The event handler that was registered.
+    def entitlement_delete(attributes = {}, &block)
+      register_event(EntitlementDeleteEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.
