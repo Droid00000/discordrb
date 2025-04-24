@@ -20,19 +20,19 @@ module Discordrb
       user_subscription: 1 << 8
     }.freeze
 
-    # @return [Integer]
+    # @return [Integer] The type of this SKU. See {TYPES}.
     attr_reader :type
 
-    # @return [String]
+    # @return [String] Customer facing name of this SKU.
     attr_reader :name
 
-    # @return [String]
+    # @return [String] System generated URL slug based on the name.
     attr_reader :slug
 
-    # @return [Integer]
+    # @return [Integer] SKU flags combined as a bitfield. See {FLAGS}.
     attr_reader :flags
 
-    # @return [Integer]
+    # @return [Integer] ID of the associated application for this SKU.
     attr_reader :application_id
 
     # @!visibility private

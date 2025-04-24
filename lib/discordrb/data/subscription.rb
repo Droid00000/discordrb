@@ -12,28 +12,28 @@ module Discordrb
       inactive: 2
     }.freeze
 
-    # @return [Integer]
+    # @return [Integer] Status of the subscription See {STATUS_TYPES}.
     attr_reader :status
 
-    # @return [Symbol, nil]
+    # @return [Symbol, nil] ISO3166-1 country code of the payment source used to buy the subscription.
     attr_reader :country
 
-    # @return [Time]
+    # @return [Time] The end of the current subscription period of the subscription.
     attr_reader :end_period
 
-    # @return [Time]
+    # @return [Time] The start of the current subscription period of the subscription.
     attr_reader :start_period
 
-    # @return [Time, nil]
+    # @return [Time, nil] The time at when the subscription was canceled.
     attr_reader :canceled_at
 
-    # @return [Array<Integer>]
+    # @return [Array<Integer>] Array of associated subscribed SKUs IDs.
     attr_reader :sku_ids
 
-    # @return [Array<Integer>]
+    # @return [Array<Integer>] Array of granted entitlement IDs for this SKU.
     attr_reader :entitlement_ids
 
-    # @return [Array<Integer>]
+    # @return [Array<Integer>] Array of SKU IDs this user will be subscribed to at renewal.
     attr_reader :renewal_sku_ids
 
     # @!visibility hidden
