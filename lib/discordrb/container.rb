@@ -703,6 +703,63 @@ module Discordrb
       register_event(EntitlementDeleteEvent, attributes, block)
     end
 
+    # This **event** is raised whenever a subscription is created for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [Integer, String, Subscription] :subscription A subscription to match against.
+    # @option attributes [Integer, String, User] :user A user to match against.
+    # @option attributes [Array<Integer, String, SKU>] :skus Array of SKUs to match against.
+    # @option attributes [Array<Integer, String, Entitlement>] :entitlements Array of entitlements to match against.
+    # @option attributes [Array<Integer, String, SKU>] :renewal_skus Array of renewal SKUs to match against.
+    # @option attributes [Time] :period_start A current period start time to match against.
+    # @option attributes [Time] :period_end A current period end time to match against.
+    # @option attributes [Symbol, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :canceled_at A cancel time to match against.
+    # @option attributes [Symbol, String] :country ISO3166 alpha-2 country code to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionCreateEvent] The event that was raised.
+    # @return [SubscriptionCreateEventHandler] The event handler that was registered.
+    def subscription_create(attributes = {}, &block)
+      register_event(SubscriptionCreateEvent, block)
+    end
+
+    # This **event** is raised whenever a subscription is updated for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [Integer, String, Subscription] :subscription A subscription to match against.
+    # @option attributes [Integer, String, User] :user A user to match against.
+    # @option attributes [Array<Integer, String, SKU>] :skus Array of SKUs to match against.
+    # @option attributes [Array<Integer, String, Entitlement>] :entitlements Array of entitlements to match against.
+    # @option attributes [Array<Integer, String, SKU>] :renewal_skus Array of renewal SKUs to match against.
+    # @option attributes [Time] :period_start A current period start time to match against.
+    # @option attributes [Time] :period_end A current period end time to match against.
+    # @option attributes [Symbol, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :canceled_at A cancel time to match against.
+    # @option attributes [Symbol, String] :country ISO3166 alpha-2 country code to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionUpdateEvent] The event that was raised.
+    # @return [SubscriptionUpdateEventHandler] The event handler that was registered.
+    def subscription_update(attributes = {}, &block)
+      register_event(SubscriptionUpdateEvent, block)
+    end
+
+    # This **event** is raised whenever a subscription is deleted for the current application.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [Integer, String, Subscription] :subscription A subscription to match against.
+    # @option attributes [Integer, String, User] :user A user to match against.
+    # @option attributes [Array<Integer, String, SKU>] :skus Array of SKUs to match against.
+    # @option attributes [Array<Integer, String, Entitlement>] :entitlements Array of entitlements to match against.
+    # @option attributes [Array<Integer, String, SKU>] :renewal_skus Array of renewal SKUs to match against.
+    # @option attributes [Time] :period_start A current period start time to match against.
+    # @option attributes [Time] :period_end A current period end time to match against.
+    # @option attributes [Symbol, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :canceled_at A cancel time to match against.
+    # @option attributes [Symbol, String] :country ISO3166 alpha-2 country code to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionDeleteEvent] The event that was raised.
+    # @return [SubscriptionDeleteEventHandler] The event handler that was registered.
+    def subscription_delete(attributes = {}, &block)
+      register_event(SubscriptionDeleteEvent, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.

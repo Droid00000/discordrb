@@ -27,6 +27,15 @@ module Discordrb
     # @return [Time, nil]
     attr_reader :canceled_at
 
+    # @return [Array<Integer>]
+    attr_reader :sku_ids
+
+    # @return [Array<Integer>]
+    attr_reader :entitlement_ids
+
+    # @return [Array<Integer>]
+    attr_reader :renewal_sku_ids
+
     # @!visibility hidden
     def initalize(data, bot)
       @bot = bot
@@ -42,7 +51,7 @@ module Discordrb
 
       @end_period = Time.iso8601(data['current_period_end'])
       @start_period = Time.iso8601(data['current_period_start'])
-      @canceled_at = data['canceled_at'] ?  Time.iso8601(data['canceled_at']) : nil
+      @canceled_at = data['canceled_at'] ? Time.iso8601(data['canceled_at']) : nil
     end
 
     # @!method active?

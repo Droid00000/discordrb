@@ -38,11 +38,9 @@ module Discordrb
 
     # @return [Time, nil]
     attr_reader :starts_at
-    alias_method :start_time, :starts_at
 
     # @return [Time, nil]
     attr_reader :ends_at
-    alias_method :end_time, :ends_at
 
     # @return [Boolean]
     attr_reader :consumed
