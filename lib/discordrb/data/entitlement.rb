@@ -23,26 +23,26 @@ module Discordrb
       user: 2
     }.freeze
 
-    # @return [Integer] ID of the associated SKU.
+    # @return [Integer] the ID of the associated SKU.
     attr_reader :sku_id
 
-    # @return [Integer] ID of the associated application.
+    # @return [Integer] the ID of the associated application.
     attr_reader :application_id
 
-    # @return [Integer] The type of this SKU. See {TYPES}.
+    # @return [Integer] the type of this SKU. See {TYPES}.
     attr_reader :type
 
-    # @return [true, false] If this entitlement is deleted or not.
+    # @return [true, false] if this entitlement is deleted or not.
     attr_reader :deleted
     alias_method :deleted?, :deleted
 
-    # @return [Time, nil] Start date at when the entitlement is valid.
+    # @return [Time, nil] the start date at when the entitlement is valid.
     attr_reader :starts_at
 
-    # @return [Time, nil] End date at when the entitlement is no longer valid.
+    # @return [Time, nil] the end date at when the entitlement is no longer valid.
     attr_reader :ends_at
 
-    # @return [true, false] If this entitlement has been consumed or not.
+    # @return [true, false] if this entitlement has been consumed or not.
     attr_reader :consumed
     alias_method :consumed?, :consumed
 
@@ -113,7 +113,6 @@ module Discordrb
     end
 
     # Deletes a currently-active test entitlement.
-    # @note this will raise an error if the entitlement is not a test purchase.
     def delete
       raise ArgumentError, 'Type must be test_purchase (4)' unless test_purchase?
 
