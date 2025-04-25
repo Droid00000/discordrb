@@ -9,6 +9,12 @@ module Discordrb::Events
     # @return [Entitlement]
     attr_reader :entitlement
 
+    # @!visibility private
+    attr_reader :server_id
+
+    # @!visibility private
+    attr_reader :user_id
+
     # @!attribute [r] id
     #   @return [Integer]
     #   @see entitlement#id
@@ -57,6 +63,8 @@ module Discordrb::Events
     # @!visibility private
     def initalize(data, bot)
       @bot = bot
+      @user_id = data['user_id']&.to_i
+      @server_id = data['guild_id']&.to_i
       @entitlement = Entitlement.new(data, bot)
     end
   end
