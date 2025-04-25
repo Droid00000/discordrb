@@ -719,7 +719,7 @@ module Discordrb
     # @yieldparam event [SubscriptionCreateEvent] The event that was raised.
     # @return [SubscriptionCreateEventHandler] The event handler that was registered.
     def subscription_create(attributes = {}, &block)
-      register_event(SubscriptionCreateEvent, block)
+      register_event(SubscriptionCreateEvent, attributes, block)
     end
 
     # This **event** is raised whenever a subscription is updated for the current application.
@@ -738,7 +738,7 @@ module Discordrb
     # @yieldparam event [SubscriptionUpdateEvent] The event that was raised.
     # @return [SubscriptionUpdateEventHandler] The event handler that was registered.
     def subscription_update(attributes = {}, &block)
-      register_event(SubscriptionUpdateEvent, block)
+      register_event(SubscriptionUpdateEvent, attributes, block)
     end
 
     # This **event** is raised whenever a subscription is deleted for the current application.
@@ -757,7 +757,7 @@ module Discordrb
     # @yieldparam event [SubscriptionDeleteEvent] The event that was raised.
     # @return [SubscriptionDeleteEventHandler] The event handler that was registered.
     def subscription_delete(attributes = {}, &block)
-      register_event(SubscriptionDeleteEvent, block)
+      register_event(SubscriptionDeleteEvent, attributes, block)
     end
 
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
