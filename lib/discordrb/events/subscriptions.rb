@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'discordrb/events/generic'
+require 'discordrb/data'
+
 module Discordrb::Events
   # Base class for subscription events.
   class SubscriptionEvent < Event

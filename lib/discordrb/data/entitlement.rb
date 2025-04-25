@@ -86,6 +86,11 @@ module Discordrb
       end
     end
 
+    # @return [SKU] The associated SKU for this entitlement.
+    def sku
+      @sku ||= @bot.sku(@sku_id)
+    end
+
     # @return [true, false] If this entitlement is for a user or not.
     def user?
       !@user_id.nil?
