@@ -89,7 +89,7 @@ module Discordrb::Events
           when Symbol
             Subscription::STATUS_TYPES[a] == e
           when Integer
-            a == e.status
+            a == e
           end
         end,
         matches_all(@attributes[:end_period], event.end_period) { |a, e| a == e },
