@@ -805,6 +805,12 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
+    # The time at which the current bot joined this server.
+    # @return [Time] ISO8601 Timestamp of when the bot joined this server.
+    def joined_at
+      @joined_at || bot.joined_at
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
@@ -858,6 +864,7 @@ module Discordrb
       @member_count = new_data['member_count'] || @member_count || 0
       @splash_id = new_data['splash'] || @splash_id
       @banner_id = new_data['banner'] || @banner_id
+      @joined_at = new_data['joined_at'] ? Time.iso8601(new_data['joined_at']) : @joined_at || nil
       @features = new_data['features'] ? new_data['features'].map { |element| element.downcase.to_sym } : @features || []
 
       process_channels(new_data['channels']) if new_data['channels']

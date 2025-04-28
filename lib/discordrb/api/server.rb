@@ -154,7 +154,7 @@ module Discordrb::API::Server
   # Update a user properties
   # https://discord.com/developers/docs/resources/guild#modify-guild-member
   def update_member(token, server_id, user_id, nick: :undef, roles: :undef, mute: :undef, deaf: :undef, channel_id: :undef,
-                    communication_disabled_until: :undef, reason: nil)
+                    communication_disabled_until: :undef, flags: :undef, reason: nil)
     Discordrb::API.request(
       :guilds_sid_members_uid,
       server_id,
@@ -165,7 +165,8 @@ module Discordrb::API::Server
         mute: mute,
         deaf: deaf,
         channel_id: channel_id,
-        communication_disabled_until: communication_disabled_until
+        communication_disabled_until: communication_disabled_until,
+        flags: flags
       }.reject { |_, v| v == :undef }.to_json,
       Authorization: token,
       content_type: :json,

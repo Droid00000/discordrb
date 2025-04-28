@@ -3,6 +3,19 @@
 module Discordrb
   # Mixin for the attributes members and private members should have
   module MemberAttributes
+    # Map of member flags.
+    FLAGS = {
+      rejoined: 1 << 0,
+      completed_onboarding: 1 << 1,
+      bypassed_verification: 1 << 2,
+      started_onboarding: 1 << 3,
+      is_guest: 1 << 4,
+      started_home_actions: 1 << 5,
+      completed_home_actions: 1 << 6,
+      automod_quarantined_username: 1 << 7,
+      dm_settings_upsell_acknowledged: 1 << 9
+    }.freeze
+
     # @return [Time] when this member joined the server.
     attr_reader :joined_at
 
@@ -22,6 +35,9 @@ module Discordrb
     # @return [Time] When the user's timeout will expire.
     attr_reader :communication_disabled_until
     alias_method :timeout, :communication_disabled_until
+
+    # @return [Integer] The flags set on this server member.
+    attr_reader :flags
   end
 
   # A member is a user on a server. It differs from regular users in that it has roles, voice statuses and things like
@@ -270,6 +286,12 @@ module Discordrb
       set_nick(nick)
     end
 
+    # Set the flags of this member.
+    # @param flags [Integer] New flags for this member.
+    def flags=(flags)
+      API::Server.update_member(@bot.token, @server_id, @user.id, flags: flags)
+    end
+
     alias_method :nickname=, :nick=
 
     # Sets or resets this member's nickname. Requires the Change Nickname permission for the bot itself and Manage
@@ -292,6 +314,12 @@ module Discordrb
     # @return [String] the name the user displays as (nickname if they have one, global_name if they have one, username otherwise)
     def display_name
       nickname || global_name || username
+    end
+
+    FLAGS.each do |name, value|
+      define_method("#{name}?") do
+        @flags.anybits?(value)
+      end
     end
 
     # Update this member's roles
