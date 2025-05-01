@@ -2,7 +2,7 @@
 
 require 'discordrb'
 
-bot = Discordrb::Bot.new(token: ENV.fetch('BOT_TOKEN', nil), intents: [:servers])
+bot = Discordrb::Bot.new(token: ENV.fetch('BOT_TOKEN', nil), intents: %i[servers server_emojis])
 
 bot.register_application_command(:components, 'Components version two!', server_id: ENV.fetch('SERVER_ID', nil)) do |option|
   option.boolean('color', 'Whether the container should include an accent color.', required: false)
@@ -15,9 +15,9 @@ bot.application_command(:components) do |event|
     "#{emoji.mention} — #{emoji.name} **(#{rand(1..500)})**\n"
   end
 
-  # The `new_components` argument must be manually set to true
+  # The `has_components` argument must be manually set to true
   # to use V2 components. Doing so disables sending content and embeds.
-  event.respond(new_components: true) do |_, view|
+  event.respond(has_components: true) do |_, view|
     # A new container is added to contain other components.
     # We don't have to do this, since all components besides buttons
     # and select menus can be used as top level components.

@@ -323,7 +323,7 @@ module Discordrb
       attr_reader :divider
       alias_method :divider?, :divider
 
-      # @return [Symbol] If this seperator has `large` or `small` spacing.
+      # @return [Integer] If this seperator has `small` (1) or `large` (2) spacing.
       attr_reader :spacing
 
       # @!visibility private
@@ -331,17 +331,17 @@ module Discordrb
         @bot = bot
         @id = data['id']
         @divider = data['divider']
-        @spacing = Webhooks::View::SEPERATOR_SIZES.key(data['spacing'])
+        @spacing = data['spacing']
       end
 
       # @return [true, false] If the spacing is small.
       def small?
-        @spacing == :small
+        @spacing == 1
       end
 
       # @return [true, false] If the spacing is large.
       def large?
-        @spacing == :large
+        @spacing == 2
       end
     end
 
@@ -462,6 +462,7 @@ module Discordrb
       # @return [String] The content within this text display.
       attr_reader :content
       alias_method :text, :content
+      alias_method :to_s, :content
 
       # @!visibility private
       def initialize(data, bot)
