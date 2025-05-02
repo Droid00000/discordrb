@@ -90,7 +90,7 @@ module Discordrb
       @bot = bot
 
       @user = bot.ensure_user(data['user'])
-      super @user # Initialize the delegate class
+      super(@user) # Initialize the delegate class
 
       @server = server
       @server_id = server&.id || data['guild_id'].to_i
@@ -317,9 +317,9 @@ module Discordrb
 
     alias_method :set_nickname, :set_nick
 
-    # @return [String] the name the user displays as (nickname if they have one, username otherwise)
+    # @return [String] the name the user displays as (nickname if they have one, global_name if they have one, username otherwise)
     def display_name
-      nickname || username
+      nickname || global_name || username
     end
 
     # Get the CDN URL of this member's current avatar.

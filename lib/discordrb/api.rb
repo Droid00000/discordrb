@@ -9,7 +9,7 @@ require 'discordrb/errors'
 # List of methods representing endpoints in Discord's API
 module Discordrb::API
   # The base URL of the Discord REST API.
-  APIBASE = 'https://discord.com/api/v8'
+  APIBASE = 'https://discord.com/api/v9'
 
   # The URL of Discord's CDN
   CDN_URL = 'https://cdn.discordapp.com'
@@ -223,28 +223,12 @@ module Discordrb::API
     "#{cdn_url}/app-assets/#{application_id}/achievements/#{achievement_id}/icons/#{icon_hash}.#{format}"
   end
 
-  # Login to the server
-  def login(email, password)
-    request(
-      :auth_login,
-      nil,
-      :post,
-      "#{api_base}/auth/login",
-      email: email,
-      password: password
-    )
-  end
-
-  # Logout from the server
-  def logout(token)
-    request(
-      :auth_logout,
-      nil,
-      :post,
-      "#{api_base}/auth/logout",
-      nil,
-      Authorization: token
-    )
+  # @param role_id [String, Integer]
+  # @param icon_hash [String]
+  # @param format ['webp', 'png', 'jpeg']
+  # @return [String]
+  def role_icon_url(role_id, icon_hash, format = 'webp')
+    "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
   # Create an OAuth application

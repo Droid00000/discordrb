@@ -134,7 +134,7 @@ module Discordrb
     LARGE_THRESHOLD = 100
 
     # The version of the gateway that's supposed to be used.
-    GATEWAY_VERSION = 8
+    GATEWAY_VERSION = 9
 
     # Heartbeat ACKs are Discord's way of verifying on the client side whether the connection is still alive. If this is
     # set to true (default value) the gateway client will use that functionality to detect zombie connections and
@@ -280,11 +280,11 @@ module Discordrb
     def identify
       compress = @compress_mode == :large
       send_identify(@token, {
-                      '$os': RUBY_PLATFORM,
-                      '$browser': 'discordrb',
-                      '$device': 'discordrb',
-                      '$referrer': '',
-                      '$referring_domain': ''
+                      os: RUBY_PLATFORM,
+                      browser: 'discordrb',
+                      device: 'discordrb',
+                      referrer: '',
+                      referring_domain: ''
                     }, compress, LARGE_THRESHOLD, @shard_key, @intents)
     end
 
@@ -295,11 +295,11 @@ module Discordrb
     # @param properties [Hash<Symbol => String>] A list of properties for Discord to use in analytics. The following
     #   keys are recognised:
     #
-    #    - "$os" (recommended value: the operating system the bot is running on)
-    #    - "$browser" (recommended value: library name)
-    #    - "$device" (recommended value: library name)
-    #    - "$referrer" (recommended value: empty)
-    #    - "$referring_domain" (recommended value: empty)
+    #    - "os" (recommended value: the operating system the bot is running on)
+    #    - "browser" (recommended value: library name)
+    #    - "device" (recommended value: library name)
+    #    - "referrer" (recommended value: empty)
+    #    - "referring_domain" (recommended value: empty)
     #
     # @param compress [true, false] Whether certain large packets should be compressed using zlib.
     # @param large_threshold [Integer] The member threshold after which a server counts as large and will have to have
@@ -718,7 +718,7 @@ module Discordrb
 
         @session = Session.new(data['session_id'])
         @session.sequence = 0
-        @bot.__send__(:notify_ready) if @intents && (@intents & INTENTS[:servers]).zero?
+        @bot.__send__(:notify_ready) if @intents && @intents.nobits?(INTENTS[:servers])
       when :RESUMED
         # The RESUMED event is received after a successful op 6 (resume). It does nothing except tell the bot the
         # connection is initiated (like READY would). Starting with v5, it doesn't set a new heartbeat interval anymore

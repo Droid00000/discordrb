@@ -137,7 +137,7 @@ module Discordrb
       @bot.debug("Members for server #{@id} not chunked yet - initiating")
 
       # If the SERVER_MEMBERS intent flag isn't set, the gateway won't respond when we ask for members.
-      raise 'The :server_members intent is required to get server members' if (@bot.gateway.intents & INTENTS[:server_members]).zero?
+      raise 'The :server_members intent is required to get server members' if @bot.gateway.intents.nobits?(INTENTS[:server_members])
 
       @bot.request_chunks(@id)
       sleep 0.05 until @chunked
@@ -397,7 +397,7 @@ module Discordrb
     # @!visibility private
     def delete_role(role_id)
       @roles.reject! { |r| r.id == role_id }
-      @members.each do |_, member|
+      @members.each_value do |member|
         new_roles = member.roles.reject { |r| r.id == role_id }
         member.update_roles(new_roles)
       end
@@ -573,7 +573,7 @@ module Discordrb
     # The amount of emoji the server can have, based on its current Nitro Boost Level.
     # @return [Integer] the max amount of emoji
     def max_emoji
-      case @level
+      case @boost_level
       when 1
         100
       when 2
@@ -585,9 +585,24 @@ module Discordrb
       end
     end
 
+    # Searches a server for members that matches a username or a nickname.
+    # @param name [String] The username or nickname to search for.
+    # @param limit [Integer] The maximum number of members between 1-1000 to return. Returns 1 member by default.
+    # @return [Array<Member>] An array of member objects that match the given parameters.
+    def search_members(name:, limit: nil)
+      response = JSON.parse(API::Server.search_guild_members(@bot.token, @id, name, limit))
+      return nil if response.empty?
+
+      response.map { |mem| Member.new(mem, self, @bot) }
+    end
+
+    # Retrieve banned users from this server.
+    # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
+    # @param before_id [Integer] Consider only users before given user id.
+    # @param after_id [Integer] Consider only users after given user id.
     # @return [Array<ServerBan>] a list of banned users on this server and the reason they were banned.
-    def bans
-      response = JSON.parse(API::Server.bans(@bot.token, @id))
+    def bans(limit: nil, before_id: nil, after_id: nil)
+      response = JSON.parse(API::Server.bans(@bot.token, @id, limit, before_id, after_id))
       response.map do |e|
         ServerBan.new(self, User.new(e['user'], @bot), e['reason'])
       end
@@ -615,11 +630,12 @@ module Discordrb
       API::Server.remove_member(@bot.token, @id, user.resolve_id, reason)
     end
 
-    # Forcibly moves a user into a different voice channel. Only works if the bot has the permission needed.
+    # Forcibly moves a user into a different voice channel.
+    # Only works if the bot has the permission needed and if the user is already connected to some voice channel on this server.
     # @param user [User, String, Integer] The user to move.
-    # @param channel [Channel, String, Integer] The voice channel to move into.
+    # @param channel [Channel, String, Integer, nil] The voice channel to move into. (If nil, the user is disconnected from the voice channel)
     def move(user, channel)
-      API::Server.update_member(@bot.token, @id, user.resolve_id, channel_id: channel.resolve_id)
+      API::Server.update_member(@bot.token, @id, user.resolve_id, channel_id: channel&.resolve_id)
     end
 
     # Deletes this server. Be aware that this is permanent and impossible to undo, so be careful!
@@ -825,11 +841,11 @@ module Discordrb
       @afk_timeout = new_data[:afk_timeout] || new_data['afk_timeout'] || @afk_timeout
 
       afk_channel_id = new_data[:afk_channel_id] || new_data['afk_channel_id'] || @afk_channel
-      @afk_channel_id = afk_channel_id.nil? ? nil : afk_channel_id.resolve_id
+      @afk_channel_id = afk_channel_id&.resolve_id
       widget_channel_id = new_data[:widget_channel_id] || new_data['widget_channel_id'] || @widget_channel
-      @widget_channel_id = widget_channel_id.nil? ? nil : widget_channel_id.resolve_id
+      @widget_channel_id = widget_channel_id&.resolve_id
       system_channel_id = new_data[:system_channel_id] || new_data['system_channel_id'] || @system_channel
-      @system_channel_id = system_channel_id.nil? ? nil : system_channel_id.resolve_id
+      @system_channel_id = system_channel_id&.resolve_id
 
       @widget_enabled = new_data[:widget_enabled] || new_data['widget_enabled']
       @splash = new_data[:splash_id] || new_data['splash_id'] || @splash_id

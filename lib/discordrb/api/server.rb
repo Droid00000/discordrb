@@ -138,6 +138,19 @@ module Discordrb::API::Server
     )
   end
 
+  # Search for a guild member
+  # https://discord.com/developers/docs/resources/guild#search-guild-members
+  def search_guild_members(token, server_id, query, limit)
+    query_string = URI.encode_www_form({ query: query, limit: limit }.compact)
+    Discordrb::API.request(
+      :guilds_sid_members,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/members/search?#{query_string}",
+      Authorization: token
+    )
+  end
+
   # Update a user properties
   # https://discord.com/developers/docs/resources/guild#modify-guild-member
   def update_member(token, server_id, user_id, nick: :undef, roles: :undef, mute: :undef, deaf: :undef, channel_id: :undef,
@@ -176,12 +189,13 @@ module Discordrb::API::Server
 
   # Get a server's banned users
   # https://discord.com/developers/docs/resources/guild#get-guild-bans
-  def bans(token, server_id)
+  def bans(token, server_id, limit = nil, before = nil, after = nil)
+    query_string = URI.encode_www_form({ limit: limit, before: before, after: after }.compact)
     Discordrb::API.request(
       :guilds_sid_bans,
       server_id,
       :get,
-      "#{Discordrb::API.api_base}/guilds/#{server_id}/bans",
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/bans?#{query_string}",
       Authorization: token
     )
   end
@@ -248,13 +262,28 @@ module Discordrb::API::Server
   # sending TTS messages, embedding links, sending files, reading the history, mentioning everybody,
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#batch-modify-guild-role
-  def update_role(token, server_id, role_id, name, colour, hoist = false, mentionable = false, packed_permissions = 104_324_161, reason = nil)
+  # @param icon [:undef, File]
+  def update_role(token, server_id, role_id, name, colour, hoist = false, mentionable = false, packed_permissions = 104_324_161, reason = nil, icon = :undef)
+    data = { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }
+
+    if icon != :undef && icon
+      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
+
+      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
+
+      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
+      data[:icon] = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+    elsif icon.nil?
+      data[:icon] = nil
+    end
+
     Discordrb::API.request(
       :guilds_sid_roles_rid,
       server_id,
       :patch,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles/#{role_id}",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }.to_json,
+      data.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
