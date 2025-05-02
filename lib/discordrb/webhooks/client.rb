@@ -22,7 +22,6 @@ module Discordrb::Webhooks
     # @param builder [Builder, nil] The builder to start out with, or nil if one should be created anew.
     # @param wait [true, false] Whether Discord should wait for the message to be successfully received by clients, or
     #   whether it should return immediately after sending the message.
-    # @param with_components [true, false] Required by non-application owned hooks to send non-interactive components.
     # @yield [builder] Gives the builder to the block to add additional steps, or to do the entire building process.
     # @yieldparam builder [Builder] The builder given as a parameter which is used as the initial step to start from.
     # @example Execute the webhook with an already existing builder
@@ -39,7 +38,7 @@ module Discordrb::Webhooks
     #     end
     #   end
     # @return [RestClient::Response] the response returned by Discord.
-    def execute(builder = nil, wait = false, components = nil, with_components = nil)
+    def execute(builder = nil, wait = false, components = nil)
       raise TypeError, 'builder needs to be nil or like a Discordrb::Webhooks::Builder!' unless
         (builder.respond_to?(:file) && builder.respond_to?(:to_multipart_hash)) || builder.respond_to?(:to_json_hash) || builder.nil?
 
@@ -51,9 +50,9 @@ module Discordrb::Webhooks
       components ||= view
 
       if builder.file
-        post_multipart(builder, components, wait, with_components)
+        post_multipart(builder, components, wait)
       else
-        post_json(builder, components, wait, with_components)
+        post_json(builder, components, wait)
       end
     end
 
@@ -118,16 +117,14 @@ module Discordrb::Webhooks
       end
     end
 
-    def post_json(builder, components, wait, with_components)
+    def post_json(builder, components, wait)
       data = builder.to_json_hash.merge({ components: components.to_a })
-      query = URI.encode_www_form({ with_components: with_components, wait: wait }.compact)
-      RestClient.post(@url + (query.empty? ? '' : "?#{query}"), data.to_json, content_type: :json)
+      RestClient.post(@url + (wait ? '?wait=true' : ''), data.to_json, content_type: :json)
     end
 
-    def post_multipart(builder, components, wait, with_components)
+    def post_multipart(builder, components, wait)
       data = builder.to_multipart_hash.merge({ components: components.to_a })
-      query = URI.encode_www_form({ with_components: with_components, wait: wait }.compact)
-      RestClient.post(@url + (query.empty? ? '' : "?#{query}"), data)
+      RestClient.post(@url + (wait ? '?wait=true' : ''), data)
     end
 
     def generate_url(id, token)
