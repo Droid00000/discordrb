@@ -45,13 +45,13 @@ module Discordrb::API::User
 
   # Update user data
   # https://discord.com/developers/docs/resources/user#modify-current-user
-  def update_profile(token, email, password, new_username, avatar, new_password = nil)
+  def update_profile(token, username = :undef, avatar = :undef, banner = :undef)
     Discordrb::API.request(
       :users_me,
       nil,
       :patch,
       "#{Discordrb::API.api_base}/users/@me",
-      { avatar: avatar, email: email, new_password: new_password, password: password, username: new_username }.to_json,
+      { username: username, avatar: avatar, banner: banner }.reject { |_, v| v == :undef }.to_json,
       Authorization: token,
       content_type: :json
     )
@@ -119,19 +119,6 @@ module Discordrb::API::User
     )
   end
 
-  # Change user status setting
-  def change_status_setting(token, status)
-    Discordrb::API.request(
-      :users_me_settings,
-      nil,
-      :patch,
-      "#{Discordrb::API.api_base}/users/@me/settings",
-      { status: status }.to_json,
-      Authorization: token,
-      content_type: :json
-    )
-  end
-
   # Returns one of the "default" discord avatars from the CDN given a discriminator
   def default_avatar(discrim = 0)
     index = discrim.to_i % 5
@@ -146,5 +133,15 @@ module Discordrb::API::User
                  'webp'
                end
     "#{Discordrb::API.cdn_url}/avatars/#{user_id}/#{avatar_id}.#{format}"
+  end
+
+  # Make a banner URL from the user and banner IDs
+  def banner_url(user_id, banner_id, format = nil)
+    format ||= if banner_id.start_with?('a_')
+                 'gif'
+               else
+                 'png'
+               end
+    "#{Discordrb::API.cdn_url}/banners/#{user_id}/#{banner_id}.#{format}"
   end
 end

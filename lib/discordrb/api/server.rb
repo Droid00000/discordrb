@@ -550,4 +550,14 @@ module Discordrb::API::Server
                end
     "#{Discordrb::API.cdn_url}/guilds/#{guild_id}/users/#{user_id}/avatars/#{avatar_id}.#{format}"
   end
+
+  # Make an banner URL from the guild, user and banner IDs
+  def member_banner_url(guild_id, user_id, banner_id, format = nil)
+    format ||= if avatar_id.start_with?('a_')
+                 'gif'
+               else
+                 'webp'
+               end
+    "#{Discordrb::API.cdn_url}/guilds/#{guild_id}/users/#{user_id}/banners/#{banner_id}.#{format}"
+  end
 end

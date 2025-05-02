@@ -21,6 +21,10 @@ module Discordrb
     # @see #avatar_url
     attr_accessor :avatar_id
 
+    # @return [String, nil] the ID of this user's current banner, can be used to generate a banner URL.
+    # @see #banner_url
+    attr_accessor :banner_id
+
     # Utility function to mention users in messages
     # @return [String] the mention code in the form of <@id>
     def mention
@@ -40,6 +44,13 @@ module Discordrb
       return API::User.default_avatar(@discriminator) unless @avatar_id
 
       API::User.avatar_url(@id, @avatar_id, format)
+    end
+
+    # Utility function to get a user's banner URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the user has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the URL to the banner image, or nil if the user doesn't have a custom banner.
+    def banner_url(format = nil)
+      API::User.banner_url(@id, @banner_id, format) if @banner_id
     end
   end
 
@@ -66,6 +77,7 @@ module Discordrb
       @id = data['id'].to_i
       @discriminator = data['discriminator']
       @avatar_id = data['avatar']
+      @banner_id = data['banner']
       @roles = {}
       @activities = Discordrb::ActivitySet.new
 

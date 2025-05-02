@@ -23,11 +23,30 @@ module Discordrb
     attr_reader :communication_disabled_until
     alias_method :timeout, :communication_disabled_until
 
-    # @!attribute [r] avatar_id
-    #   @return [String, nil] the ID of this member's current avatar, can be used to generate an avatar URL.
-    #   @see Member#avatar_url
-    def avatar_id
-      @avatar || @user.avatar_id
+    # @return [String, nil] The ID of this user's current server avatar.
+    # @see #server_avatar_url
+    attr_reader :server_avatar_id
+
+    # @return [String, nil] The ID of this user's current server banner.
+    # @see #server_banner_url
+    attr_reader :server_banner_id
+
+    # Utility method to get a user's server avatar URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the user has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this. Will always be PNG for default avatars.
+    # @return [String, nil] the URL to the avatar image, or nil if this member doesn't have a server avatar.
+    def server_avatar_url(format = nil)
+      return nil unless @server_avatar_id
+
+      API::Server.avatar_url(@server_id, @user.id, @server_avatar_id, format)
+    end
+
+    # Utility method to get a user's server banner URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banner, and will detect if the user has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the URL to the banner image, or nil if this member doesn't have a server banner.
+    def server_banner_url(format = nil)
+      return nil unless @server_banner_id
+
+      API::Server.member_banner_url(@server_id, @user.id, @server_banner_id, format)
     end
   end
 
@@ -84,7 +103,8 @@ module Discordrb
       timeout_until = data['communication_disabled_until']
       @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
       @permissions = Permissions.new(data['permissions']) if data['permissions']
-      @avatar_id = data['avatar']
+      @server_avatar_id = data['avatar']
+      @server_banner_id = data['banner']
     end
 
     # @return [Server] the server this member is on.
@@ -302,11 +322,20 @@ module Discordrb
       nickname || username
     end
 
-    # (See User#avatar_url)
-    def avatar_url(format = nil)
-      return @user.avatar_url(format) unless @avatar_id
+    # Get the CDN URL of this member's current avatar.
+    # @return [String] The member's server avatar, or global avatar.
+    def display_avatar(format = nil)
+      return @user.avatar_url(format) unless @server_avatar_id
 
-      API::Server.avatar_url(@server_id, @user.id, @avatar_id, format)
+      API::Server.avatar_url(@server_id, @user.id, @server_avatar_id, format)
+    end
+
+    # Get the CDN URL of this member's current banner.
+    # @return [String, nil] The member's server banner, or global banner.
+    def display_banner(format = nil)
+      return @user.banner_url(format) unless @server_banner_id
+
+      API::Server.member_banner_url(@server_id, @user.id, @server_banner_id, format)
     end
 
     # Update this member's roles
