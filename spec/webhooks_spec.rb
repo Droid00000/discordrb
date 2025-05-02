@@ -227,13 +227,13 @@ describe Discordrb::Webhooks do
       end
 
       it 'makes a POST request with JSON data' do
-        subject.__send__(:post_json, builder, [], false, nil)
+        subject.__send__(:post_json, builder, [], false)
 
         expect(RestClient).to have_received(:post).with(provided_url, builder.to_json_hash.merge({ components: [] }).to_json, content_type: :json)
       end
 
       it 'waits when wait=true' do
-        subject.__send__(:post_json, builder, [], true, nil)
+        subject.__send__(:post_json, builder, [], true)
 
         expect(provided_url).to have_received(:+).with('?wait=true')
       end
@@ -251,13 +251,13 @@ describe Discordrb::Webhooks do
       end
 
       it 'makes a POST request with multipart data' do
-        subject.__send__(:post_multipart, builder, [], false, nil)
+        subject.__send__(:post_multipart, builder, [], false)
 
         expect(RestClient).to have_received(:post).with(provided_url, post_data)
       end
 
       it 'waits for a response when wait=true' do
-        subject.__send__(:post_multipart, builder, [], true, nil)
+        subject.__send__(:post_multipart, builder, [], true)
 
         expect(provided_url).to have_received(:+).with('?wait=true')
       end
