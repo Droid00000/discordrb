@@ -88,7 +88,7 @@ module Discordrb
 
     # @return [SKU] The associated SKU for this entitlement.
     def sku
-      @sku ||= @bot.sku(@sku_id)
+      @sku ||= @bot.get_sku(@sku_id)
     end
 
     # @return [User] The user this entitlement is for.
