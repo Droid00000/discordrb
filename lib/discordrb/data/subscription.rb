@@ -36,7 +36,7 @@ module Discordrb
     # @return [Array<Integer>] an array of SKU IDs this user will be subscribed to at renewal.
     attr_reader :renewal_sku_ids
 
-    # @!visibility hidden
+    # @!visibility private
     def initalize(data, bot)
       @bot = bot
       @id = data['id'].to_i

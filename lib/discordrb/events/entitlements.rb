@@ -15,51 +15,6 @@ module Discordrb::Events
     # @!visibility private
     attr_reader :user_id
 
-    # @!attribute [r] id
-    #   @return [Integer]
-    #   @see entitlement#id
-    # @!attribute [r] sku_id
-    #   @return [Integer]
-    #   @see entitlement#sku_id
-    # @!attribute [r] application_id
-    #   @return [Integer]
-    #   @see entitlement#application_id
-    # @!attribute [r] type
-    #   @return [Integer]
-    #   @see entitlement#type
-    # @!attribute [r] deleted?
-    #   @return [true, false]
-    #   @see entitlement#deleted?
-    # @!attribute [r] starts_at
-    #   @return [Time]
-    #   @see entitlement#starts_at
-    # @!attribute [r] ends_at
-    #   @return [Time]
-    #   @see entitlement#ends_at
-    # @!attribute [r] consumed?
-    #   @return [true, false]
-    #   @see entitlement#consumed?
-    # @!attribute [r] user?
-    #   @return [true, false]
-    #   @see entitlement#user?
-    # @!attribute [r] server?
-    #   @return [true, false]
-    #   @see entitlement#server?
-    # @!attribute [r] user
-    #   @return [User]
-    #   @see entitlement#user
-    # @!attribute [r] server
-    #   @return [Server]
-    #   @see entitlement#server
-    # @!attribute [r] consume
-    #   @return [true]
-    #   @see entitlement#consume
-    # @!attribute [r] sku
-    #   @return [SKU]
-    #   @see entitlement#sku
-    delegate :id, :sku_id, :application_id, :type, :deleted?, :starts_at, :ends_at,
-             :consumed?, :user?, :server?, :user, :server, :consume, :sku, to: :entitlement
-
     # @!visibility private
     def initalize(data, bot)
       @bot = bot

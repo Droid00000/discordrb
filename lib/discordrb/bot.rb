@@ -815,13 +815,12 @@ module Discordrb
     # @return [Entitlement]
     def get_entitlement(entitlement_id)
       response = API::Monetization.get_entitlement(@bot.token, profile.id, entitlement_id.resolve_id)
-
       Entitlement.new(JSON.parse(response), self)
     end
 
     # Create a test entitlement for the current application.
-    # @param sku_id [Integer, String] ID of the SKU to grant the entitlement to.
-    # @param owner_id [Integer, String] ID of the server or user to grant the entitlement to.
+    # @param sku [Integer, String] ID of the SKU to grant the entitlement to.
+    # @param owner [Integer, String] ID of the server or user to grant the entitlement to.
     # @param owner_type [Symbol, Integer] 1 for a server subscription, 2 for a user subscription.
     # @return [Entitlement]
     def create_test_entitlement(sku:, owner:, owner_type:)
@@ -843,26 +842,24 @@ module Discordrb
     # @param limit [Integer, nil] 1-100 Max number of subscriptions to get. Defaults to 50.
     # @param before [Integer, nil] Get subscriptions before this ID.
     # @param after [Integer, nil] Get subscriptions after this ID.
-    # @param before [User, Integer, nil] Get subscriptions for this user. Required except for OAuth queries.
+    # @param user [User, Integer, nil] Get subscriptions for this user. Required except for OAuth queries.
     def get_sku_subscriptions(sku_id, limit: nil, before: nil, after: nil, user: nil)
       subscriptions = API::Monetization.list_sku_subscriptions(@bot.token, sku_id, before, after, limit, user&.resolve_id)
-
       JSON.parse(subscriptions).map { |subscription| Subscription.new(subscription, @bot) }
     end
 
     # Get a subscription by its ID.
-    # @param sku_id [Integer, String] The ID of the associated SKU.
-    # @param subscription [Integer, String] The ID of the subscription to fetch.
+    # @param sku_id [SKU, Integer, String] The ID of the associated SKU.
+    # @param subscription_id [Subscription, Integer, String] The ID of the subscription to fetch.
     # @return [Subscription]
     def get_sku_subscription(sku_id, subscription_id)
-      response = API::Monetization.get_sku_subscription(@token, sku_id, subscription_id.resolve_id)
-
+      response = API::Monetization.get_sku_subscription(@token, sku_id.resolve_id, subscription_id.resolve_id)
       Subscription.new(JSON.parse(response), self)
     end
 
     # Get an array of all the SKUs for the current application.
     # @return [Array<SKU>] All of the SKUs for the current application.
-    def get_skus
+    def skus
       response = API::Monetization.list_skus(@token, profile.id)
       JSON.parse(response).map { |sku| SKU.new(sku, self) }
     end
@@ -871,7 +868,7 @@ module Discordrb
     # @param sku_id [Integer, String] ID of the SKU to find.
     # @return [SKU, nil] The SKU for the given ID, or nil if it couldn't be found.
     def get_sku(sku_id)
-      get_skus.find { |sku| sku.id == sku_id.resolve_id && sku.type == 5 }
+      skus.find { |sku| sku.id == sku_id.resolve_id && sku.type == 5 }
     end
 
     # Get all application commands.

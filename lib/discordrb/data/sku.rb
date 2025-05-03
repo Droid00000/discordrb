@@ -84,8 +84,8 @@ module Discordrb
     # @param user [User, Integer, nil] A user for which to return subscriptions. Required except for OAuth queries.
     # @return [Array<Subscription>] Array of subscription objects that match the given parameters.
     def subscriptions(limit: nil, user: nil)
-      get_subs = proc do |limit, user = nil, after = nil|
-        @bot.get_sku_subscriptions(limit: limit, after: after, user: user)
+      get_subs = proc do |fetch_limit, user_id = nil, after = nil|
+        @bot.get_sku_subscriptions(limit: fetch_limit, after: after, user: user_id)
       end
 
       # Can be done without pagination
