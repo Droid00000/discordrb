@@ -17,12 +17,6 @@ module Discordrb
       application_subscription: 8
     }.freeze
 
-    # Map of owner types.
-    OWNER_TYPES = {
-      server: 1,
-      user: 2
-    }.freeze
-
     # @return [Integer] the ID of the associated SKU.
     attr_reader :sku_id
 
@@ -45,6 +39,12 @@ module Discordrb
     # @return [true, false] if this entitlement has been consumed or not.
     attr_reader :consumed
     alias_method :consumed?, :consumed
+
+    # @return [Integer, nil] The associated user ID for this SKU, or nil.
+    attr_reader :user_id
+
+    # @return [Integer, nil] The associated server ID for this SKU, or nil.
+    attr_reader :server_id
 
     # @!visibility private
     def initialize(data, bot)
@@ -91,24 +91,19 @@ module Discordrb
       @sku ||= @bot.sku(@sku_id)
     end
 
-    # @return [true, false] If this entitlement is for a user or not.
-    def user?
-      !@user_id.nil?
-    end
-
-    # @return [true, false] If this entitlement is for a server or not.
-    def server?
-      !@server_id.nil?
-    end
-
     # @return [User] The user this entitlement is for.
     def user
-      @bot.user(@user_id) if user?
+      @bot.user(@user_id) if @user_id
     end
 
     # @return [Server] The server this entitlement is for.
     def server
-      @bot.server(@server_id) if server?
+      @bot.server(@server_id) if @server_id
+    end
+
+    # @return [true, false] If this entitlement has expired or not.
+    def ended?
+      @ends_at ? (Time.now >= @ends_at) : false
     end
 
     # For One-Time Purchase SKUs, marks a given entitlement as consumed.
@@ -117,9 +112,9 @@ module Discordrb
       @consumed = true
     end
 
-    # Deletes a currently-active test entitlement.
+    # Deletes a currently-active test entitlement. This entilement must be a test purchase.
     def delete
-      raise ArgumentError, 'Type must be test_purchase (4)' unless test_purchase?
+      raise ArgumentError, 'Type must be of test_purchase!' unless test_purchase?
 
       API::Monetization.delete_test_entitlement(@bot.token, @bot.profile.id, @id)
       @deleted = true

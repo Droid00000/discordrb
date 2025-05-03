@@ -803,7 +803,7 @@ module Discordrb
     # @param exclude_ended [true, false, nil] if ended entitlements should be excluded. Defaults to false.
     # @param exclude_deleted [true, false, nil] if deleted entitlements should be excluded. Defaults to false.
     # @return [Array<Entitlement>]
-    def entitlements(user_id: nil, skus: nil, before: nil, after: nil, limit: nil, server_id: nil, exclude_ended: false, exclude_deleted: true)
+    def get_entitlements(user_id: nil, skus: nil, before: nil, after: nil, limit: nil, server_id: nil, exclude_ended: false, exclude_deleted: true)
       response = API::Monetization.list_entitlements(@bot.token, profile.id, user_id&.resolve_id, skus&.map(&:resolve_id)&.join(', '),
                                                      before, after, limit, server_id&.resolve_id, exclude_ended, exclude_deleted)
 
@@ -812,8 +812,8 @@ module Discordrb
 
     # Get a single entitlement for the current application.
     # @param entitlement_id [Integer, String] The ID of the entitlement to lookup.
-    # @return [Entitlement] The entitlement for the given ID.
-    def entitlement(entitlement_id)
+    # @return [Entitlement]
+    def get_entitlement(entitlement_id)
       response = API::Monetization.get_entitlement(@bot.token, profile.id, entitlement_id.resolve_id)
 
       Entitlement.new(JSON.parse(response), self)
@@ -821,15 +821,57 @@ module Discordrb
 
     # Create a test entitlement for the current application.
     # @param sku_id [Integer, String] ID of the SKU to grant the entitlement to.
-    # @param owner_id [Integer, String] ID of the guild or user to grant the entitlement to.
-    # @param owner_type [Symbol, Integer] 1 for a guild subscription, 2 for a user subscription.
+    # @param owner_id [Integer, String] ID of the server or user to grant the entitlement to.
+    # @param owner_type [Symbol, Integer] 1 for a server subscription, 2 for a user subscription.
     # @return [Entitlement]
-    def create_test_entitlement(sku_id:, owner_id:, owner_type:)
-      owner_type = Entitlement::OWNER_TYPES[owner_type] || owner_type
+    def create_test_entitlement(sku:, owner:, owner_type:)
+      owner_type = case owner_type
+                   when Integer
+                     owner_type
+                   when :server
+                     1
+                   when :user
+                     2
+                   end
 
-      response = API::Monetization.create_test_entitlement(@bot.token, profile.id, sku_id.resolve_id, owner_id.resolve_id, owner_type)
+      response = API::Monetization.create_test_entitlement(@bot.token, profile.id, sku.resolve_id, owner.resolve_id, owner_type)
 
       Entitlement.new(JSON.parse(response), self)
+    end
+
+    # Get a list of subscriptions for an SKU.
+    # @param limit [Integer, nil] 1-100 Max number of subscriptions to get. Defaults to 50.
+    # @param before [Integer, nil] Get subscriptions before this ID.
+    # @param after [Integer, nil] Get subscriptions after this ID.
+    # @param before [User, Integer, nil] Get subscriptions for this user. Required except for OAuth queries.
+    def get_sku_subscriptions(sku_id, limit: nil, before: nil, after: nil, user: nil)
+      subscriptions = API::Monetization.list_sku_subscriptions(@bot.token, sku_id, before, after, limit, user&.resolve_id)
+
+      JSON.parse(subscriptions).map { |subscription| Subscription.new(subscription, @bot) }
+    end
+
+    # Get a subscription by its ID.
+    # @param sku_id [Integer, String] The ID of the associated SKU.
+    # @param subscription [Integer, String] The ID of the subscription to fetch.
+    # @return [Subscription]
+    def get_sku_subscription(sku_id, subscription_id)
+      response = API::Monetization.get_sku_subscription(@token, sku_id, subscription_id.resolve_id)
+
+      Subscription.new(JSON.parse(response), self)
+    end
+
+    # Get an array of all the SKUs for the current application.
+    # @return [Array<SKU>] All of the SKUs for the current application.
+    def get_skus
+      response = API::Monetization.list_skus(@token, profile.id)
+      JSON.parse(response).map { |sku| SKU.new(sku, self) }
+    end
+
+    # Get a single SKU based on ID.
+    # @param sku_id [Integer, String] ID of the SKU to find.
+    # @return [SKU, nil] The SKU for the given ID, or nil if it couldn't be found.
+    def get_sku(sku_id)
+      get_skus.find { |sku| sku.id == sku_id.resolve_id && sku.type == 5 }
     end
 
     # Get all application commands.

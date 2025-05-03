@@ -24,7 +24,7 @@ module Discordrb
     # @return [Time] the start of the current subscription period of the subscription.
     attr_reader :start_period
 
-    # @return [Time, nil] the time at when the subscription was canceled.
+    # @return [Time, nil] the time at when the subscription was canceled, or nil.
     attr_reader :canceled_at
 
     # @return [Array<Integer>] an array of associated subscribed SKUs IDs.
@@ -45,9 +45,9 @@ module Discordrb
       @user_id = data['user_id'].to_i
       @country = data['country'].to_sym
 
-      @sku_ids = data['sku_ids'].map(&:to_i)
-      @entitlement_ids = data['entitlement_ids'].map(&:to_i)
-      @renewal_sku_ids = data['renewal_sku_ids'].map(&:to_i)
+      @sku_ids = data['sku_ids'].map(&:resolve_id)
+      @entitlement_ids = data['entitlement_ids'].map(&:resolve_id)
+      @renewal_sku_ids = data['renewal_sku_ids'].map(&:resolve_id)
 
       @end_period = Time.iso8601(data['current_period_end'])
       @start_period = Time.iso8601(data['current_period_start'])
