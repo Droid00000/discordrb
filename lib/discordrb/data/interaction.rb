@@ -388,6 +388,80 @@ module Discordrb
     def delete
       @bot.delete_application_command(@id, server_id: @server_id)
     end
+
+    # Get the permissions for this application command.
+    # @param server_id [Integer, nil] Server to fetch permissions for, required if this command is global.
+    # @return (see Bot#get_application_command_permissions)
+    def permissions(server_id: nil)
+      @bot.get_application_command_permissions(@id, server_id: @server_id || server_id)
+    end
+
+    # A permission "overwrite" for an application command.
+    class Permission
+      # Map of permission types.
+      TYPES = {
+        role: 1,
+        user: 2,
+        channel: 3
+      }.freeze
+
+      # @return [Integer] ID of the role, user, or channel this permissions is for.
+      attr_reader :id
+
+      # @return [Integer] The permission type of this permission. See {TYPES}.
+      attr_reader :type
+
+      # @!visbility private
+      def initialize(data, bot, server)
+        @bot = bot
+        @server = server_id
+        @id = data['id'].to_i
+        @type = data['type']
+        @permission = data['permission']
+      end
+
+      # Get the object this permission is for.
+      # @return [Member, Role, Channel, Array<Channel>] If the target is an array of channels the target is all channels in the server.
+      #   If the target is the everyone role, then the the target is all members in the server.
+      def target
+        if role?
+          server.role(id)
+        elsif user?
+          server.member(id)
+        elsif channel? && @server_id - 1 != id
+          @bot.channel(id)
+        elsif channel? && @server_id - 1 == id
+          server.channels
+        end
+      end
+
+      # @return [Server, nil] The server where this command's permissions are for.
+      def server
+        @bot.server(@server)
+      end
+
+      # @return [Boolean] If this permissions is allowed i.e. has a green check in the UI.
+      def allowed?
+        @permission == true
+      end
+
+      # @return [Boolean] If this permissions is denied, i.e. has a red x-mark in the UI.
+      def denied?
+        @permission == false
+      end
+
+      # @!method role?
+      #   @return [true, false] whether the type of this permission is for a role.
+      # @!method user?
+      #   @return [true, false] whether the type of this permission is for a user.
+      # @!method channel?
+      #   @return [true, false] whether the type of this permission is for a channel.
+      TYPES.each do |name, value|
+        define_method("#{name}?") do
+          @type == value
+        end
+      end
+    end
   end
 
   # Objects specific to Interactions.

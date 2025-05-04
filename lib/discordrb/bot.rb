@@ -1645,6 +1645,10 @@ module Discordrb
 
         event = ThreadMembersUpdateEvent.new(data, self)
         raise_event(event)
+      when :APPLICATION_COMMAND_PERMISSIONS_UPDATE
+        event = ApplicationCommandPermissionsUpdateEvent.new(data, self)
+
+        raise_event(event)
       else
         # another event that we don't support yet
         debug "Event #{type} has been received but is unsupported. Raising UnknownEvent"

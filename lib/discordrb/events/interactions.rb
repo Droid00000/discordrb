@@ -325,6 +325,35 @@ module Discordrb::Events
     end
   end
 
+  # This event is raised whenever the permissions for an application command are updated.
+  class ApplicationCommandPermissionsUpdateEvent < Event
+    # @return [Integer] ID of the application the command belongs to.
+    attr_reader :application_id
+
+    # @return [Integer] ID of the server where the command was updated.
+    attr_reader :server_id
+
+    # @return [Integer, nil] ID of the application command that was updated.
+    attr_reader :command_id
+
+    # @return [Array<ApplicationCommand::Permissions>] Permissions for the updated command.
+    attr_reader :permissions
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @server_id = data['guild_id'].to_i
+      @application_id = data['application_id'].to_i
+      @command_id = data['id'].to_i if (data['id'].to_i != @application_id)
+      @permissions = data['permissions'].map { |a| Discordrb::Interaction::ApplicationCommand::Permission.new(a, bot, @server_id) }
+    end
+
+    # @return [Server, nil] The server where this command's permissions were updated.
+    def server
+      @bot.server(@server_id)
+    end
+  end
+
   # An event for when a user interacts with a component.
   class ComponentEvent < InteractionCreateEvent
     # @return [String] User provided data for this button.
