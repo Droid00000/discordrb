@@ -344,7 +344,7 @@ module Discordrb::Events
       @bot = bot
       @server_id = data['guild_id'].to_i
       @application_id = data['application_id'].to_i
-      @command_id = data['id'].to_i if (data['id'].to_i != @application_id)
+      @command_id = data['id'].to_i if data['id'].to_i != @application_id
       @permissions = data['permissions'].map { |a| Discordrb::Interaction::ApplicationCommand::Permission.new(a, bot, @server_id) }
     end
 

@@ -392,7 +392,7 @@ module Discordrb
     # Get the permissions for this application command.
     # @param server_id [Integer, nil] Server to fetch permissions for, required if this command is global.
     # @return (see Bot#get_application_command_permissions)
-    def permissions(server_id: nil)
+    def permissions(server_id = nil)
       @bot.get_application_command_permissions(@id, server_id: @server_id || server_id)
     end
 
