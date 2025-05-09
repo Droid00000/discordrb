@@ -100,12 +100,12 @@ module Discordrb
     attr_reader :resume_gateway_url
 
     # @!visibility private
-    def initialize(session_id, resume_url)
+    def initialize(session_id, resume_gateway_url)
       @session_id = session_id
       @sequence = 0
       @suspended = false
       @invalid = false
-      @resume_gateway_url = resume_url
+      @resume_gateway_url = resume_gateway_url
     end
 
     # Flags this session as suspended, so we know not to try and send heartbeats, etc. to the gateway until we've reconnected
