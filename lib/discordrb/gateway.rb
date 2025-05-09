@@ -99,6 +99,7 @@ module Discordrb
     # @return [String] Gateway URL used to reconnect to the targeted node that Discord wants this gateway connection to use.
     attr_reader :resume_url
 
+    # @!visibility private
     def initialize(session_id, resume_url)
       @session_id = session_id
       @sequence = 0
