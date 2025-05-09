@@ -96,6 +96,9 @@ module Discordrb
     # @return [Integer] Incrementing integer used to detemrine the most recent event reccived from Discord.
     attr_accessor :sequence
 
+    # @return [String] Gateway URL used to reconnect to the targeted node that Discord wants this gateway connection to use.
+    attr_reader :resume_url
+
     def initialize(session_id, resume_url)
       @session_id = session_id
       @sequence = 0
@@ -116,11 +119,6 @@ module Discordrb
     # Flags this session as no longer being suspended, so we can resume
     def resume
       @suspended = false
-    end
-
-    # @return [String, nil] Gateway URL used to reconnect to the targeted node that Discord wants this gateway connection to use.
-    def resume_url
-      @resume_url.tap { @resume_url = nil }
     end
 
     # Flags this session as being invalid
