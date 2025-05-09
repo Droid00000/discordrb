@@ -96,7 +96,7 @@ module Discordrb
     # @return [Integer] Incrementing integer used to detemrine the most recent event reccived from Discord.
     attr_accessor :sequence
 
-    # @return [String] Gateway URL used to reconnect to the targeted node that Discord wants this gateway connection to use.
+    # @return [String] Gateway URL used to reconnect to the gateway node that Discord wants this session to use.
     attr_reader :resume_url
 
     # @!visibility private
