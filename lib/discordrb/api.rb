@@ -231,6 +231,16 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
+  # Make an application cover image URL for application ID and icon hash.
+  def cover_image_url(application_id, icon_hash, format = 'webp')
+    "#{cdn_url}/app-icons/#{application_id}/#{icon_hash}.#{format}"
+  end
+
+  # Make a team icon URL for application ID and icon hash.
+  def team_icon_url(team_id, icon_hash, format = 'webp')
+    "#{cdn_url}/team-icons/#{team_id}/#{icon_hash}.#{format}"
+  end
+
   # Create an OAuth application
   def create_oauth_application(token, name, redirect_uris)
     request(
