@@ -705,7 +705,7 @@ module Discordrb
       when Opcodes::RECONNECT
         handle_reconnect
       when Opcodes::INVALIDATE_SESSION
-        handle_invalidate_session(JSON.parse(packet['d']))
+        handle_invalidate_session(packet['d'])
       when Opcodes::HEARTBEAT_ACK
         handle_heartbeat_ack(packet)
       when Opcodes::HEARTBEAT
