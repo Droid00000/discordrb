@@ -90,14 +90,22 @@ module Discordrb
   # This class stores the data of an active gateway session. Note that this is different from a websocket connection -
   # there may be multiple sessions per connection or one session may persist over multiple connections.
   class Session
+    # @return [String] Used to uniquely identify this session. Mostly used when resuming connections.
     attr_reader :session_id
+
+    # @return [Integer] Incrementing integer used to detemrine the most recent event reccived from Discord.
     attr_accessor :sequence
 
-    def initialize(session_id)
+    # @return [String] Gateway URL used to reconnect to the gateway node that Discord wants this session to use.
+    attr_reader :resume_gateway_url
+
+    # @!visibility private
+    def initialize(session_id, resume_url)
       @session_id = session_id
       @sequence = 0
       @suspended = false
       @invalid = false
+      @resume_gateway_url = resume_url
     end
 
     # Flags this session as suspended, so we know not to try and send heartbeats, etc. to the gateway until we've reconnected
@@ -117,6 +125,7 @@ module Discordrb
     # Flags this session as being invalid
     def invalidate
       @invalid = true
+      @resume_gateway_url = nil
     end
 
     def invalid?
@@ -538,7 +547,7 @@ module Discordrb
     end
 
     def process_gateway
-      raw_url = find_gateway
+      raw_url = @session&.resume_gateway_url || find_gateway
 
       # Append a slash in case it's not there (I'm not sure how well WSCS handles it otherwise)
       raw_url += '/' unless raw_url.end_with? '/'
@@ -716,7 +725,7 @@ module Discordrb
       when :READY
         LOGGER.info("Discord using gateway protocol version: #{data['v']}, requested: #{GATEWAY_VERSION}")
 
-        @session = Session.new(data['session_id'])
+        @session = Session.new(data['session_id'], data['resume_gateway_url'])
         @session.sequence = 0
         @bot.__send__(:notify_ready) if @intents && @intents.nobits?(INTENTS[:servers])
       when :RESUMED
