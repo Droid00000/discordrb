@@ -259,8 +259,8 @@ module Discordrb::API
     request(
       :oauth2_applications,
       nil,
-      :put,
-      "#{api_base}/oauth2/applications",
+      :patch,
+      "#{api_base}/applications/@me",
       { name: name, redirect_uris: redirect_uris, description: description, icon: icon }.to_json,
       Authorization: token,
       content_type: :json

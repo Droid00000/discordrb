@@ -18,7 +18,7 @@ module Discordrb
       limited_message_content_intent: 1 << 19,
       application_command_badge: 1 << 23
     }.freeze
-  
+
     # @return [String] the application name.
     attr_reader :name
 
@@ -71,7 +71,7 @@ module Discordrb
     attr_reader :interactions_endpoint
 
     # @return [String, nil] URL used for role connections verification by the application.
-    attr_reader :role_connections_verifications_url
+    attr_reader :role_connections_url
 
     # @return [Integer] The webhook events status. (1) disabled by default, (2) enabled, (3) disabled by Discord.
     attr_reader :webhook_events_status
@@ -116,26 +116,26 @@ module Discordrb
 
       @server_install_count = data['approximate_guild_count'] || 0
       @user_install_count = data['approximate_user_install_count'] || 0
-       
+
       @cover_image_id = data['cover_image']
       @redirect_uris = data['redirect_uris'] || []
       @interactions_endpoint = data['interactions_endpoint_url']
 
-      @role_connections_verification_url = data['role_connections_verification_url']
+      @role_connections_url = data['role_connections_verification_url']
       @webhook_events_url = data['event_webhooks_url']
       @webhook_events_status = data['event_webhooks_status']
-      @webhook_event_types =  data['event_webhooks_types'] || []
+      @webhook_event_types = data['event_webhooks_types'] || []
 
       @slug = data['slug']
       @tags = data['tags'] || []
       @custom_installation_url = data['custom_install_url']
-      
+
       if (params = data['install_params'])
         @install_scopes = params['scopes']
         @install_permissions = Permissions.new(params['permissions'])
       end
     end
-    
+
     # Utility method to get an application's icon URL.
     # @return [String, nil] The URL of the icon's image (nil if no image is set.)
     def icon_url
@@ -147,7 +147,7 @@ module Discordrb
     def cover_image_url
       @cover_image ? API.cover_image_url(@id, @cover_image) : nil
     end
-    
+
     # @return [User] The user that owns this application.
     def owner
       @bot.user(@owner_id)
@@ -158,7 +158,61 @@ module Discordrb
     def server
       @bot.server(@server_id)
     end
-    
+
+    # Edit the tags used to describe this application.
+    # @param tags [Array<String>] New tags to describe the app.
+    def tags=(tags)
+      edit_application(tags: tags)
+    end
+
+    # Edit the public enabled flags for this application.
+    # @param flags [Integer] Bitwise value of new public flags.
+    def flags=(flags)
+      edit_application(flags: flags)
+    end
+
+    # Edit the custom installation URL for this application.
+    # @param url [String] New default custom install URL for the app.
+    def custom_install_url=(url)
+      edit_application(custom_install_url: url)
+    end
+
+    # Edit the webhook events URL for this application.
+    # @param url [String] New webhook events URL for the app.
+    def webhook_events_url=(url)
+      edit_application(event_webhooks_url: url)
+    end
+
+    # Edit the description for this application.
+    # @param description [String] New description for the app.
+    def description=(description)
+      edit_application(description: description)
+    end
+
+    # Edit the role connections verification URL for this application.
+    # @param url [String] New role connection verification URL for the app.
+    def role_connections_url=(url)
+      edit_application(role_connections_url: url)
+    end
+
+    # Edit the subscribed webhook events for this application.
+    # @param types [Array<String>] New events to subscribe to for the app.
+    def webhook_event_types=(types)
+      edit_application(event_webhooks_types: types)
+    end
+
+    # Edit the status of webhook events for this application.
+    # @param events [Integer] 1 to enable webhook events, 2 to disable.
+    def webhook_events_status=(events)
+      edit_application(event_webhooks_status: events)
+    end
+
+    # Edit the URL used to reccive interactions via POST.
+    # @param url [String] New interactions endpoint URL for the app.
+    def interactions_endpoint=(url)
+      edit_application(interactions_endpoint_url: url)
+    end
+
     # @!method automod_rule_badge?
     #   @return [Boolean] If the bot has the auto-moderation badge displayed on their profile.
     # @!method server_presences_intent?
