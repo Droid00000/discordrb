@@ -168,8 +168,6 @@ module Discordrb
 
       @compress_mode = compress_mode
       @intents = intents
-
-      @waiting_for_reconnect = false
     end
 
     # Connect to the gateway server in a separate thread
@@ -464,11 +462,11 @@ module Discordrb
           if (@session && !@session.suspended?) || !@session
             sleep @heartbeat_interval
 
-            if @session && !@session.suspended? && !@waiting_for_reconnect
+            if @hanshaked && !@closed
               @bot.raise_heartbeat_event
               heartbeat
             else
-              LOGGER.warn("Attempted to send a heartbeat while the session was suspended or while waiting for a reconnect! No biggie, skipping a beat.")
+              LOGGER.warn("Attempted to send a heartbeat without an active connection. Ignoring, we should be fine though.")
             end
           else
             sleep 1
@@ -506,11 +504,7 @@ module Discordrb
     def wait_for_reconnect
       # We disconnected in an unexpected way! Wait before reconnecting so we don't spam Discord's servers.
       LOGGER.debug("Attempting to reconnect in #{@falloff} seconds.")
-      @waiting_for_reconnect = true
-
       sleep @falloff
-
-      @waiting_for_reconnect = false
 
       # Calculate new falloff
       @falloff *= 1.5
