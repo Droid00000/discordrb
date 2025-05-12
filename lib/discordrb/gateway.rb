@@ -462,7 +462,7 @@ module Discordrb
           if (@session && !@session.suspended?) || !@session
             sleep @heartbeat_interval
 
-            if @hanshaked && !@closed
+            if @handshaked && !@closed
               @bot.raise_heartbeat_event
               heartbeat
             else
