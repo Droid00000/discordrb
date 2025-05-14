@@ -241,29 +241,49 @@ module Discordrb::API
     "#{cdn_url}/team-icons/#{team_id}/#{icon_hash}.#{format}"
   end
 
-  # Create an OAuth application
-  def create_oauth_application(token, name, redirect_uris)
-    request(
-      :oauth2_applications,
-      nil,
-      :post,
-      "#{api_base}/oauth2/applications",
-      { name: name, redirect_uris: redirect_uris }.to_json,
-      Authorization: token,
-      content_type: :json
-    )
-  end
-
   # Change an OAuth application's properties
   def update_oauth_application(token, name, redirect_uris, description = '', icon = nil)
     request(
       :oauth2_applications,
       nil,
-      :patch,
-      "#{api_base}/applications/@me",
+      :put,
+      "#{api_base}/oauth2/applications",
       { name: name, redirect_uris: redirect_uris, description: description, icon: icon }.to_json,
       Authorization: token,
       content_type: :json
+    )
+  end
+
+  # modify the bot's OAuth application information.
+  def edit_current_application(token, custom_install_url: :undef, description: :undef,
+                               role_connections_verification_url: :undef, install_params: :undef,
+                               integration_types_config: :undef, flags: :undef, icon: :undef,
+                               cover_image: :undef, interactions_endpoint_url: :undef, tags: :undef,
+                               event_webhooks_url: :undef, event_webhooks_status: :undef, event_webhooks_types: :undef)
+    data = {
+      custom_install_url: custom_install_url,
+      description: description,
+      role_connections_verification_url: role_connections_verification_url,
+      install_params: install_params,
+      integration_types_config: integration_types_config,
+      flags: flags,
+      icon: icon,
+      cover_image: cover_image,
+      interactions_endpoint_url: interactions_endpoint_url,
+      tags: tags,
+      event_webhooks_url: event_webhooks_url,
+      event_webhooks_status: event_webhooks_status,
+      event_webhooks_types: event_webhooks_types
+    }
+
+    request(
+      :oauth2_applications_me,
+      nil,
+      :patch,
+      "#{api_base}/applications/@me",
+      data.reject { |_, v| v == :undef }.to_json,
+      Authorization: token,
+      content_type: :json,
     )
   end
 
@@ -274,20 +294,6 @@ module Discordrb::API
       nil,
       :get,
       "#{api_base}/oauth2/applications/@me",
-      Authorization: token
-    )
-  end
-
-  # Acknowledge that a message has been received
-  # The last acknowledged message will be sent in the ready packet,
-  # so this is an easy way to catch up on messages
-  def acknowledge_message(token, channel_id, message_id)
-    request(
-      :channels_cid_messages_mid_ack,
-      nil, # This endpoint is unavailable for bot accounts and thus isn't subject to its rate limit requirements.
-      :post,
-      "#{api_base}/channels/#{channel_id}/messages/#{message_id}/ack",
-      nil,
       Authorization: token
     )
   end
@@ -312,19 +318,6 @@ module Discordrb::API
       :get,
       "#{api_base}/gateway/bot",
       Authorization: token
-    )
-  end
-
-  # Validate a token (this request will fail if the token is invalid)
-  def validate_token(token)
-    request(
-      :auth_login,
-      nil,
-      :post,
-      "#{api_base}/auth/login",
-      {}.to_json,
-      Authorization: token,
-      content_type: :json
     )
   end
 

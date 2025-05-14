@@ -95,45 +95,8 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @name = data['name']
       @id = data['id'].to_i
-      @description = data['description']
-      @icon_id = data['icon']
-      @rpc_origins = data['rpc_origins']
-      @flags = data['flags']
-
-      @owner_id = data['owner']['id'].to_i
-      @server_id = data['guild_id']&.to_i
-      @public = data['bot_public']
-      @requires_code_grant = data['bot_requires_code_grant']
-      @team = data['team'] ? Team.new(data['team'], bot) : nil
-
-      @privacy_policy_url = data['privacy_policy_url']
-      @terms_of_service_url = data['terms_of_service_url']
-      @verify_key = data['verify_key']
-      @primary_sku_id = data['primary_sku_id']&.to_i
-
-      @server_install_count = data['approximate_guild_count'] || 0
-      @user_install_count = data['approximate_user_install_count'] || 0
-
-      @cover_image_id = data['cover_image']
-      @redirect_uris = data['redirect_uris'] || []
-      @interactions_endpoint = data['interactions_endpoint_url']
-
-      @role_connections_url = data['role_connections_verification_url']
-      @webhook_events_url = data['event_webhooks_url']
-      @webhook_events_status = data['event_webhooks_status']
-      @webhook_event_types = data['event_webhooks_types'] || []
-
-      @slug = data['slug']
-      @tags = data['tags'] || []
-      @custom_installation_url = data['custom_install_url']
-
-      if (params = data['install_params'])
-        @install_scopes = params['scopes']
-        @install_permissions = Permissions.new(params['permissions'])
-      end
+      update_application_data(data)
     end
 
     # Utility method to get an application's icon URL.
@@ -242,6 +205,54 @@ module Discordrb
     # The inspect method is overwritten to give more useful output
     def inspect
       "<Application name=#{@name} id=#{@id} flags=#{@flags} owner_id=#{@owner_id} server_id=#{@server_id} public=#{@public}>"
+    end
+
+    private
+
+    # @!visibility private
+    def edit_application(data)
+      update_application_data(JSON.parse(API.edit_current_application(@bot.token, **data)))
+    end
+
+    # @!visibility private
+    def update_application_data(data)
+      @name = data['name']
+      @description = data['description']
+      @icon_id = data['icon']
+      @rpc_origins = data['rpc_origins']
+      @flags = data['flags']
+
+      @owner_id = data['owner']['id'].to_i
+      @server_id = data['guild_id']&.to_i
+      @public = data['bot_public']
+      @requires_code_grant = data['bot_requires_code_grant']
+      @team = data['team'] ? Team.new(data['team'], bot) : nil
+
+      @privacy_policy_url = data['privacy_policy_url']
+      @terms_of_service_url = data['terms_of_service_url']
+      @verify_key = data['verify_key']
+      @primary_sku_id = data['primary_sku_id']&.to_i
+
+      @server_install_count = data['approximate_guild_count'] || 0
+      @user_install_count = data['approximate_user_install_count'] || 0
+
+      @cover_image_id = data['cover_image']
+      @redirect_uris = data['redirect_uris'] || []
+      @interactions_endpoint = data['interactions_endpoint_url']
+
+      @role_connections_url = data['role_connections_verification_url']
+      @webhook_events_url = data['event_webhooks_url']
+      @webhook_events_status = data['event_webhooks_status']
+      @webhook_event_types = data['event_webhooks_types'] || []
+
+      @slug = data['slug']
+      @tags = data['tags'] || []
+      @custom_installation_url = data['custom_install_url']
+
+      if (params = data['install_params'])
+        @install_scopes = params['scopes']
+        @install_permissions = Permissions.new(params['permissions'])
+      end
     end
   end
 end

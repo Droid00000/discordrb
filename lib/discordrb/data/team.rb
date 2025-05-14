@@ -15,9 +15,6 @@ module Discordrb
       # @return [Integer] The ID of the user this member is for.
       attr_reader :user_id
 
-      # @return [Integer] The membership state of this member.
-      attr_reader :membership_state
-
       # @!visibility private
       def initialize(data, team, bot)
         @bot = bot
