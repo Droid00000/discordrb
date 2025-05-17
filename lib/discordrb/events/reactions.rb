@@ -11,6 +11,16 @@ module Discordrb::Events
     # @return [Emoji] the emoji that was reacted with.
     attr_reader :emoji
 
+    # @return [true, false] whether this is a super-reaction
+    attr_reader :burst
+    alias_method :burst?, :burst
+
+    # @return [Array<ColourRGB>] Array of colors used for super reactions
+    attr_reader :burst_colors
+
+    # @return [Integer] `0` for normal reactions and `1` for burst (super) reactions
+    attr_reader :type
+
     # @!visibility private
     attr_reader :message_id
 
@@ -21,6 +31,9 @@ module Discordrb::Events
       @user_id = data['user_id'].to_i
       @message_id = data['message_id'].to_i
       @channel_id = data['channel_id'].to_i
+      @type = data['type']
+      @burst = data['burst']
+      @burst_colors = data['burst_colors']&.map { |c| Discordrb::ColourRGB.new(c.delete('#')) } || []
     end
 
     # @return [User, Member] the user that reacted to this message, or member if a server exists.
@@ -86,6 +99,16 @@ module Discordrb::Events
             a == e.name
           when :bot
             e.current_bot?
+          else
+            a == e
+          end
+        end,
+        matches_all(@attributes[:type], event.type) do |a, e|
+          case a
+          when :normal
+            e.zero?
+          when :burst
+            e == 1
           else
             a == e
           end

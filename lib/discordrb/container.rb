@@ -131,6 +131,7 @@ module Discordrb
     # @option attributes [String, Integer, User] :from Matches the user who added the reaction.
     # @option attributes [String, Integer, Message] :message Matches the message to which the reaction was added.
     # @option attributes [String, Integer, Channel] :in Matches the channel the reaction was added in.
+    # @option attributes [Symbol, Integer] :type Matches the type of reaction. `:normal` for normal reactions, `:burst` for super reactions.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [ReactionAddEvent] The event that was raised.
     # @return [ReactionAddEventHandler] The event handler that was registered.

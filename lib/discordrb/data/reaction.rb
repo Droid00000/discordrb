@@ -3,7 +3,7 @@
 module Discordrb
   # A reaction to a message.
   class Reaction
-    # @return [Integer] the amount of users who have reacted with this reaction
+    # @return [Integer] the total amount of users who have reacted with this reaction
     attr_reader :count
 
     # @return [true, false] whether the current bot or user used this reaction
@@ -16,11 +16,29 @@ module Discordrb
     # @return [String] the name or unicode representation of the emoji
     attr_reader :name
 
+    # @return [true, false] whether the current bot super-reacted using this emoji
+    attr_reader :me_burst
+    alias_method :me_burst?, :me_burst
+
+    # @return [Array<ColourRGB>] an array of colors used for super reactions
+    attr_reader :burst_colors
+
+    # @return [Integer] the total count of super reactions
+    attr_reader :burst_count
+
+    # @return [Integer] the total count of non super reactions
+    attr_reader :normal_count
+
+    # @!visibility private
     def initialize(data)
       @count = data['count']
       @me = data['me']
       @id = data['emoji']['id']&.to_i
       @name = data['emoji']['name']
+      @me_burst = data['me_burst']
+      @burst_count = data['count_details']['burst']
+      @normal_count = data['count_details']['normal']
+      @burst_colors = data['burst_colors']&.map { |c| ColourRGB.new(c.delete('#')) } || []
     end
 
     # Converts this Reaction into a string that can be sent back to Discord in other reaction endpoints.
