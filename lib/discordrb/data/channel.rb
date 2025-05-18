@@ -93,6 +93,103 @@ module Discordrb
     #   a thread.
     attr_reader :invitable
 
+    # @return [Integer] The bitwise value of flags for this channel.
+    attr_reader :flags
+
+    # @return [Array<Tag>] Tags that can be used in a forum or a media channel.
+    attr_reader :available_tags
+
+    # @return [Integer, nil] Default sort order for threads in a forum or media channel. Nil means no preferred order.
+    attr_reader :sort_order
+
+    # @return [Integer, nil] The default forum layout used to display posts in a forum channel.
+    attr_reader :forum_layout
+
+    # @return [Emoji, String, nil] The default emoji shown on threads in a forum or media channel.
+    attr_reader :default_reaction
+
+    # A tag that can applied to a thread in a forum or media channel.
+    class Tag
+      include IDObject
+
+      # @return [String] The name of the tag.
+      attr_reader :name
+
+      # @return [Boolean] Whether the `MANAGE_THREADS` permission is required to add or remove this tag.
+      attr_reader :moderated
+      alias_method :moderated?, :moderated
+
+      # @return [Emoji, String, nil] The custom emoji or unicode emoji of the tag. `Nil` for no emoji.
+      attr_reader :emoji
+
+      # @!visibility private
+      def initialize(data, channel, bot)
+        @bot = bot
+        @channel = channel
+        @id = data['id'].to_i
+        @name = data['name']
+        @moderated = data['moderated']
+        @emoji = data['emoji_id'] ? bot.emoji(data['emoji_id']) : data['emoji_name']
+      end
+
+      # Update the name of this tag.
+      # @param name [String] The new name of this tag.
+      def name=(name)
+        update_data(name: name)
+      end
+
+      # Set the moderated value of this tag.
+      # @param moderated [Boolean] Whether the `MANAGE_THREADS` permission is required to add or remove this tag.
+      def moderated=(moderated)
+        update_data(moderated: moderated)
+      end
+
+      # Set the emoji of this tag.
+      # @param emoji [Emoji, String, Integer, nil] The unicode emoji, custom emoji, or nil of this tag.
+      def emoji=(emoji)
+        emoji = case emoji
+                when Emoji, Reaction
+                  emoji.id
+                else
+                  emoji.to_i.zero? ? emoji : emoji.resolve_id
+                end
+
+        case emoji
+        when Integer
+          update_data(emoji_id: emoji, emoji_name: nil)
+        when String
+          update_data(emoji_id: nil, emoji_name: emoji)
+        else
+          update_data(emoji_id: nil, emoji_name: nil)
+        end
+      end
+
+      private
+
+      # @!visibility private
+      def update_data(new_data)
+        @channel.__send__(:update_tag_data, to_h.merge(new_data))
+      end
+
+      # @!visibility private
+      def to_h
+        data = {
+          id: id,
+          name: name,
+          moderated: moderated,
+        }
+
+        case emoji
+        when String
+          data[:emoji_name] = emoji
+        when Emoji
+          data[:emoji_id] = emoji
+        end
+
+        data
+      end
+    end
+
     # @return [true, false] whether or not this channel is a PM or group channel.
     def private?
       pm? || group?
@@ -156,6 +253,20 @@ module Discordrb
       if (member = data['member'])
         @member_join = Time.iso8601(member['join_timestamp'])
         @member_flags = member['flags']
+      end
+
+      @flags = data['flags'] || 0
+      @available_tags = data['available_tags']&.map { |t| Tag.new(t, self) }
+      @sort_order = data['default_sort_order']
+      @forum_layout = data['default_forum_layout']
+      @applied_tags = data['applied_tags']&.map(&:resolve_id)
+
+      if (default_emoji = data['default_reaction_emoji'])
+        @default_reaction = if default_emoji['emoji_id']
+                              @bot.emoji(default_emoji['emoji_id'])
+                            else
+                              default_emoji['emoji_name']
+                            end
       end
 
       process_permission_overwrites(data['permission_overwrites'])
@@ -887,7 +998,65 @@ module Discordrb
       @bot.remove_thread_member(@id, member)
     end
 
+    # Lock or unlock a thread.
+    # @param locked [true, false] Whether the thread should be locked or unlocked.
+    def locked=(locked)
+      update_thread_data(locked: locked)
+    end
+
+    # Archive or unarchive a thread.
+    # @param archived [true, false] Whether the thread should be archived or unarchived.
+    def archived=(archive)
+      update_thread_data(archived: archived)
+    end
+
+    # Allow or disallow non-moderators the ability to add other non-moderators to a private thread.
+    # @param invitable [true, false] Whether non-moderators can invite other non-moderators to the thread.
+    def invitable=(invitable)
+      update_thread_data(invitable: invitable)
+    end
+
+    # Set the flags for a thread.
+    # @param flags [Integer] The thread flags combined as a bitwise value.
+    def flags=(flags)
+      update_thread_data(flags: flags)
+    end
+
+    # Set the applied tags for a thread.
+    # @param applied_tags [Array<Tag>] List of tags that have been applied to a thread in a forum channel.
+    def applied_tags=(applied_tags)
+      update_thread_data(applied_tags: tags)
+    end
+
+    # Get the applied tags on a thread.
+    # @return [Array<Tag>] Tags that have been applied onto this forum thread.
+    def applied_tags
+      parent.available_tags.select { |tag| @applied_tags.any?(tag) }
+    end
+
     # @!endgroup
+
+    # Set the default reaction emoji in a forum or media channel.
+    # @param emoji [Emoji, String, nil] The unicode emoji, or custom emoji to set.
+    def default_reaction=(emoji)
+      emoji = case emoji
+              when Emoji, Reaction
+                emoji.id
+              else
+                emoji.to_i.zero? ? emoji : emoji.resolve_id
+              end
+
+      emoji = case emoji
+              when Integer
+                { emoji_id: emoji, emoji_name: nil }
+              when String
+                { emoji_id: nil, emoji_name: emoji }
+              else
+                { emoji_id: nil, emoji_name: nil }
+              end
+
+      update_channel_data(default_reaction_emoji: emoji)
+    end
 
     # The default `inspect` method is overwritten to give more useful output.
     def inspect

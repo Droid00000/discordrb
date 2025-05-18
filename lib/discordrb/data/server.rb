@@ -866,6 +866,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_active_threads(new_data['threads']) if new_data['threads']
     end
 
     # Adds a channel to this server's cache
@@ -981,6 +982,16 @@ module Discordrb
 
       voice_states.each do |element|
         update_voice_state(element)
+      end
+    end
+
+    def process_active_threads(active_threads)
+      return unless active_threads
+
+      active_threads.each do |element|
+        channel = @bot.ensure_channel(element, self)
+        @channels << channel
+        @channels_by_id[channel.id] = channel
       end
     end
   end
