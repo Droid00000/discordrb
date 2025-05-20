@@ -35,11 +35,11 @@ module Discordrb::Events
     end
 
     # (see Interaction#respond)
-    def respond(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, attachments: nil, new_components: false, &block)
+    def respond(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, attachments: nil, has_components: false, &block)
       @interaction.respond(
         content: content, tts: tts, embeds: embeds, allowed_mentions: allowed_mentions,
         flags: flags, ephemeral: ephemeral, wait: wait, components: components, attachments: attachments,
-        new_components: new_components, &block
+        has_components: has_components, &block
       )
     end
 
@@ -49,11 +49,11 @@ module Discordrb::Events
     end
 
     # (see Interaction#update_message)
-    def update_message(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, attachments: nil, new_components: false, &block)
+    def update_message(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, attachments: nil, has_components: false, &block)
       @interaction.update_message(
         content: content, tts: tts, embeds: embeds, allowed_mentions: allowed_mentions,
         flags: flags, ephemeral: ephemeral, wait: wait, components: components, attachments: attachments,
-        new_components: new_components, &block
+        has_components: has_components, &block
       )
     end
 
@@ -63,10 +63,10 @@ module Discordrb::Events
     end
 
     # (see Interaction#edit_response)
-    def edit_response(content: nil, embeds: nil, allowed_mentions: nil, flags: 0, components: nil, attachments: nil, new_components: false, &block)
+    def edit_response(content: nil, embeds: nil, allowed_mentions: nil, flags: 0, components: nil, attachments: nil, has_components: false, &block)
       @interaction.edit_response(
         content: content, embeds: embeds, allowed_mentions: allowed_mentions, components: components,
-        attachments: attachments, new_components: new_components, flags: flags, &block
+        attachments: attachments, has_components: has_components, flags: flags, &block
       )
     end
 
@@ -76,11 +76,11 @@ module Discordrb::Events
     end
 
     # (see Interaction#send_message)
-    def send_message(content: nil, embeds: nil, tts: false, allowed_mentions: nil, flags: 0, ephemeral: nil, components: nil, attachments: nil, new_components: false, &block)
+    def send_message(content: nil, embeds: nil, tts: false, allowed_mentions: nil, flags: 0, ephemeral: nil, components: nil, attachments: nil, has_components: false, &block)
       @interaction.send_message(
         content: content, embeds: embeds, tts: tts, allowed_mentions: allowed_mentions, flags: flags,
         ephemeral: ephemeral, components: components, attachments: attachments,
-        new_components: new_components, &block
+        has_components: has_components, &block
       )
     end
 
@@ -535,8 +535,8 @@ module Discordrb::Events
 
     # Respond to this interaction with autocomplete choices.
     # @param choices [Array<Hash>, Hash, nil] Autocomplete choices to return.
-    def respond(choices: nil)
-      @interaction.show_autocomplete_choices(choices || @choices)
+    def respond(choices:)
+      @interaction.show_autocomplete_choices(choices)
     end
   end
 end

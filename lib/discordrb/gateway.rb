@@ -90,14 +90,21 @@ module Discordrb
   # This class stores the data of an active gateway session. Note that this is different from a websocket connection -
   # there may be multiple sessions per connection or one session may persist over multiple connections.
   class Session
+    # @return [String] Used to uniquely identify this session. Mostly used when resuming connections.
     attr_reader :session_id
+
+    # @return [Integer] Incrementing integer used to determine the most recent event reccived from Discord.
     attr_accessor :sequence
 
-    def initialize(session_id)
+    # @return [String] Gateway URL used to reconnect to the gateway node that Discord wants this session to use.
+    attr_reader :resume_gateway_url
+
+    def initialize(session_id, resume_gateway_url)
       @session_id = session_id
       @sequence = 0
       @suspended = false
       @invalid = false
+      @resume_gateway_url = resume_gateway_url
     end
 
     # Flags this session as suspended, so we know not to try and send heartbeats, etc. to the gateway until we've reconnected
@@ -116,6 +123,7 @@ module Discordrb
 
     # Flags this session as being invalid
     def invalidate
+      @resume_gateway_url = nil
       @invalid = true
     end
 
@@ -452,8 +460,13 @@ module Discordrb
           # suspended (e.g. after op7)
           if (@session && !@session.suspended?) || !@session
             sleep @heartbeat_interval
-            @bot.raise_heartbeat_event
-            heartbeat
+            # Check if we're connected here, since we could possibly be waiting for a reconnect to occur.
+            if @handshaked && !@closed
+              @bot.raise_heartbeat_event
+              heartbeat
+            else
+              LOGGER.warn('Tried to send a heartbeat without being connected! Ignoring, we should be fine.')
+            end
           else
             sleep 1
           end
@@ -538,7 +551,7 @@ module Discordrb
     end
 
     def process_gateway
-      raw_url = find_gateway
+      raw_url = @session&.resume_gateway_url || find_gateway
 
       # Append a slash in case it's not there (I'm not sure how well WSCS handles it otherwise)
       raw_url += '/' unless raw_url.end_with? '/'
@@ -716,7 +729,7 @@ module Discordrb
       when :READY
         LOGGER.info("Discord using gateway protocol version: #{data['v']}, requested: #{GATEWAY_VERSION}")
 
-        @session = Session.new(data['session_id'])
+        @session = Session.new(data['session_id'], data['resume_gateway_url'])
         @session.sequence = 0
         @bot.__send__(:notify_ready) if @intents && @intents.nobits?(INTENTS[:servers])
       when :RESUMED
