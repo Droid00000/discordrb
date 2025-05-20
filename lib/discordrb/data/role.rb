@@ -142,7 +142,7 @@ module Discordrb
 
       @tags = Tags.new(data['tags']) if data['tags']
 
-      @colors = Colors.new(data['colors']) if data['colors']
+      @colors = Colors.new(data['colors'], self) if data['colors']
     end
 
     # @return [String] a string that will mention this role, if it is mentionable.
