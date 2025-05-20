@@ -38,6 +38,9 @@ module Discordrb
     # @return [Tags, nil] The role tags
     attr_reader :tags
 
+    # @return [Colors, nil] The role colors.
+    attr_reader :colors
+
     # Wrapper for the role tags
     class Tags
       # @return [Integer, nil] The ID of the bot this role belongs to
@@ -65,6 +68,37 @@ module Discordrb
         @subscription_listing_id = data['subscription_listing_id']&.resolve_id
         @available_for_purchase = data.key?('available_for_purchase')
         @guild_connections = data.key?('guild_connections')
+      end
+    end
+
+    # Wrapper for the role colors.
+    class Colors
+      # @return [ColourRGB] The primary color of the role, the same as Role#color.
+      attr_reader :primary
+
+      # @return [ColourRGB, nil] The secondary gradient color of the role, or nil.
+      attr_reader :secondary
+      alias_method :gradient_start, :secondary
+
+      # @return [ColourRGB, nil] The tertiary gradient color of the role, or nil.
+      attr_reader :tertiary
+      alias_method :gradient_end, :tertiary
+
+      # @!visibility private
+      def initialize(data, role)
+        @role = role
+        @primary = ColourRGB.new(data['primary_color'])
+        @secondary = data['secondary_color'] ? ColourRGB.new(data['secondary_color']) : nil
+        @tertiary = data['tertiary_color'] ? ColourRGB.new(data['tertiary_color']) : nil
+      end
+
+      # @!visibility private
+      def to_h
+        {
+          primary: primary.to_i,
+          secondary: secondary&.to_i,
+          tertiary: tertiary&.to_i
+        }
       end
     end
 
@@ -107,6 +141,8 @@ module Discordrb
       @icon = data['icon']
 
       @tags = Tags.new(data['tags']) if data['tags']
+
+      @colors = Colors.new(data['colors']) if data['colors']
     end
 
     # @return [String] a string that will mention this role, if it is mentionable.
@@ -133,6 +169,7 @@ module Discordrb
       @position = other.position
       @managed = other.managed
       @icon = other.icon
+      @colors = other.colors
     end
 
     # Updates the data cache from a hash containing data
