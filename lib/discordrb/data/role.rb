@@ -95,9 +95,9 @@ module Discordrb
       # @!visibility private
       def to_h
         {
-          primary: primary.to_i,
-          secondary: secondary&.to_i,
-          tertiary: tertiary&.to_i
+          primary_color: primary&.to_i,
+          secondary_color: secondary&.to_i,
+          tertiary_color: tertiary&.to_i
         }
       end
     end
