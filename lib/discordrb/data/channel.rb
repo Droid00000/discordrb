@@ -996,36 +996,6 @@ module Discordrb
       parent.available_tags.select { |tag| @applied_tags.any?(tag) }
     end
 
-    # Create a thread in a forum or media channel.
-    # @param name [String] 1-100 character name of the thread.
-    # @param auto_archive_duration [60, 1440, 4320, 10080, nil] How long before a thread is automatically archived.
-    # @param rate_limit_per_user [Integer amount of seconds between (0-21600) a user has to wait before sending another message.
-    # @param content [String, nil] Message content for the the first message in the forum thread.
-    # @param embeds [Hash, Discordrb::Webhooks::Embed, Array<Hash>, Array<Discordrb::Webhooks::Embed> nil] The rich embed(s) to append to this message.
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings.
-    # @param components [View, Array<Hash>, nil] Interaction components to associate with this message.
-    # @param attachments [Array<File>, nil] Files that can be referenced in embeds via `attachment://file.png`
-    # @param flags [Integer, nil] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12) and IS_COMPONENTS_V2 (1 << 15) can be set.
-    # @param stickers [Array<Integer>, nil] Sticker IDs to associate with this messages.
-    # @param tags [Array<Tag, Integer, String>, nil] Array of forum tags to apply onto the created thread.
-    # @param reason [String, nil] The reason for creating this thread.
-    # @return [Array<Channel, Message>] Returns an array where the first value is the newly created thread channel, and the second value is the newly created message.
-    def create_forum_post(name, auto_archive_duration: nil, rate_limit_per_user: nil, content: nil, embeds: nil, allowed_mentions: nil, components: nil, stickers: nil, attachments: nil, flags: 0, tags: nil, reason: nil)
-      allowed_mentions = { parse: [] } if allowed_mentions == false
-
-      message = {
-        content: content, embeds: embeds&.map(&:to_hash), allowed_mentions: allowed_mentions&.to_hash,
-        components: components&.to_a, sticker_ids: stickers&.map(&:resolve_id), flags: flags
-      }
-
-      data = JSON.parse(API::Channel.start_thread_in_forum_or_media_channel(@bot.token, @id, name, message.compact, auto_archive_duration,
-                                                                            rate_limit_per_user, tags&.map(&:resolve_id), attachments, reason))
-
-      Message.new(data['message'].merge!('thread' => data), @bot)
-    end
-
-    alias_method :start_forum_thread, :create_forum_post
-
     # @!endgroup
 
     # Set the default reaction emoji in a forum or media channel.
@@ -1049,6 +1019,36 @@ module Discordrb
 
       update_channel_data(default_reaction_emoji: emoji)
     end
+
+    # Create a thread in a forum or media channel.
+    # @param name [String] 1-100 character name of the thread.
+    # @param auto_archive_duration [60, 1440, 4320, 10080, nil] How long before a thread is automatically archived.
+    # @param rate_limit_per_user [Integer amount of seconds between (0-21600) a user has to wait before sending another message.
+    # @param content [String, nil] Message content for the the first message in the forum thread.
+    # @param embeds [Hash, Discordrb::Webhooks::Embed, Array<Hash>, Array<Discordrb::Webhooks::Embed> nil] The rich embed(s) to append to this message.
+    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings.
+    # @param components [View, Array<Hash>, nil] Interaction components to associate with this message.
+    # @param attachments [Array<File>, nil] Files that can be referenced in embeds via `attachment://file.png`
+    # @param flags [Integer, nil] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12) and IS_COMPONENTS_V2 (1 << 15) can be set.
+    # @param stickers [Array<Integer>, nil] Sticker IDs to associate with this message.
+    # @param tags [Array<Tag, Integer, String>, nil] Array of forum tags to apply onto the created thread.
+    # @param reason [String, nil] The reason for creating this thread.
+    # @return [Array<Channel, Message>] Returns an array where the first value is the newly created thread channel, and the second value is the newly created message.
+    def create_forum_post(name, auto_archive_duration: nil, rate_limit_per_user: nil, content: nil, embeds: nil, allowed_mentions: nil, components: nil, stickers: nil, attachments: nil, flags: 0, tags: nil, reason: nil)
+      allowed_mentions = { parse: [] } if allowed_mentions == false
+
+      message = {
+        content: content, embeds: embeds&.map(&:to_hash), allowed_mentions: allowed_mentions&.to_hash,
+        components: components&.to_a, sticker_ids: stickers&.map(&:resolve_id), flags: flags
+      }.compact
+
+      response = JSON.parse(API::Channel.start_forum_thread(@bot.token, @id, name, message, auto_archive_duration, rate_limit_per_user,
+                                                            tags&.map(&:resolve_id), attachments, reason))
+
+      Message.new(response['message'].merge!('thread' => response), @bot)
+    end
+
+    alias_method :start_forum_thread, :create_forum_post
 
     # The default `inspect` method is overwritten to give more useful output.
     def inspect
