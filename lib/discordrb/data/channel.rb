@@ -22,7 +22,8 @@ module Discordrb
       private_thread: 12,
       stage_voice: 13,
       directory: 14,
-      forum: 15
+      forum: 15,
+      media: 16
     }.freeze
 
     # @return [String] this channel's name.
@@ -108,87 +109,11 @@ module Discordrb
     # @return [Emoji, String, nil] The default emoji shown on threads in a forum or media channel.
     attr_reader :default_reaction
 
-    # A tag that can applied to a thread in a forum or media channel.
-    class Tag
-      include IDObject
+    # @return [Integer, nil] Total number of messages ever sent in a thread, doesn't de-increment on message deletion.
+    attr_reader :total_messages_sent
 
-      # @return [String] The name of the tag.
-      attr_reader :name
-
-      # @return [Boolean] Whether the `MANAGE_THREADS` permission is required to add or remove this tag.
-      attr_reader :moderated
-      alias_method :moderated?, :moderated
-
-      # @return [Emoji, String, nil] The custom emoji or unicode emoji of the tag. `Nil` for no emoji.
-      attr_reader :emoji
-
-      # @!visibility private
-      def initialize(data, channel, bot)
-        @bot = bot
-        @channel = channel
-        @id = data['id'].to_i
-        @name = data['name']
-        @moderated = data['moderated']
-        @emoji = data['emoji_id'] ? bot.emoji(data['emoji_id']) : data['emoji_name']
-      end
-
-      # Update the name of this tag.
-      # @param name [String] The new name of this tag.
-      def name=(name)
-        update_data(name: name)
-      end
-
-      # Set the moderated value of this tag.
-      # @param moderated [Boolean] Whether the `MANAGE_THREADS` permission is required to add or remove this tag.
-      def moderated=(moderated)
-        update_data(moderated: moderated)
-      end
-
-      # Set the emoji of this tag.
-      # @param emoji [Emoji, String, Integer, nil] The unicode emoji, custom emoji, or nil of this tag.
-      def emoji=(emoji)
-        emoji = case emoji
-                when Emoji, Reaction
-                  emoji.id
-                else
-                  emoji.to_i.zero? ? emoji : emoji.resolve_id
-                end
-
-        case emoji
-        when Integer
-          update_data(emoji_id: emoji, emoji_name: nil)
-        when String
-          update_data(emoji_id: nil, emoji_name: emoji)
-        else
-          update_data(emoji_id: nil, emoji_name: nil)
-        end
-      end
-
-      private
-
-      # @!visibility private
-      def update_data(new_data)
-        @channel.__send__(:update_tag_data, to_h.merge(new_data))
-      end
-
-      # @!visibility private
-      def to_h
-        data = {
-          id: id,
-          name: name,
-          moderated: moderated,
-        }
-
-        case emoji
-        when String
-          data[:emoji_name] = emoji
-        when Emoji
-          data[:emoji_id] = emoji
-        end
-
-        data
-      end
-    end
+    # @return [Integer, nil] For thread channels, the initial rate_limit_per_user to set on newly created threads in a channel.
+    attr_reader :thread_rate_limit_per_user
 
     # @return [true, false] whether or not this channel is a PM or group channel.
     def private?
@@ -256,10 +181,14 @@ module Discordrb
       end
 
       @flags = data['flags'] || 0
-      @available_tags = data['available_tags']&.map { |t| Tag.new(t, self) }
+
       @sort_order = data['default_sort_order']
       @forum_layout = data['default_forum_layout']
       @applied_tags = data['applied_tags']&.map(&:resolve_id)
+      @available_tags = data['available_tags']&.map { |d| ChannelTag.new(d, self, @bot) }
+
+      @total_message_sent = data['total_message_sent']
+      @thread_rate_limit_per_user = data['default_thread_rate_limit_per_user']
 
       if (default_emoji = data['default_reaction_emoji'])
         @default_reaction = if default_emoji['emoji_id']
@@ -335,9 +264,34 @@ module Discordrb
       @type == 12
     end
 
+    # @return [true, false] whether or not this channel is a private thread.
+    def stage_voice?
+      @type == 13
+    end
+
+    # @return [true, false] whether or not this channel is a directory channel.
+    def directory?
+      @type == 14
+    end
+
+    # @return [true, false] whether or not this channel is a forum channel.
+    def forum?
+      @type == 15
+    end
+
+    # @return [true, false] whether or not this channel is a media channel.
+    def media?
+      @type == 16
+    end
+
     # @return [true, false] whether or not this channel is a thread.
     def thread?
       news_thread? || public_thread? || private_thread?
+    end
+
+    # @return [true, false] whether or not this channel is a forum post.
+    def forum_post?
+      public_thread? && parent.forum?
     end
 
     # @return [Channel, nil] the category channel, if this channel is in a category
@@ -717,6 +671,14 @@ module Discordrb
       @nsfw = other.nsfw
       @parent_id = other.parent_id
       @rate_limit_per_user = other.rate_limit_per_user
+      @flags = other.flags
+      @applied_tags = other.applied_tags
+      @total_messages_sent = other.total_messages_sent
+      @available_tags = other.available_tags
+      @default_reaction = other.default_reaction
+      @thread_rate_limit_per_user = other.thread_rate_limit_per_user
+      @default_sort_order = other.default_sort_order
+      @default_forum_layout = other.default_forum_layout
     end
 
     # The list of users currently in this channel. For a voice channel, it will return all the members currently
@@ -1033,6 +995,36 @@ module Discordrb
     def applied_tags
       parent.available_tags.select { |tag| @applied_tags.any?(tag) }
     end
+
+    # Create a thread in a forum or media channel.
+    # @param name [String] 1-100 character name of the thread.
+    # @param auto_archive_duration [60, 1440, 4320, 10080, nil] How long before a thread is automatically archived.
+    # @param rate_limit_per_user [Integer amount of seconds between (0-21600) a user has to wait before sending another message.
+    # @param content [String, nil] Message content for the the first message in the forum thread.
+    # @param embeds [Hash, Discordrb::Webhooks::Embed, Array<Hash>, Array<Discordrb::Webhooks::Embed> nil] The rich embed(s) to append to this message.
+    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings.
+    # @param components [View, Array<Hash>, nil] Interaction components to associate with this message.
+    # @param attachments [Array<File>, nil] Files that can be referenced in embeds via `attachment://file.png`
+    # @param flags [Integer, nil] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12) and IS_COMPONENTS_V2 (1 << 15) can be set.
+    # @param stickers [Array<Integer>, nil] Sticker IDs to associate with this messages.
+    # @param tags [Array<Tag, Integer, String>, nil] Array of forum tags to apply onto the created thread.
+    # @param reason [String, nil] The reason for creating this thread.
+    # @return [Array<Channel, Message>] Returns an array where the first value is the newly created thread channel, and the second value is the newly created message.
+    def create_forum_post(name, auto_archive_duration: nil, rate_limit_per_user: nil, content: nil, embeds: nil, allowed_mentions: nil, components: nil, stickers: nil, attachments: nil, flags: 0, tags: nil, reason: nil)
+      allowed_mentions = { parse: [] } if allowed_mentions == false
+
+      message = {
+        content: content, embeds: embeds&.map(&:to_hash), allowed_mentions: allowed_mentions&.to_hash,
+        components: components&.to_a, sticker_ids: stickers&.map(&:resolve_id), flags: flags
+      }
+
+      data = JSON.parse(API::Channel.start_thread_in_forum_or_media_channel(@bot.token, @id, name, message.compact, auto_archive_duration,
+                                                                            rate_limit_per_user, tags&.map(&:resolve_id), attachments, reason))
+
+      Message.new(data['message'].merge!('thread' => data), @bot)
+    end
+
+    alias_method :start_forum_thread, :create_forum_post
 
     # @!endgroup
 
