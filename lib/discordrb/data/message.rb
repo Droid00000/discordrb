@@ -11,8 +11,7 @@ module Discordrb
     alias_method :to_s, :content
 
     # @return [Member, User, nil] the user that sent this message. (Will be a {Member} most of the time, it should only be a
-    #   {User} for old messages when the author has left the server since then) This can be nil when the message is a snapshot
-    #   and the bot doesn't have access to the server the snapshot originates from.
+    #   {User} for old messages when the author has left the server since then) This can be nil when the message is a snapshot.
     attr_reader :author
     alias_method :user, :author
     alias_method :writer, :author
@@ -434,7 +433,7 @@ module Discordrb
     # Whether or not this message was sent in reply to another message
     # @return [true, false]
     def reply?
-      @message_reference['type']&.zero?
+      @message_reference ? @message_reference['type'].zero? : false
     end
 
     # Whether or not this message was of type "CHAT_INPUT_COMMAND"
