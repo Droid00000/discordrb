@@ -522,7 +522,7 @@ class Discordrb::Webhooks::View
     @components << new_row
   end
 
-  # Add a text display component to this container.
+  # Add a text display component to the view.
   # @param id [Integer, nil] Integer ID of this component.
   # @param text [String] Set the text display of this component.
   # @yieldparam builder [TextDisplayBuilder] The text display object is yielded to allow for modification of attributes.
@@ -534,7 +534,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # Add a section to this container.
+  # Add a section component to the view.
   # @param id [Integer, nil] Integer ID of this section component.
   # @param components [Array<Components>] Optional array of text display components.
   # @param accessory [Hash, nil] Optional thumbnail or button accessory to include.
@@ -547,7 +547,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # Add a media gallery to this container.
+  # Add a media gallery to the view.
   # @param id [Integer, nil] Integer ID of this media gallery component.
   # @param items [Array<Hash>] Array of media gallery components to include.
   # @yieldparam builder [MediaGalleryBuilder] The media gallery object is yielded to allow for modification of attributes.
@@ -559,7 +559,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # Add a seperator to this container.
+  # Add a seperator to the view.
   # @param id [Integer, nil] Integer ID of this seperator component.
   # @param divider [true, false] Whether this seperator is a divider. Defaults to true.
   # @param spacing [Integer, nil] The amount of spacing for this seperator component.
@@ -572,7 +572,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # Add a file to this container.
+  # Add a file to the view.
   # @param id [Integer, nil] Integer ID of this file component.
   # @param file [String, nil] An attachment://<filename> reference.
   # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
@@ -585,7 +585,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # Add a container component.
+  # Add a container to the view.
   # @param id [Integer, nil] Integer ID of this container component.
   # @param components [Array<Hash>] Container components to include.
   # @param colour [String, Integer, {Integer, Integer, Integer}, #to_i, nil] The colour in decimal,
