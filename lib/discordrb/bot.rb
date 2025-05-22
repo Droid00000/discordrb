@@ -403,13 +403,18 @@ module Discordrb
     # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
     # @param components [View, Array<Hash>] Interaction components to associate with this message.
     # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2) and SUPPRESS_NOTIFICATIONS (1 << 12) can be set.
+    # @param forward [true, false] Whether the message reference should be a forward instead of an inline reply. Defaults to false.
     # @return [Message] The message that was sent.
-    def send_message(channel, content, tts = false, embeds = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
+    def send_message(channel, content, tts = false, embeds = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0, forward = false)
       channel = channel.resolve_id
       debug("Sending message to #{channel} with content '#{content}'")
       allowed_mentions = { parse: [] } if allowed_mentions == false
-      message_reference = { message_id: message_reference.id } if message_reference.respond_to?(:id)
+      message_reference = { message_id: message_reference.id, type: 0 } if message_reference.respond_to?(:id)
       embeds = (embeds.instance_of?(Array) ? embeds.map(&:to_hash) : [embeds&.to_hash]).compact
+      if forward && message_reference.respond_to?(:id)
+        message_reference[:type] = 1
+        message_reference[:channel_id] = message_reference.channel.id
+      end
 
       response = API::Channel.create_message(token, channel, content, tts, embeds, nil, attachments, allowed_mentions&.to_hash, message_reference, components, flags)
       Message.new(JSON.parse(response), self)
@@ -427,11 +432,12 @@ module Discordrb
     # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
     # @param components [View, Array<Hash>] Interaction components to associate with this message.
     # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2) and SUPPRESS_NOTIFICATIONS (1 << 12) can be set.
-    def send_temporary_message(channel, content, timeout, tts = false, embeds = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
+    # @param forward [true, false] Whether the message reference should be a forward instead of an inline reply. Defaults to false.
+    def send_temporary_message(channel, content, timeout, tts = false, embeds = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0, forward = false)
       Thread.new do
         Thread.current[:discordrb_name] = "#{@current_thread}-temp-msg"
 
-        message = send_message(channel, content, tts, embeds, attachments, allowed_mentions, message_reference, components, flags)
+        message = send_message(channel, content, tts, embeds, attachments, allowed_mentions, message_reference, components, flags, forward)
         sleep(timeout)
         message.delete
       end

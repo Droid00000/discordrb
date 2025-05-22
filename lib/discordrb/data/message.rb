@@ -10,8 +10,9 @@ module Discordrb
     alias_method :text, :content
     alias_method :to_s, :content
 
-    # @return [Member, User] the user that sent this message. (Will be a {Member} most of the time, it should only be a
-    #   {User} for old messages when the author has left the server since then)
+    # @return [Member, User, nil] the user that sent this message. (Will be a {Member} most of the time, it should only be a
+    #   {User} for old messages when the author has left the server since then) This can be nil when the message is a snapshot
+    #   and the bot doesn't have access to the server the snapshot originates from.
     attr_reader :author
     alias_method :user, :author
     alias_method :writer, :author
@@ -78,6 +79,10 @@ module Discordrb
 
     # @return [Channel, nil] The thread that was started from this message, or nil.
     attr_reader :thread
+
+    # @return [Array<Message>] The messages that were forwarded. The resulting {Message} objects only contain partial
+    #   data, if you want to resolve the full message object, consider using {Message#forwarded_message} instead.
+    attr_reader :snapshots
 
     # @!visibility private
     def initialize(data, bot)
@@ -167,6 +172,15 @@ module Discordrb
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
+
+      @snapshots = []
+
+      data['message_snapshots']&.each do |element|
+        element['message']['channel_id'] = @message_reference['channel_id']
+        element['message']['id'] = @message_reference['message_id']
+
+        @snapshots << Message.new(element['message'], @bot)
+      end
     end
 
     # Replies to this message with the specified content.
@@ -193,12 +207,35 @@ module Discordrb
       allowed_mentions = allowed_mentions.to_hash.transform_keys(&:to_sym)
       allowed_mentions[:replied_user] = mention_user
 
-      respond(content, tts, embed, attachments, allowed_mentions, self, components, flags)
+      respond(content, tts, embed, attachments, allowed_mentions, self, components, flags, false)
+    end
+
+    # Create a forwarded message from this message.
+    # @param content [String] The content to send. Should not be longer than 2000 characters or it will result in an error.
+    # @param channel [Integer, String, Channel, nil] The channel to forward this message to. Nil will forward the message to the channel the message originates from.
+    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
+    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
+    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
+    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
+    # @param mention_user [true, false] Whether the user that is being replied to should be pinged by the reply.
+    # @param components [View, Array<Hash>] Interaction components to associate with this message.
+    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2) and SUPPRESS_NOTIFICATIONS (1 << 12) can be set.
+    # @return (see #respond)
+    def forward(content: nil, channel: nil, tts: false, embed: nil, attachments: nil, allowed_mentions: {}, mention_user: false, components: nil, flags: 0)
+      allowed_mentions = { parse: [] } if allowed_mentions == false
+      allowed_mentions = allowed_mentions.to_hash.transform_keys(&:to_sym)
+      allowed_mentions[:replied_user] = mention_user
+
+      if channel
+        @bot.channel(channel).send_message(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags, forward)
+      else
+        respond(content, tts, embed, attachments, allowed_mentions, self, components, flags, true)
+      end
     end
 
     # (see Channel#send_message)
-    def respond(content, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
-      @channel.send_message(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
+    def respond(content, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0, forward = false)
+      @channel.send_message(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags, forward)
     end
 
     # Edits this message to have the specified content instead.
@@ -397,7 +434,7 @@ module Discordrb
     # Whether or not this message was sent in reply to another message
     # @return [true, false]
     def reply?
-      !@referenced_message.nil?
+      @message_reference['type']&.zero?
     end
 
     # Whether or not this message was of type "CHAT_INPUT_COMMAND"
@@ -406,14 +443,22 @@ module Discordrb
       @type == 20
     end
 
-    # @return [Message, nil] the Message this Message was sent in reply to.
+    # Whether or not this message contains any forwards.
+    # @return [true, false]
+    def snapshots?
+      !@snapshots.empty?
+    end
+
+    # @return [Message, nil] the Message this Message was sent in reply to, or the forwarded message.
     def referenced_message
       return @referenced_message if @referenced_message
       return nil unless @message_reference
 
       referenced_channel = @bot.channel(@message_reference['channel_id'])
-      @referenced_message = referenced_channel.message(@message_reference['message_id'])
+      @referenced_message = referenced_channel&.message(@message_reference['message_id'])
     end
+
+    alias_method :forwarded_message, :referenced_message
 
     # @return [Array<Components::Button>]
     def buttons

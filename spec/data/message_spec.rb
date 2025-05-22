@@ -193,13 +193,13 @@ describe Discordrb::Message do
     let(:mention) { instance_double('TrueClass', 'mention') }
 
     it 'responds with a message_reference' do
-      expect(message).to receive(:respond).with(content, false, nil, nil, hash_including(:replied_user), message, nil, 0)
+      expect(message).to receive(:respond).with(content, false, nil, nil, hash_including(:replied_user), message, nil, 0, false)
 
       message.reply!(content)
     end
 
     it 'sets replied_user in allowed_mentions' do
-      expect(message).to receive(:respond).with(content, false, nil, nil, { replied_user: mention }, message, nil, 0)
+      expect(message).to receive(:respond).with(content, false, nil, nil, { replied_user: mention }, message, nil, 0, false)
 
       message.reply!(content, mention_user: mention)
     end
@@ -208,7 +208,7 @@ describe Discordrb::Message do
       let(:mention) { double('mention') }
 
       it 'sets parse to an empty array add merges the mention_user param' do
-        expect(message).to receive(:respond).with(content, false, nil, nil, { parse: [], replied_user: mention }, message, nil, 0)
+        expect(message).to receive(:respond).with(content, false, nil, nil, { parse: [], replied_user: mention }, message, nil, 0, false)
 
         message.reply!(content, allowed_mentions: false, mention_user: mention, flags: 0)
       end
@@ -226,7 +226,7 @@ describe Discordrb::Message do
       end
 
       it 'converts it to a hash to set the replied_user key' do
-        expect(message).to receive(:respond).with(content, false, nil, nil, hash, message, nil, 0)
+        expect(message).to receive(:respond).with(content, false, nil, nil, hash, message, nil, 0, false)
         message.reply!(content, allowed_mentions: allowed_mentions, mention_user: mention_user, flags: 0)
       end
     end
@@ -253,11 +253,12 @@ describe Discordrb::Message do
     let(:message_reference) { instance_double('Discordrb::Message') }
     let(:components) { instance_double('Discordrb::Webhooks::View') }
     let(:flags) { instance_double('Integer') }
+    let(:forward) { instance_double('TrueClass', 'FalseClass') }
 
     it 'forwards arguments to Channel#send_message' do
-      expect(channel).to receive(:send_message).with(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
+      expect(channel).to receive(:send_message).with(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags, forward)
 
-      message.respond(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
+      message.respond(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags, forward)
     end
   end
 end
