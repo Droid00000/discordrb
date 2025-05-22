@@ -507,7 +507,7 @@ module Discordrb
 
       # Calculate new falloff
       @falloff *= 1.5
-      @falloff = 20 + (rand * 10) if @falloff > 30 # Cap the falloff at 120 seconds and then add some random jitter
+      @falloff = 7 + (rand * 10) if @falloff > 20 # Cap the falloff at 120 seconds and then add some random jitter
     end
 
     # Create and connect a socket using a URI
