@@ -11,7 +11,7 @@ class Discordrb::Webhooks::View
     link: 5
   }.freeze
 
-  # Possible seperator size name and values.
+  # Possible seperator size names and values.
   SEPERATOR_SIZES = {
     small: 1,
     large: 2
@@ -201,7 +201,7 @@ class Discordrb::Webhooks::View
     # @return [String] Content of this component.
     attr_accessor :text
 
-    # @!visibility hidden
+    # @!visibility private
     def initialize(text = nil, id = nil)
       @text = text
       @id = id
@@ -223,7 +223,7 @@ class Discordrb::Webhooks::View
     # @return [true, false] If this seperator is a divider.
     attr_accessor :divider
 
-    # @!visibility hidden
+    # @!visibility private
     def initialize(divider = nil, spacing = nil, id = nil)
       @spacing = SEPERATOR_SIZES[spacing] || spacing
       @divider = divider
@@ -236,7 +236,7 @@ class Discordrb::Webhooks::View
       @spacing = SEPERATOR_SIZES[space] || space
     end
 
-    # @!visibility hidden
+    # @!visibility private
     def to_h
       { type: COMPONENT_TYPES[:seperator],
         divider: @divider,
@@ -249,15 +249,15 @@ class Discordrb::Webhooks::View
   # are currently supported at the time of writing.
   class FileBuilder
     # If this file should be spoilered.
-    # @return [true, false, nil] If this file is a spoiler or not.
+    # @return [true, false] If this file is a spoiler or not.
     attr_accessor :spoiler
 
     # Set the integer ID of this component.
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
 
-    # @!visibility hidden
-    def initialize(file = nil, spoiler = nil, id = nil)
+    # @!visibility private
+    def initialize(file = nil, spoiler = false, id = nil)
       @id = id
       @file = { url: file }
       @spoiler = spoiler
@@ -269,7 +269,7 @@ class Discordrb::Webhooks::View
       @file[:url] = file
     end
 
-    # @!visibility hidden
+    # @!visibility private
     def to_h
       { type: COMPONENT_TYPES[:file],
         id: @id,
@@ -288,23 +288,23 @@ class Discordrb::Webhooks::View
     # @return [Array<Hash>] Media gallery items serialized as a hash.
     attr_accessor :items
 
-    # @!visibility hidden
+    # @!visibility private
     def initialize(items = [], id = nil)
       @id = id
       @items = items
     end
 
     # Add a gallery item to this media gallery collection.
-    # @param media [String] The URL of this media item.
+    # @param url [String] The URL of this media item.
     # @param description [String, nil] An optional description of this media item.
-    # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
-    def gallery_item(media:, description: nil, spoiler: nil)
-      @items << { media: { url: media }, description: description, spoiler: spoiler }.compact
+    # @param spoiler [true, false] Whether this argument should be spoilered. Defaults to false.
+    def gallery_item(url:, description: nil, spoiler: false)
+      @items << { media: { url: url }, description: description, spoiler: spoiler }.compact
     end
 
     alias_method :item, :gallery_item
 
-    # @!visibility hidden
+    # @!visibility private
     def to_h
       { type: COMPONENT_TYPES[:media_gallery], items: @items }
     end
@@ -318,7 +318,7 @@ class Discordrb::Webhooks::View
     # @return [Integer, nil] integer ID of this component.
     attr_accessor :id
 
-    # @!visibility hidden
+    # @!visibility private
     def initialize(components = [], accessory = nil, id = nil)
       @components = components
       @accessory = accessory
@@ -327,16 +327,18 @@ class Discordrb::Webhooks::View
 
     # Add a text display component to this section.
     # @param text [String] Content of the component.
+    # @param id [Integer, nil] The 32-bit integer ID of this component.
     def text_display(text:, id: nil)
       @components << { type: COMPONENT_TYPES[:text_display], content: text, id: id }.compact
     end
 
     # Set the accessory to a thumbnail for this media gallery collection.
-    # @param media [String] The URL of the media item for this thumbnail.
+    # @param url [String] The URL of the media item for this thumbnail.
     # @param description [String, nil] An optional description of this media item.
-    # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
-    def thumbnail(media:, description: nil, spoiler: nil)
-      @accessory = { type: COMPONENT_TYPES[:thumbnail], media: { url: media }, description: description, spoiler: spoiler }.compact
+    # @param spoiler [true, false] Whether this argument should be spoilered. Defaults to false.
+    # @param id [Integer, nil] The 32-bit integer ID of this component.
+    def thumbnail(url:, description: nil, spoiler: false, id: nil)
+      @accessory = { type: COMPONENT_TYPES[:thumbnail], media: { url: url }, description: description, spoiler: spoiler, id: id }.compact
     end
 
     # Set the accessory to a button for this media gallery collection.
@@ -362,7 +364,7 @@ class Discordrb::Webhooks::View
       @accessory = { type: COMPONENT_TYPES[:button], id: id, label: label, emoji: emoji, style: style, custom_id: custom_id, disabled: disabled, url: url }.compact
     end
 
-    # @!visibility hidden
+    # @!visibility private
     def to_h
       { type: COMPONENT_TYPES[:section], components: @components, accessory: @accessory }.compact
     end
@@ -379,11 +381,11 @@ class Discordrb::Webhooks::View
     attr_reader :colour
     alias_method :color, :colour
 
-    # If this container be spoilered.
-    # @return [true, false, nil] If this container is a spoiler or not.
+    # If this container should be spoilered.
+    # @return [true, false] If this container is a spoiler or not.
     attr_accessor :spoiler
 
-    # @!visibility hidden
+    # @!visibility private
     def initialize(id = nil, components = [], colour = nil, spoiler = nil)
       @components = components
       @spoiler = spoiler
@@ -475,7 +477,7 @@ class Discordrb::Webhooks::View
       @components << builder
     end
 
-    # @!visibility hidden
+    # @!visibility private
     def to_h
       { type: COMPONENT_TYPES[:container],
         accent_color: @colour,
@@ -500,7 +502,7 @@ class Discordrb::Webhooks::View
     end
   end
 
-  # @!visibility hidden
+  # @!visibility private
   attr_reader :components
 
   def initialize
@@ -598,7 +600,7 @@ class Discordrb::Webhooks::View
     @components << builder
   end
 
-  # @!visibility hidden
+  # @!visibility private
   # @return [Array<RowBuilder>]
   def rows
     @components.select { |component| component.is_a?(RowBuilder) }

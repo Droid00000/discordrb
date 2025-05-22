@@ -25,7 +25,7 @@ bot.application_command(:components) do |event|
       # A section must have either a thumbnail or a button. This is currently
       # the only case where a button can be used without being in an action row.
       container.section do |section|
-        section.thumbnail(media: event.server.icon_url)
+        section.thumbnail(url: event.server.icon_url)
         section.text_display(text: "### Emoji Statistics for #{event.server.name}")
         section.text_display(text: 'These are the fake emoji statistics for your server.')
       end
