@@ -220,9 +220,9 @@ module Discordrb
       allowed_mentions = allowed_mentions.to_hash.transform_keys(&:to_sym)
 
       if channel
-        @bot.channel(channel).send_message(content, tts, embed, attachments, allowed_mentions, self, components, flags, forward)
+        @bot.channel(channel).send_message(nil, tts, nil, nil, allowed_mentions, self, nil, flags, true)
       else
-        respond(content, tts, embed, attachments, allowed_mentions, self, components, flags, true)
+        respond(nil, tts, nil, nil, allowed_mentions, self, nil, flags, true)
       end
     end
 
