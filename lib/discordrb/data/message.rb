@@ -442,12 +442,6 @@ module Discordrb
       @type == 20
     end
 
-    # Whether or not this message contains any forwards.
-    # @return [true, false]
-    def snapshots?
-      !@snapshots.empty?
-    end
-
     # @return [Message, nil] the Message this Message was sent in reply to, or the forwarded message.
     def referenced_message
       return @referenced_message if @referenced_message
