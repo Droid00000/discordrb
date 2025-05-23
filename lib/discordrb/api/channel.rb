@@ -87,6 +87,8 @@ module Discordrb::API::Channel
     headers = { Authorization: token }
     headers[:content_type] = :json unless attachments
 
+    puts body
+
     Discordrb::API.request(
       :channels_cid_messages_mid,
       channel_id,
