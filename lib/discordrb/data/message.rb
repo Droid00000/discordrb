@@ -226,7 +226,7 @@ module Discordrb
       allowed_mentions[:replied_user] = mention_user
 
       if channel
-        @bot.channel(channel).send_message(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags, forward)
+        @bot.channel(channel).send_message(content, tts, embed, attachments, allowed_mentions, self, components, flags, forward)
       else
         respond(content, tts, embed, attachments, allowed_mentions, self, components, flags, true)
       end
