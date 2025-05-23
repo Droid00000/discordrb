@@ -210,20 +210,14 @@ module Discordrb
     end
 
     # Create a forwarded message from this message.
-    # @param content [String] The content to send. Should not be longer than 2000 characters or it will result in an error.
     # @param channel [Integer, String, Channel, nil] The channel to forward this message to. Nil will forward the message to the channel the message originates from.
     # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
     # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param mention_user [true, false] Whether the user that is being replied to should be pinged by the reply.
-    # @param components [View, Array<Hash>] Interaction components to associate with this message.
     # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2) and SUPPRESS_NOTIFICATIONS (1 << 12) can be set.
     # @return (see #respond)
-    def forward(content: nil, channel: nil, tts: false, embed: nil, attachments: nil, allowed_mentions: {}, mention_user: false, components: nil, flags: 0)
+    def forward(channel: nil, tts: false, allowed_mentions: {}, flags: 0)
       allowed_mentions = { parse: [] } if allowed_mentions == false
       allowed_mentions = allowed_mentions.to_hash.transform_keys(&:to_sym)
-      allowed_mentions[:replied_user] = mention_user
 
       if channel
         @bot.channel(channel).send_message(content, tts, embed, attachments, allowed_mentions, self, components, flags, forward)
