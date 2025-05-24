@@ -299,8 +299,8 @@ class Discordrb::Webhooks::View
     # @param media [String] The URL of this media item.
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
-    def gallery_item(media:, description: nil, spoiler: nil)
-      @items << { media: { url: media }, description: description, spoiler: spoiler }.compact
+    def gallery_item(url:, description: nil, spoiler: nil)
+      @items << { media: { url: url }, description: description, spoiler: spoiler }.compact
     end
 
     alias_method :item, :gallery_item
@@ -336,8 +336,8 @@ class Discordrb::Webhooks::View
     # @param media [String] The URL of the media item for this thumbnail.
     # @param description [String, nil] An optional description of this media item.
     # @param spoiler [true, false, nil] Whether this argument should be spoilered. Defaults to false.
-    def thumbnail(media:, description: nil, spoiler: nil)
-      @accessory = { type: COMPONENT_TYPES[:thumbnail], media: { url: media }, description: description, spoiler: spoiler }.compact
+    def thumbnail(url:, description: nil, spoiler: nil)
+      @accessory = { type: COMPONENT_TYPES[:thumbnail], media: { url: url }, description: description, spoiler: spoiler }.compact
     end
 
     # Set the accessory to a button for this media gallery collection.
