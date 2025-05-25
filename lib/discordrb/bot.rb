@@ -1567,7 +1567,7 @@ module Discordrb
           event = ApplicationCommandEvent.new(data, self)
 
           Thread.new do
-            if !event.is_a?(Discordrb::Events::RawEvent)
+            if event.is_a?(Discordrb::Events::ApplicationCommandEvent)
               Thread.current[:discordrb_name] = "it-#{event.interaction.id}"
 
               begin
