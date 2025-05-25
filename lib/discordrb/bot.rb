@@ -1567,12 +1567,12 @@ module Discordrb
           event = ApplicationCommandEvent.new(data, self)
 
           Thread.new do
-            Thread.current[:discordrb_name] = "it-#{event.interaction.id}" if event.respond_to?(:interaction)
+            Thread.current[:discordrb_name] = "it-#{event.interaction.id}"
 
             begin
-              debug("Executing application command #{event.command_name}:#{event.command_id}") if event.respond_to?(:command_id)
+              debug("Executing application command #{event.command_name}:#{event.command_id}")
 
-              @application_commands[event.command_name]&.call(event) if event.respond_to?(:command_name)
+              @application_commands[event.command_name]&.call(event)
             rescue StandardError => e
               log_exception(e)
             end
