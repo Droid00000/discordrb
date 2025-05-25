@@ -1569,14 +1569,14 @@ module Discordrb
           Thread.new do
             if event.respond_to?(:interaction)
               Thread.current[:discordrb_name] = "it-#{event.interaction.id}"
-            end
 
-            begin
-              debug("Executing application command #{event.command_name}:#{event.command_id}")
+              begin
+                debug("Executing application command #{event.command_name}:#{event.command_id}")
 
-              @application_commands[event.command_name]&.call(event)
-            rescue StandardError => e
-              log_exception(e)
+                @application_commands[event.command_name]&.call(event)
+              rescue StandardError => e
+                log_exception(e)
+              end
             end
           end
         when Interaction::TYPES[:component]
