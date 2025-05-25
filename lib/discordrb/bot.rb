@@ -1567,7 +1567,7 @@ module Discordrb
           event = ApplicationCommandEvent.new(data, self)
 
           Thread.new do
-            Thread.current[:discordrb_name] = "it-#{event.interaction.id}" if event.responds_to?(:interaction)
+            Thread.current[:discordrb_name] = "it-#{event.interaction.id}" if event.respond_to?(:interaction)
 
             begin
               debug("Executing application command #{event.command_name}:#{event.command_id}")
