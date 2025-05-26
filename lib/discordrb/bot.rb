@@ -1564,6 +1564,8 @@ module Discordrb
 
         case data['type']
         when Interaction::TYPES[:command]
+          # We have to use a seperate variable name besides `event` here, since if we have a handler
+          # for a raw event, `event` would get re-assigned by the time the thread starts runnning.
           cmd_event = ApplicationCommandEvent.new(data, self)
 
           Thread.new do
