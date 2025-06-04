@@ -27,7 +27,10 @@ module Discordrb::Events
     # @!attribute [r] user
     #   @return [User]
     #   @see Interaction#user
-    delegate :type, :server, :server_id, :channel, :channel_id, :user, to: :interaction
+    # @!attribute [r] context
+    #   @return [Integer]
+    #   @see Interaction#context
+    delegate :type, :server, :server_id, :channel, :channel_id, :user, :context, to: :interaction
 
     def initialize(data, bot)
       @interaction = Discordrb::Interaction.new(data, bot)
@@ -144,16 +147,16 @@ module Discordrb::Events
     # Struct to allow accessing data via [] or methods.
     Resolved = Struct.new('Resolved', :channels, :members, :messages, :roles, :users, :attachments) # rubocop:disable Lint/StructNewOverride
 
-    # @return [String] The name of the command.
+    # @return [Symbol] The name of the command.
     attr_reader :command_name
 
     # @return [Integer] The ID of the command.
     attr_reader :command_id
 
-    # @return [String, nil] The name of the subcommand group relevant to this event.
+    # @return [Symbol, nil] The name of the subcommand group relevant to this event.
     attr_reader :subcommand_group
 
-    # @return [String, nil] The name of the subcommand relevant to this event.
+    # @return [Symbol, nil] The name of the subcommand relevant to this event.
     attr_reader :subcommand
 
     # @return [Resolved]
@@ -258,7 +261,7 @@ module Discordrb::Events
     # @yieldparam [SubcommandBuilder]
     # @return [ApplicationCommandEventHandler]
     def group(name)
-      raise ArgumentError, 'Unable to mix subcommands and groups' if @subcommands.any? { |_, v| v.is_a? Proc }
+      raise ArgumentError, 'Unable to mix subcommands and groups' if @subcommands.any? { |n, v| n == name && v.is_a?(Proc) }
 
       builder = SubcommandBuilder.new(name)
       yield builder
@@ -271,7 +274,7 @@ module Discordrb::Events
     # @yieldparam [SubcommandBuilder]
     # @return [ApplicationCommandEventHandler]
     def subcommand(name, &block)
-      raise ArgumentError, 'Unable to mix subcommands and groups' if @subcommands.any? { |_, v| v.is_a? Hash }
+      raise ArgumentError, 'Unable to mix subcommands and groups' if @subcommands.any? { |n, v| n == name && v.is_a?(Hash) }
 
       @subcommands[name.to_sym] = block
 
@@ -465,8 +468,8 @@ module Discordrb::Events
     def initialize(data, bot)
       super
 
-      users   = data['data']['resolved']['users'].keys.map { |e| bot.user(e) }
-      roles   = data['data']['resolved']['roles'] ? data['data']['resolved']['roles'].keys.map { |e| bot.server(data['guild_id']).role(e) } : []
+      users = data['data']['resolved']['users'].keys.map { |e| bot.user(e) }
+      roles = data['data']['resolved']['roles'] ? data['data']['resolved']['roles'].keys.map { |e| bot.server(data['guild_id']).role(e) } : []
       @values = { users: users, roles: roles }
     end
   end
@@ -490,5 +493,56 @@ module Discordrb::Events
 
   # Event handler for a select channel component.
   class ChannelSelectEventHandler < ComponentEventHandler
+  end
+
+  # Event handler for an autocomplete option choices.
+  class AutocompleteEventHandler < InteractionCreateEventHandler
+    def matches?(event)
+      return false unless super
+      return false unless event.is_a?(AutocompleteEvent)
+
+      [
+        matches_all(@attributes[:name], event.focused) { |a, e| a&.to_s == e },
+        matches_all(@attributes[:command_id], event.command_id) { |a, e| a&.to_i == e },
+        matches_all(@attributes[:subcommand], event.subcommand) { |a, e| a&.to_sym == e },
+        matches_all(@attributes[:command_name], event.command_name) { |a, e| a&.to_sym == e },
+        matches_all(@attributes[:subcommand_group], event.subcommand_group) { |a, e| a&.to_sym == e }
+      ].reduce(&:&)
+    end
+  end
+
+  # An event for an autocomplete option choice.
+  class AutocompleteEvent < ApplicationCommandEvent
+    # @return [String] Name of the currently focused option.
+    attr_reader :focused
+
+    # @return [Hash] An empty hash that can be used to return choices by adding K/V pairs.
+    attr_reader :choices
+
+    # @!visibility private
+    def initialize(data, bot)
+      super
+
+      @choices = {}
+
+      options = data['data']['options']
+
+      options = case options[0]['type']
+                when 1
+                  options[0]['options']
+                when 2
+                  options[0]['options'][0]['options']
+                else
+                  options
+                end
+
+      @focused = options.find { |opt| opt.key?('focused') }['name']
+    end
+
+    # Respond to this interaction with autocomplete choices.
+    # @param choices [Array<Hash>, Hash, nil] Autocomplete choices to return.
+    def respond(choices:)
+      @interaction.show_autocomplete_choices(choices)
+    end
   end
 end

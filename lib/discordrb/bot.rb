@@ -527,7 +527,7 @@ module Discordrb
             end
           end
         elsif /(?<animated>^a|^${0}):(?<name>\w+):(?<id>\d+)/ =~ mention
-          array_to_return << (emoji(id) || Emoji.new({ 'animated' => !animated.nil?, 'name' => name, 'id' => id }, self, nil))
+          array_to_return << (emoji(id) || Emoji.new({ 'animated' => animated != '', 'name' => name, 'id' => id }, self, nil))
         end
       end
       array_to_return
@@ -795,12 +795,13 @@ module Discordrb
 
     # Get all application commands.
     # @param server_id [String, Integer, nil] The ID of the server to get the commands from. Global if `nil`.
+    # @param with_localizations [true, false, nil] Whether the full localizations of commands should be included in the result. `nil` requests the Discord API default.
     # @return [Array<ApplicationCommand>]
-    def get_application_commands(server_id: nil)
+    def get_application_commands(server_id: nil, with_localizations: nil)
       resp = if server_id
-               API::Application.get_guild_commands(@token, profile.id, server_id)
+               API::Application.get_guild_commands(@token, profile.id, server_id, with_localizations)
              else
-               API::Application.get_global_commands(@token, profile.id)
+               API::Application.get_global_commands(@token, profile.id, with_localizations)
              end
 
       JSON.parse(resp).map do |command_data|
@@ -1101,12 +1102,15 @@ module Discordrb
       server_id = data['guild_id'].to_i
       server = self.server(server_id)
 
-      member = server.member(data['user']['id'].to_i)
-      member.update_roles(data['roles'])
-      member.update_nick(data['nick'])
-      member.update_global_name(data['user']['global_name']) if data['user']['global_name']
-      member.update_boosting_since(data['premium_since'])
-      member.update_communication_disabled_until(data['communication_disabled_until'])
+      if (member = server.member(data['user']['id'].to_i))
+        member.update_roles(data['roles'])
+        member.update_nick(data['nick'])
+        member.update_global_name(data['user']['global_name']) if data['user']['global_name']
+        member.update_boosting_since(data['premium_since'])
+        member.update_communication_disabled_until(data['communication_disabled_until'])
+      else
+        Discordrb::LOGGER.warn("update_guild_member attempted to access a member which doesn't exist! Not sure what happened here, ignoring.")
+      end
     end
 
     # Internal handler for GUILD_MEMBER_DELETE
@@ -1608,6 +1612,10 @@ module Discordrb
 
           event = ModalSubmitEvent.new(data, self)
           raise_event(event)
+        when Interaction::TYPES[:autocomplete]
+
+          event = AutocompleteEvent.new(data, self)
+          raise_event(event)
         end
       when :WEBHOOKS_UPDATE
         event = WebhookUpdateEvent.new(data, self)
@@ -1656,8 +1664,10 @@ module Discordrb
       # The existence of this array is checked before for performance reasons, since this has to be done for *every*
       # dispatch.
       if @event_handlers && @event_handlers[RawEvent]
-        event = RawEvent.new(type, data, self)
-        raise_event(event)
+        # Don't assign a seperate variable named event here, because application
+        # command handlers run in a seperate thread, and by the time the thread
+        # start running, event has been re-assigned here, and the thread will error out.
+        raise_event(RawEvent.new(type, data, self))
       end
     rescue Exception => e
       LOGGER.error('Gateway message error!')

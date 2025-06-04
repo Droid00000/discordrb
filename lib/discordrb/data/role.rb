@@ -38,6 +38,16 @@ module Discordrb
     # @return [Tags, nil] The role tags
     attr_reader :tags
 
+    # @return [Integer] The flags for this role.
+    attr_reader :flags
+
+    # @return [String, nil] The unicode emoji for this role.
+    attr_reader :unicode_emoji
+
+    # @return [colours] The gradient color information for the role.
+    attr_reader :colours
+    alias_method :colors, :colours
+
     # Wrapper for the role tags
     class Tags
       # @return [Integer, nil] The ID of the bot this role belongs to
@@ -57,6 +67,7 @@ module Discordrb
 
       # @return [true, false] Whether this role is a guild's linked role
       attr_reader :guild_connections
+      alias_method :server_connections, :guild_connections
 
       def initialize(data)
         @bot_id = data['bot_id']&.resolve_id
@@ -65,6 +76,56 @@ module Discordrb
         @subscription_listing_id = data['subscription_listing_id']&.resolve_id
         @available_for_purchase = data.key?('available_for_purchase')
         @guild_connections = data.key?('guild_connections')
+      end
+    end
+
+    # Wrapper for the role colors.
+    class Colours
+      # @return [ColourRGB] The primary color of the role, the same as Role#color.
+      attr_reader :primary
+      alias_method :base, :primary
+
+      # @return [ColourRGB, nil] The secondary gradient color of the role, or nil.
+      attr_reader :secondary
+      alias_method :gradient_start, :secondary
+
+      # @return [ColourRGB, nil] The tertiary gradient color of the role, or nil.
+      attr_reader :tertiary
+      alias_method :gradient_end, :tertiary
+
+      # @!visibility private
+      def initialize(data, role)
+        @role = role
+        @primary = ColourRGB.new(data['primary_color'])
+        @secondary = data['secondary_color'] ? ColourRGB.new(data['secondary_color']) : nil
+        @tertiary = data['tertiary_color'] ? ColourRGB.new(data['tertiary_color']) : nil
+      end
+
+      # Set the primary color of the role. This is essentially the same as Role#color=.
+      # @param color [Integer, ColourRGB] The new primary (base) color of this role.
+      def primary=(color)
+        @role.send(:colors=, to_h.merge(primary: color&.to_i))
+      end
+
+      # Set the secondary color of this role for servers with the ENHANCED_ROLE_COLORS feature.
+      # @param color [Integer, ColourRGB, nil] The new secondary color of this role, or nil.
+      def secondary=(color)
+        @role.send(:colors=, to_h.merge(secondary: color&.to_i))
+      end
+
+      # Set the tertiary color of this role for servers with the ENHANCED_ROLE_COLORS feature.
+      # @param color [Integer, ColourRGB, nil] The new tertiary color of this role, or nil.
+      def tertiary=(color)
+        @role.send(:colors=, to_h.merge(secondary: color&.to_i))
+      end
+
+      # @!visibility private
+      def to_h
+        {
+          primary_color: primary&.to_i,
+          secondary_color: secondary&.to_i,
+          tertiary_color: tertiary&.to_i
+        }
       end
     end
 
@@ -107,6 +168,10 @@ module Discordrb
       @icon = data['icon']
 
       @tags = Tags.new(data['tags']) if data['tags']
+      @flags = data['flags'] || 0
+      @unicode_emoji = data['unicode_emoji']
+
+      @colours = Colours.new(data['colors'], self)
     end
 
     # @return [String] a string that will mention this role, if it is mentionable.
@@ -133,6 +198,9 @@ module Discordrb
       @position = other.position
       @managed = other.managed
       @icon = other.icon
+      @flags = other.flags
+      @unicode_emoji = other.unicode_emoji
+      @colours = other.colours
     end
 
     # Updates the data cache from a hash containing data
@@ -143,6 +211,9 @@ module Discordrb
       @hoist = new_data['hoist'] unless new_data['hoist'].nil?
       @hoist = new_data[:hoist] unless new_data[:hoist].nil?
       @colour = new_data[:colour] || (new_data['color'] ? ColourRGB.new(new_data['color']) : @colour)
+      @flags = new_data[:flags] || new_data['flags'] || @flags
+      @unicode_emoji = new_data[:unicode_emoji] if new_data.key?(:unicode_emoji)
+      @unicode_emoji = new_data['unicode_emoji'] if new_data.key?('unicode_emoji')
     end
 
     # Sets the role name to something new
@@ -175,6 +246,41 @@ module Discordrb
       update_role_data(icon: file)
     end
 
+    # Set a role icon to a unicode emoji for servers with the ROLE_ICONS feature.
+    # @param emoji [String, nil] The new unicode emoji for this role, or nil.
+    def unicode_emoji=(emoji)
+      update_role_data(unicode_emoji: emoji)
+    end
+
+    # Update the role's colour data. The secondary and tertiary feature require the server to have the
+    #   ENHANCED_ROLE_COLORS feature.
+    # @param colors [Colours, Hash, #to_h] The new colors to set for this role.
+    def colours=(colours)
+      update_role_data(colors: colours)
+    end
+
+    # Get the icon that a role has displayed.
+    # @return [String, nil] Icon URL, the unicode emoji, or nil if this role doesn't have any icon.
+    # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
+    def display_icon
+      icon_url || unicode_emoji
+    end
+
+    # Set the icon this role is displaying.
+    # @param icon [File, String, nil] File like object that responds to #read, unicode emoji, or nil.
+    # @note Setting the icon to nil will remove the unicode emoji **and** the custom icon.
+    def display_icon=(icon)
+      # rubocop:disable Lint/ReturnInVoidContext
+      return update_role_data(unicode_emoji: nil, icon: nil) if icon.nil?
+      # rubocop:enable Lint/ReturnInVoidContext
+
+      if icon.respond_to?(:read)
+        update_role_data(unicode_emoji: nil, icon: icon)
+      else
+        update_role_data(unicode_emoji: icon, icon: nil)
+      end
+    end
+
     # @param format ['webp', 'png', 'jpeg']
     # @return [String] URL to the icon on Discord's CDN.
     def icon_url(format = 'webp')
@@ -184,6 +290,8 @@ module Discordrb
     end
 
     alias_method :color=, :colour=
+
+    alias_method :colors=, :colours=
 
     # Changes this role's permissions to a fixed bitfield. This allows setting multiple permissions at once with just
     # one API call.
@@ -241,7 +349,9 @@ module Discordrb
                               new_data[:mentionable].nil? ? @mentionable : new_data[:mentionable],
                               new_data[:permissions] || @permissions.bits,
                               nil,
-                              new_data.key?(:icon) ? new_data[:icon] : :undef)
+                              new_data.key?(:icon) ? new_data[:icon] : :undef,
+                              new_data.key?(:unicode_emoji) ? new_data[:unicode_emoji] : :undef,
+                              new_data.key?(:colors) ? new_data[:colors] : :undef)
       update_data(new_data)
     end
   end
