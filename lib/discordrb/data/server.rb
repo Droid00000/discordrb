@@ -810,7 +810,6 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
-
     # Ban up to 200 users from this server in one go.
     # @param users [Array<User, String, Integer>] Array of up to 200 users to ban.
     # @param message_seconds [Integer] How many seconds of messages sent by the users should be deleted.
@@ -823,6 +822,13 @@ module Discordrb
 
       response = API::Server.bulk_ban(@bot.token, @id, users.map(&:resolve_id), message_seconds, reason)
       BulkBan.new(JSON.parse(response), self, reason)
+    end
+
+    # Fetch the onboarding flow for this server.
+    # @return [Onboarding] The onboarding flow for new members in a server.
+    def onboarding
+      response = API::Server.onboarding(@bot.token, @id)
+      Onboarding.new(JSON.parse(response), self, @bot)
     end
 
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field

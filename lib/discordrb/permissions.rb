@@ -137,6 +137,7 @@ module Discordrb
     # Comparison based on permission bits
     def ==(other)
       return false unless other.is_a? Discordrb::Permissions
+
       bits == other.bits
     end
   end

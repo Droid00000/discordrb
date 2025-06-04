@@ -586,4 +586,30 @@ module Discordrb::API::Server
       'X-Audit-Log-Reason': reason
     )
   end
+
+  # Get the onboarding configuration for this server.
+  # https://discord.com/developers/docs/resources/webhook#get-guild-onboarding
+  def onboarding(token, server_id)
+    Discordrb::API.request(
+      :guilds_sid_onboarding,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/onboarding",
+      Authorization: token
+    )
+  end
+
+  # Modify the onboarding configuration for this server.
+  # https://discord.com/developers/docs/resources/guild#modify-guild-onboarding
+  def modify_onboarding(token, server_id, mode = :undef, prompts = :undef, default_channels = :undef, enabled = :undef, reason = nil)
+    Discordrb::API.request(
+      :guilds_sid_onboarding,
+      server_id,
+      :put,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/onboarding",
+      { mode: mode, prompts: prompts, default_channel_ids: default_channels, enabled: enabled }.reject { |_, v| v == :undef }.to_json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
 end
