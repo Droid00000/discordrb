@@ -608,10 +608,17 @@ module Discordrb
 
     # Bans a user from this server.
     # @param user [User, String, Integer] The user to ban.
-    # @param message_days [Integer] How many days worth of messages sent by the user should be deleted.
+    # @param message_days [Integer] How many days worth of messages sent by the user should be deleted. This is deprecated and will be removed in 4.0.
+    # @param message_seconds [Integer] How many seconds of messages sent by the user should be deleted.
     # @param reason [String] The reason the user is being banned.
-    def ban(user, message_days = 0, reason: nil)
-      API::Server.ban_user(@bot.token, @id, user.resolve_id, message_days, reason)
+    def ban(user, message_days = 0, message_seconds: nil, reason: nil)
+      delete_messages = if message_days != 0 && message_days
+                          message_days * 86_400
+                        else
+                          message_seconds || 0
+                        end
+
+      API::Server.ban_user(@bot.token, @id, user.resolve_id, delete_messages, reason)
     end
 
     # Unbans a previously banned user from this server.
@@ -801,6 +808,21 @@ module Discordrb
     def invites
       invites = JSON.parse(API::Server.invites(@bot.token, @id))
       invites.map { |invite| Invite.new(invite, @bot) }
+    end
+
+
+    # Ban up to 200 users from this server in one go.
+    # @param users [Array<User, String, Integer>] Array of up to 200 users to ban.
+    # @param message_seconds [Integer] How many seconds of messages sent by the users should be deleted.
+    # @param reason [String] The reason these users are being banned.
+    # @return [nil, BulkBan] nil if only a single user was provided or a bulk ban object otherwise.
+    def bulk_ban(users, message_seconds: 0, reason: nil)
+      raise ArgumentError, 'Can only ban between 1 and 200 users!' unless users.size.between?(1, 200)
+
+      return ban(users.first, 0, message_seconds: message_seconds, reason: reason) if users.size == 1
+
+      response = API::Server.bulk_ban(@bot.token, @id, users.map(&:resolve_id), message_seconds, reason)
+      BulkBan.new(JSON.parse(response), self, reason)
     end
 
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
@@ -1009,5 +1031,28 @@ module Discordrb
 
     alias_method :unban, :remove
     alias_method :lift, :remove
+  end
+
+  # A bulk ban entry on a server
+  class BulkBan
+    # @return [Server] The server this bulk ban belongs to.
+    attr_reader :server
+
+    # @return [String, nil] The reason these users were banned.
+    attr_reader :reason
+
+    # @return [Array<Integer>] Array of user IDs that were banned.
+    attr_reader :banned_users
+
+    # @return [Array<Integer>] Array of user IDs that couldn't be banned.
+    attr_reader :failed_users
+
+    # @!visibility private
+    def initialize(data, server, reason)
+      @server = server
+      @reason = reason
+      @banned_users = data['banned_users'].map(&:to_i)
+      @failed_users = data['failed_users'].map(&:to_i)
+    end
   end
 end
