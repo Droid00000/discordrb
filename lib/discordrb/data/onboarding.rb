@@ -70,7 +70,7 @@ module Discordrb
     # Remove a prompt from this onboarding flow.
     def remove_prompt(id)
       prompts.delete(prompt(id))
-    
+
       update_data(prompts: prompts.map(&:to_h))
     end
 

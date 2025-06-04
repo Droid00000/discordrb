@@ -41,4 +41,3 @@ require 'discordrb/data/audit_logs'
 require 'discordrb/data/interaction'
 require 'discordrb/data/component'
 require 'discordrb/data/onboarding'
-

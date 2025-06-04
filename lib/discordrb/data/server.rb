@@ -61,6 +61,12 @@ module Discordrb
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
 
+    # @return [String] the preferred locale of a Community server; used in server discovery and notices from Discord.
+    attr_reader :preferred_locale
+
+    # @return [String, nil] The description for this server.
+    attr_reader :description
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -885,6 +891,8 @@ module Discordrb
       @splash_id = new_data['splash'] || @splash_id
       @banner_id = new_data['banner'] || @banner_id
       @features = new_data['features'] ? new_data['features'].map { |element| element.downcase.to_sym } : @features || []
+      @preferred_locale = new_data[:preferred_locale] || new_data['preferred_locale'] || @preferred_locale
+      @description = new_data[:description] || new_data['description'] || @description
 
       process_channels(new_data['channels']) if new_data['channels']
       process_roles(new_data['roles']) if new_data['roles']
@@ -892,6 +900,7 @@ module Discordrb
       process_members(new_data['members']) if new_data['members']
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
+      process_active_threads(new_data['threads']) if new_data['threads']
     end
 
     # Adds a channel to this server's cache
@@ -936,7 +945,10 @@ module Discordrb
                                                new_data[:default_message_notifications] || @default_message_notifications,
                                                new_data[:verification_level] || @verification_level,
                                                new_data[:explicit_content_filter] || @explicit_content_filter,
-                                               new_data[:system_channel_id] || @system_channel_id))
+                                               new_data[:system_channel_id] || @system_channel_id,
+                                               nil,
+                                               new_data[:features] || @features.map(&:upcase),
+                                               new_data[:description] || @description))
       update_data(response)
     end
 
@@ -1007,6 +1019,19 @@ module Discordrb
 
       voice_states.each do |element|
         update_voice_state(element)
+      end
+    end
+
+    def process_active_threads(threads)
+      @channels ||= []
+      @channels_by_id ||= {}
+
+      return unless threads
+
+      threads.each do |element|
+        channel = @bot.ensure_channel(element, self)
+        @channels << channel
+        @channels_by_id[channel.id] = channel
       end
     end
   end
