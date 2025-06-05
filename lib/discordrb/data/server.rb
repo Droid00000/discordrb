@@ -837,6 +837,13 @@ module Discordrb
       Onboarding.new(JSON.parse(response), self, @bot)
     end
 
+    # Fetch the welcome screen shown to new server members.
+    # @return [WelcomeScreen] The welcome screen for this server.
+    def welcome_screen
+      response = API::Server.welcome_screen(@bot.token, @id)
+      WelcomeScreen.new(JSON.parse(response), self, @bot)
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private

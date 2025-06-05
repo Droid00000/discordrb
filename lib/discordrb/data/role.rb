@@ -79,17 +79,17 @@ module Discordrb
       end
     end
 
-    # Wrapper for the role colors.
+    # Wrapper for the role colours.
     class Colours
-      # @return [ColourRGB] The primary color of the role, the same as Role#color.
+      # @return [ColourRGB] The primary colour of the role, the same as Role#colour.
       attr_reader :primary
       alias_method :base, :primary
 
-      # @return [ColourRGB, nil] The secondary gradient color of the role, or nil.
+      # @return [ColourRGB, nil] The secondary gradient colour of the role, or nil.
       attr_reader :secondary
       alias_method :gradient_start, :secondary
 
-      # @return [ColourRGB, nil] The tertiary gradient color of the role, or nil.
+      # @return [ColourRGB, nil] The tertiary gradient colour of the role, or nil.
       attr_reader :tertiary
       alias_method :gradient_end, :tertiary
 
@@ -101,22 +101,27 @@ module Discordrb
         @tertiary = data['tertiary_color'] ? ColourRGB.new(data['tertiary_color']) : nil
       end
 
-      # Set the primary color of the role. This is essentially the same as Role#color=.
-      # @param color [Integer, ColourRGB] The new primary (base) color of this role.
-      def primary=(color)
-        @role.send(:colors=, to_h.merge(primary: color&.to_i))
+      # Set the primary colour of the role. This is essentially the same as Role#colour=.
+      # @param colour [Integer, ColourRGB, String, nil] The new primary (base) colour of this role.
+      def primary=(colour)
+        @role.public_send(:colours=, to_h.merge(primary_color: to_colour(colour)))
       end
 
-      # Set the secondary color of this role for servers with the ENHANCED_ROLE_COLORS feature.
-      # @param color [Integer, ColourRGB, nil] The new secondary color of this role, or nil.
-      def secondary=(color)
-        @role.send(:colors=, to_h.merge(secondary: color&.to_i))
+      # Set the secondary colour of this role for servers with the ENHANCED_ROLE_COLORS feature.
+      # @param colour [Integer, ColourRGB, String, nil] The new secondary colour of this role, or nil.
+      def secondary=(colour)
+        @role.public_send(:colours=, to_h.merge(secondary_color: to_colour(colour)))
       end
 
-      # Set the tertiary color of this role for servers with the ENHANCED_ROLE_COLORS feature.
-      # @param color [Integer, ColourRGB, nil] The new tertiary color of this role, or nil.
-      def tertiary=(color)
-        @role.send(:colors=, to_h.merge(secondary: color&.to_i))
+      # Set the tertiary colour of this role for servers with the ENHANCED_ROLE_COLORS feature.
+      # @param colour [Integer, ColourRGB, String, nil] The new tertiary colour of this role, or nil.
+      def tertiary=(colour)
+        @role.public_send(:colours=, to_h.merge(tertiary_color: to_colour(colour)))
+      end
+
+      # @!visibility private
+      def to_colour(colour)
+        colour.is_a?(String) ? colour.delete('#').to_s(16) : colour&.to_i
       end
 
       # @!visibility private
@@ -254,12 +259,12 @@ module Discordrb
 
     # Update the role's colour data. The secondary and tertiary feature require the server to have the
     #   ENHANCED_ROLE_COLORS feature.
-    # @param colors [Colours, Hash, #to_h] The new colors to set for this role.
+    # @param colours [Colours, Hash, nil] The new colors to set for this role.
     def colours=(colours)
-      update_role_data(colors: colours)
+      update_role_data(colours: colours&.to_h)
     end
 
-    # Get the icon that a role has displayed.
+    # Get the icon that this role has displayed.
     # @return [String, nil] Icon URL, the unicode emoji, or nil if this role doesn't have any icon.
     # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
     def display_icon
@@ -351,7 +356,7 @@ module Discordrb
                               nil,
                               new_data.key?(:icon) ? new_data[:icon] : :undef,
                               new_data.key?(:unicode_emoji) ? new_data[:unicode_emoji] : :undef,
-                              new_data.key?(:colors) ? new_data[:colors] : :undef)
+                              new_data.key?(:colours) ? new_data[:colours] : :undef)
       update_data(new_data)
     end
   end

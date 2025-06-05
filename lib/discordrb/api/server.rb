@@ -572,7 +572,7 @@ module Discordrb::API::Server
     )
   end
 
-  # Ban multiple users in one go
+  # Ban multiple users from a server in one API call.
   # https://discord.com/developers/docs/resources/guild#bulk-guild-ban
   def bulk_ban(token, server_id, users, message_seconds, reason = nil)
     Discordrb::API.request(
@@ -587,7 +587,7 @@ module Discordrb::API::Server
     )
   end
 
-  # Get the onboarding configuration for this server.
+  # Get the onboarding configuration for a server.
   # https://discord.com/developers/docs/resources/webhook#get-guild-onboarding
   def onboarding(token, server_id)
     Discordrb::API.request(
@@ -599,7 +599,7 @@ module Discordrb::API::Server
     )
   end
 
-  # Modify the onboarding configuration for this server.
+  # Modify the onboarding configuration for a server.
   # https://discord.com/developers/docs/resources/guild#modify-guild-onboarding
   def modify_onboarding(token, server_id, mode = :undef, prompts = :undef, default_channels = :undef, enabled = :undef, reason = nil)
     Discordrb::API.request(
@@ -608,6 +608,32 @@ module Discordrb::API::Server
       :put,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/onboarding",
       { mode: mode, prompts: prompts, default_channel_ids: default_channels, enabled: enabled }.reject { |_, v| v == :undef }.to_json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Get the welcome screen object for a server.
+  # https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen
+  def welcome_screen(token, server_id)
+    Discordrb::API.request(
+      :guilds_sid_welcome_screen,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/welcome-screen",
+      Authorization: token
+    )
+  end
+
+  # Modify the welcome screen object for a server.
+  # https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen
+  def modify_welcome_screen(token, server_id, enabled = :undef, welcome_channels = :undef, description = :undef)
+    Discordrb::API.request(
+      :guilds_sid_welcome_screen,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/welcome-screen",
+      { enabled: enabled, welcome_channels: welcome_channels, description: description }.reject { |_, v| v == :undef }.to_json,
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
