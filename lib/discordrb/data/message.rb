@@ -333,7 +333,7 @@ module Discordrb
     # Check if any emoji were used in this message.
     # @return [true, false] whether or not any emoji were used
     def emoji?
-      emoji&.empty?
+      emoji&.any?
     end
 
     # Check if any reactions were used in this message.
