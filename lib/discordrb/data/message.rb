@@ -123,6 +123,9 @@ module Discordrb
     # @return [Integer] The type of this message.
     attr_reader :type
 
+    # @return [Time, nil] The time this message was pinned at. Only present on messages fetched via {Channel#pins}.
+    attr_reader :pinned_at
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -211,6 +214,8 @@ module Discordrb
       @flags = data['flags'] || 0
 
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
+
+      @pinned_at = data['pinned_at'] ? Time.iso8601(data['pinned_at']) : nil
     end
 
     # Replies to this message with the specified content.

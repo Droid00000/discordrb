@@ -320,12 +320,14 @@ module Discordrb::API::Channel
 
   # Get a list of pinned messages in a channel
   # https://discord.com/developers/docs/resources/channel#get-pinned-messages
-  def pinned_messages(token, channel_id)
+  def pinned_messages(token, channel_id, limit = 50, after = nil)
+    query = URI.encode_www_form({ after: after, limit: limit }.compact)
+
     Discordrb::API.request(
       :channels_cid_pins,
       channel_id,
       :get,
-      "#{Discordrb::API.api_base}/channels/#{channel_id}/pins",
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/pins?#{query}",
       Authorization: token
     )
   end
@@ -337,7 +339,7 @@ module Discordrb::API::Channel
       :channels_cid_pins_mid,
       channel_id,
       :put,
-      "#{Discordrb::API.api_base}/channels/#{channel_id}/pins/#{message_id}",
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/pins/#{message_id}",
       nil,
       Authorization: token,
       'X-Audit-Log-Reason': reason
@@ -351,7 +353,7 @@ module Discordrb::API::Channel
       :channels_cid_pins_mid,
       channel_id,
       :delete,
-      "#{Discordrb::API.api_base}/channels/#{channel_id}/pins/#{message_id}",
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/pins/#{message_id}",
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
