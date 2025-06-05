@@ -237,6 +237,11 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
+  # make an avatar decoration URL from an avatar decoration id.
+  def avatar_decoration_url(avatar_decoration_id, format = 'png')
+    "#{cdn_url}/avatar-decoration-presets/#{avatar_decoration_id}.#{format}"
+  end
+
   # Change an OAuth application's properties
   def update_oauth_application(token, name, redirect_uris, description = '', icon = nil)
     request(

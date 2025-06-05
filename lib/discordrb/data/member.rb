@@ -36,7 +36,7 @@ module Discordrb
     attr_reader :communication_disabled_until
     alias_method :timeout, :communication_disabled_until
 
-    # @return [Integer] The flags set on this member.
+    # @return [Integer] the flags set on this member.
     attr_reader :flags
 
     # @return [true, false] whether the member has not yet passed the server's Membership Screening requirements.
@@ -44,11 +44,15 @@ module Discordrb
 
     # @return [String, nil] the ID of this user's current avatar, can be used to generate a server avatar URL.
     # @see #server_avatar_url
-    attr_accessor :server_avatar_id
+    attr_reader :server_avatar_id
 
     # @return [String, nil] the ID of this user's current server banner, can be used to generate a banner URL.
     # @see #server_banner_url
-    attr_accessor :server_banner_id
+    attr_reader :server_banner_id
+
+    # @return [String, nil] the ID of this user's current server avatar decoration, can be used to generate an avatar decoration URL.
+    # @see #server_avatar_decoration_url
+    attr_reader :server_avatar_decoration_id
 
     # Utility method to get a member's server avatar URL.
     # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
@@ -62,6 +66,12 @@ module Discordrb
     # @return [String, nil] the URL to the banner image, or nil if the member doesn't have one.
     def server_banner_url(format = nil)
       API::Server.member_banner_url(@server_id, @id, @server_banner_id, format) if @server_banner_id
+    end
+
+    # Utility method to get a member's server avatar decoration URL.
+    # @return [String, nil] the URL to the avatar decoration, or nil if the member doesn't have one.
+    def server_avatar_decoration_url
+      API.avatar_decoration_url(@server_avatar_decoration_id) if @server_avatar_decoration_id
     end
 
     MEMBER_FLAGS.each do |name, value|
@@ -127,7 +137,8 @@ module Discordrb
       @server_banner_id = data['banner']
       @server_avatar_id = data['avatar']
       @flags = data['flags']
-      @pending = data['pending']
+      @pending = data.key?('pending') ? data['pending'] : false
+      @server_avatar_decoration_id = data.dig('avatar_decoration_data', 'asset_id')
     end
 
     # @return [Server] the server this member is on.
@@ -358,6 +369,11 @@ module Discordrb
       server_banner_url(format) || banner_url(format)
     end
 
+    # @return [String, nil] the avatar decoration that the user displays (server avatar decoration if they have one, user avatar decoration if they have one, nil otherwise)
+    def display_avatar_decoration
+      server_avatar_decoration_url || avatar_decoration_url
+    end
+
     # Set the flags for this member.
     # @param flags [Integer, nil] The new bitwise value of flags for this member, or nil.
     def flags=(flags)
@@ -413,6 +429,8 @@ module Discordrb
       @joined_at = Time.parse(data['joined_at']) if data['joined_at']
       timeout_until = data['communication_disabled_until']
       @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
+      decoration = data['avatar_decoration_data']
+      @server_avatar_decoration_id = decoration['asset_id'] if data.key?('avatar_decoration_data')
     end
 
     include PermissionCalculator

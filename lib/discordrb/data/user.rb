@@ -57,6 +57,10 @@ module Discordrb
     # @see #banner_url
     attr_accessor :banner_id
 
+    # @return [String, nil] the ID of this user's current avatar decoration, can be used to generate an avatar decoration URL.
+    # @see #avatar_decoration_url
+    attr_reader :avatar_decoration_id
+
     # Utility function to get Discord's display name of a user not in server
     # @return [String] the name the user displays as (global_name if they have one, username otherwise)
     def display_name
@@ -112,6 +116,12 @@ module Discordrb
 
       API::User.banner_url(@id, @banner_id, format)
     end
+
+    # Utility method to get a user's avatar decoration URL.
+    # @return [String, nil] the URL to the avatar decoration, or nil if the user doesn't have one.
+    def avatar_decoration_url
+      API.avatar_decoration_url(@avatar_decoration_id) if @avatar_decoration_id
+    end
   end
 
   # User on Discord, including internal data like discriminators
@@ -149,6 +159,7 @@ module Discordrb
       @status = :offline
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
+      @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset_id')
     end
 
     # Get a user's PM channel or send them a PM
