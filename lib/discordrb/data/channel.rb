@@ -663,9 +663,9 @@ module Discordrb
     # @param limit [Integer, nil] 1-50 number of pins to request. {nil} requests all pins.
     # @return [Array<Message>] the received messages.
     def pins(limit: nil)
-      get_pins = proc do |fetch_limit, after_time = nil|
-        resp = API::Channel.pinned_messages(@bot.token, @channel.id, @id, fetch_limit, after_time)
-        JSON.parse(resp)['items'].map { |p| Message.new(p['message'].merge(p['pinned_at']), @bot) }
+      get_pins = proc do |amount, after = nil|
+        resp = JSON.parse(API::Channel.pinned_messages(@bot.token, @channel.id, @id, amount, after))
+        resp['items'].map { |p| Message.new(p['message'].merge(p['pinned_at']), @bot) }
       end
 
       # Can be done without pagination
