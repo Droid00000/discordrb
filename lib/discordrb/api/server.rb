@@ -154,7 +154,7 @@ module Discordrb::API::Server
   # Update a user properties
   # https://discord.com/developers/docs/resources/guild#modify-guild-member
   def update_member(token, server_id, user_id, nick: :undef, roles: :undef, mute: :undef, deaf: :undef, channel_id: :undef,
-                    communication_disabled_until: :undef, reason: nil)
+                    communication_disabled_until: :undef, flags: :undef, reason: nil)
     Discordrb::API.request(
       :guilds_sid_members_uid,
       server_id,
@@ -165,7 +165,8 @@ module Discordrb::API::Server
         mute: mute,
         deaf: deaf,
         channel_id: channel_id,
-        communication_disabled_until: communication_disabled_until
+        communication_disabled_until: communication_disabled_until,
+        flags: flags
       }.reject { |_, v| v == :undef }.to_json,
       Authorization: token,
       content_type: :json,
@@ -246,13 +247,13 @@ module Discordrb::API::Server
   # sending TTS messages, embedding links, sending files, reading the history, mentioning everybody,
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#get-guild-roles
-  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil)
+  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil, icon = nil, unicode_emoji = nil)
     Discordrb::API.request(
       :guilds_sid_roles,
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions }.to_json,
+      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, icon: icon, unicode_emoji: unicode_emoji }.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
@@ -268,14 +269,8 @@ module Discordrb::API::Server
   def update_role(token, server_id, role_id, name, colour, hoist = false, mentionable = false, packed_permissions = 104_324_161, reason = nil, icon = :undef, unicode_emoji = :undef, colors = :undef)
     data = { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, unicode_emoji: unicode_emoji, colors: colors }.reject { |_, v| v == :undef }
 
-    if icon != :undef && icon
-      path_method = %i[original_filename path local_path].find { |meth| icon.respond_to?(meth) }
-
-      raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
-      raise ArgumentError, 'File must respond to read' unless icon.respond_to? :read
-
-      mime_type = MIME::Types.type_for(icon.__send__(path_method)).first&.to_s || 'image/jpeg'
-      data[:icon] = "data:#{mime_type};base64,#{Base64.encode64(icon.read).strip}"
+    if icon != :undef && icon.respond_to?(:read)
+      data[:icon] = Discordrb.encode_file(icon)
     elsif icon.nil?
       data[:icon] = nil
     end
@@ -637,5 +632,40 @@ module Discordrb::API::Server
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
+  end
+
+  # Update the current member's properties.
+  # https://discord.com/developers/docs/resources/guild#modify-current-member
+  def update_current_member(token, server_id, nick = :undef, reason = nil)
+    Discordrb::API.request(
+      :guilds_sid_members_me_nick,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/members/@me",
+      { nick: nick }.reject { |_, v| v == :undef }.to_json,
+      Authorization: token,
+      content_type: :json,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Make an avatar URL from the guild, user and avatar IDs.
+  def member_avatar_url(guild_id, user_id, avatar_id, format = nil)
+    format ||= if avatar_id.start_with?('a_')
+                 'gif'
+               else
+                 'webp'
+               end
+    "#{Discordrb::API.cdn_url}/guilds/#{guild_id}/users/#{user_id}/avatars/#{avatar_id}.#{format}"
+  end
+
+  # Make a banner URL from the guild, user and banner IDs.
+  def member_banner_url(guild_id, user_id, banner_id, format = nil)
+    format ||= if banner_id.start_with?('a_')
+                 'gif'
+               else
+                 'webp'
+               end
+    "#{Discordrb::API.cdn_url}/guilds/#{guild_id}/users/#{user_id}/banners/#{banner_id}.#{format}"
   end
 end

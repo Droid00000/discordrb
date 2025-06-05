@@ -49,6 +49,14 @@ module Discordrb
     # @see #avatar_url
     attr_accessor :avatar_id
 
+    # @return [true, false] whether the user is an offical Discord System user (part of the urgent message system).
+    attr_reader :system_account
+    alias_method :system_account?, :system_account
+
+    # @return [String] the ID of this user's current banner, can be used to generate a banner URL.
+    # @see #banner_url
+    attr_accessor :banner_id
+
     # Utility function to get Discord's display name of a user not in server
     # @return [String] the name the user displays as (global_name if they have one, username otherwise)
     def display_name
@@ -94,6 +102,16 @@ module Discordrb
         @public_flags.anybits?(value)
       end
     end
+
+    # Utility function to get a user's banner URL.
+    # @param format [String, nil] If `nil`, the URL will default to `png` for static banners and will detect if the user has a `gif` banner.
+    # You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the URL to the banner image or nil if the user doesn't have one.
+    def banner_url(format = nil)
+      return nil unless @banner_id
+
+      API::User.banner_url(@id, @banner_id, format)
+    end
   end
 
   # User on Discord, including internal data like discriminators
@@ -120,18 +138,17 @@ module Discordrb
       @id = data['id'].to_i
       @discriminator = data['discriminator']
       @avatar_id = data['avatar']
-      @roles = {}
+      @banner_id = data['banner']
       @activities = Discordrb::ActivitySet.new
       @public_flags = data['public_flags'] || 0
 
-      @bot_account = false
-      @bot_account = true if data['bot']
+      @bot_account = data.key?('bot') ? data['bot'] : false
 
-      @webhook_account = false
-      @webhook_account = true if data['_webhook']
+      @webhook_account = data.key?('_webhook') ? true : false
 
       @status = :offline
       @client_status = process_client_status(data['client_status'])
+      @system_account = data.key?('system') ? data['system'] : false
     end
 
     # Get a user's PM channel or send them a PM

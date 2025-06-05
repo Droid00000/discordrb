@@ -32,7 +32,13 @@ module Discordrb
     server_message_typing: 1 << 11,
     direct_messages: 1 << 12,
     direct_message_reactions: 1 << 13,
-    direct_message_typing: 1 << 14
+    direct_message_typing: 1 << 14,
+    server_message_content: 1 << 15,
+    server_scheduled_events: 1 << 16,
+    auto_moderation_configuration: 1 << 20,
+    auto_moderation_execution: 1 << 21,
+    server_message_polls: 1 << 24,
+    direct_message_polls: 1 << 25
   }.freeze
 
   # All available intents
@@ -40,7 +46,7 @@ module Discordrb
 
   # All unprivileged intents
   # @see https://discord.com/developers/docs/topics/gateway#privileged-intents
-  UNPRIVILEGED_INTENTS = ALL_INTENTS & ~(INTENTS[:server_members] | INTENTS[:server_presences])
+  UNPRIVILEGED_INTENTS = ALL_INTENTS & ~(INTENTS[:server_members] | INTENTS[:server_presences] | INTENTS[:server_message_content])
 
   # No intents
   NO_INTENTS = 0
@@ -116,6 +122,19 @@ module Discordrb
     else
       "<t:#{time.to_i}:#{TIMESTAMP_STYLES[style] || style}>"
     end
+  end
+
+  # A utility method to base64 enocde a file like object using its mime type.
+  # @param file [File, #read] A file like object that responds to #read.
+  # @return [String] The base64 encoded data for the file object.
+  def self.encode_file(file)
+    path_method = %i[original_filename path local_path].find { |meth| file.respond_to?(meth) }
+
+    raise ArgumentError, 'File object must respond to original_filename, path, or local path.' unless path_method
+    raise ArgumentError, 'File object must respond to read.' unless file.respond_to?(:read)
+
+    mime_type = MIME::Types.type_for(file.__send__(path_method)).first&.to_s || 'image/jpeg'
+    "data:#{mime_type};base64,#{Base64.encode64(file.read).strip}"
   end
 end
 

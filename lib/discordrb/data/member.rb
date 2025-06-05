@@ -3,6 +3,19 @@
 module Discordrb
   # Mixin for the attributes members and private members should have
   module MemberAttributes
+    # Map of server member flags
+    MEMBER_FLAGS = {
+      rejoined: 1 << 0,
+      completed_onboarding: 1 << 1,
+      bypassed_verification: 1 << 2,
+      started_onboarding: 1 << 3,
+      guest: 1 << 4,
+      started_home_actions: 1 << 5,
+      completed_home_actions: 1 << 6,
+      automod_quarantined_username: 1 << 7,
+      dm_settings_upsell_acknowledged: 1 << 9
+    }.freeze
+
     # @return [Time] when this member joined the server.
     attr_reader :joined_at
 
@@ -22,6 +35,40 @@ module Discordrb
     # @return [Time] When the user's timeout will expire.
     attr_reader :communication_disabled_until
     alias_method :timeout, :communication_disabled_until
+
+    # @return [Integer] The flags set on this member.
+    attr_reader :flags
+
+    # @return [true, false] whether the member has not yet passed the server's Membership Screening requirements.
+    attr_reader :pending
+
+    # @return [String, nil] the ID of this user's current avatar, can be used to generate a server avatar URL.
+    # @see #server_avatar_url
+    attr_accessor :server_avatar_id
+
+    # @return [String, nil] the ID of this user's current server banner, can be used to generate a banner URL.
+    # @see #server_banner_url
+    attr_accessor :server_banner_id
+
+    # Utility method to get a member's server avatar URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the URL to the avatar image, or nil if the member doesn't have one.
+    def server_avatar_url(format = nil)
+      API::Server.member_avatar_url(@server_id, @id, @server_avatar_id, format) if @server_avatar_id
+    end
+
+    # Utility method to get a member's server banner URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the member has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the URL to the banner image, or nil if the member doesn't have one.
+    def server_banner_url(format = nil)
+      API::Server.member_banner_url(@server_id, @id, @server_banner_id, format) if @server_banner_id
+    end
+
+    MEMBER_FLAGS.each do |name, value|
+      define_method("#{name}?") do
+        @flags.anybits?(value)
+      end
+    end
   end
 
   # A member is a user on a server. It differs from regular users in that it has roles, voice statuses and things like
@@ -77,6 +124,10 @@ module Discordrb
       timeout_until = data['communication_disabled_until']
       @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
       @permissions = Permissions.new(data['permissions']) if data['permissions']
+      @server_banner_id = data['banner']
+      @server_avatar_id = data['avatar']
+      @flags = data['flags']
+      @pending = data['pending']
     end
 
     # @return [Server] the server this member is on.
@@ -282,7 +333,7 @@ module Discordrb
       nick ||= ''
 
       if @user.current_bot?
-        API::User.change_own_nickname(@bot.token, @server_id, nick, reason)
+        API::Server.update_current_member(@bot.token, @server_id, nick, reason)
       else
         API::Server.update_member(@bot.token, @server_id, @user.id, nick: nick, reason: reason)
       end
@@ -293,6 +344,24 @@ module Discordrb
     # @return [String] the name the user displays as (nickname if they have one, global_name if they have one, username otherwise)
     def display_name
       nickname || global_name || username
+    end
+
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the avatar that the user has displayed (server avatat if they have one, user avatar if they have one, nil otherwise)
+    def display_avatar_url(format = nil)
+      server_avatar_url(format) || avatar_url(format)
+    end
+
+    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the member has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String, nil] the banner that the user has displayed (server banner if they have one, user banner if they have one, nil otherwise)
+    def display_banner_url(format = nil)
+      server_banner_url(format) || banner_url(format)
+    end
+
+    # Set the flags for this member.
+    # @param flags [Integer, nil] The new bitwise value of flags for this member, or nil.
+    def flags=(flags)
+      API::Server.update_member(@bot.token, @server_id, @user.id, flags: flags)
     end
 
     # Update this member's roles
@@ -336,6 +405,10 @@ module Discordrb
       update_nick(data['nick']) if data.key?('nick')
       @mute = data['mute'] if data.key?('mute')
       @deaf = data['deaf'] if data.key?('deaf')
+      @server_avatar_id = data['avatar'] if data.key?('avatar')
+      @server_banner_id = data['banner'] if data.key?('banner')
+      @flags = data['flags'] if data.key?('flags')
+      @pending = data['pending'] if data.key?('pending')
 
       @joined_at = Time.parse(data['joined_at']) if data['joined_at']
       timeout_until = data['communication_disabled_until']

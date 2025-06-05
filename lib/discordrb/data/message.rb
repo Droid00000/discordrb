@@ -120,9 +120,6 @@ module Discordrb
     # @return [Channel, nil] The thread that was started from this message, or nil.
     attr_reader :thread
 
-    # @return [Integer] The type of this message.
-    attr_reader :type
-
     # @return [Time, nil] The time this message was pinned at. Only present on messages fetched via {Channel#pins}.
     attr_reader :pinned_at
 

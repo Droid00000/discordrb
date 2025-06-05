@@ -665,7 +665,7 @@ module Discordrb
     def pins(limit: nil)
       get_pins = proc do |amount, before = nil|
         resp = JSON.parse(API::Channel.pinned_messages(@bot.token, @channel.id, @id, amount, before))
-        resp['items'].map { |p| Message.new(p['message'].merge("pinned_at" => p['pinned_at']), @bot) }
+        resp['items'].map { |m| Message.new(m['message'].merge('pinned_at' => m['pinned_at']), @bot) }
       end
 
       # Can be done without pagination
@@ -675,7 +675,9 @@ module Discordrb
         if last_page && last_page.count < 50
           []
         else
+          # rubocop:disable Style/SafeNavigationChainLength
           get_pins.call(50, last_page&.last&.pinned_at&.iso8601)
+          # rubocop:enable Style/SafeNavigationChainLength
         end
       end
 
@@ -695,12 +697,11 @@ module Discordrb
     def prune(amount, strict = false, reason = nil, &block)
       raise ArgumentError, 'Can only delete between 1 and 100 messages!' unless amount.between?(1, 100)
 
-      messages =
-        if block
-          history(amount).select(&block).map(&:id)
-        else
-          history_ids(amount)
-        end
+      messages = if block
+                   history(amount).select(&block).map(&:id)
+                 else
+                   history_ids(amount)
+                 end
 
       case messages.size
       when 0

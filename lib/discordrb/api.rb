@@ -185,7 +185,13 @@ module Discordrb::API
 
   # Make an icon URL from server and icon IDs
   def icon_url(server_id, icon_id, format = 'webp')
-    "#{cdn_url}/icons/#{server_id}/#{icon_id}.#{format}"
+    query = if icon_id.start_with?('a_')
+              'animated=true'
+            else
+              'animated=false'
+            end
+
+    "#{cdn_url}/icons/#{server_id}/#{icon_id}.#{format}?#{query}"
   end
 
   # Make an icon URL from application and icon IDs
@@ -231,19 +237,6 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
-  # Create an OAuth application
-  def create_oauth_application(token, name, redirect_uris)
-    request(
-      :oauth2_applications,
-      nil,
-      :post,
-      "#{api_base}/oauth2/applications",
-      { name: name, redirect_uris: redirect_uris }.to_json,
-      Authorization: token,
-      content_type: :json
-    )
-  end
-
   # Change an OAuth application's properties
   def update_oauth_application(token, name, redirect_uris, description = '', icon = nil)
     request(
@@ -268,20 +261,6 @@ module Discordrb::API
     )
   end
 
-  # Acknowledge that a message has been received
-  # The last acknowledged message will be sent in the ready packet,
-  # so this is an easy way to catch up on messages
-  def acknowledge_message(token, channel_id, message_id)
-    request(
-      :channels_cid_messages_mid_ack,
-      nil, # This endpoint is unavailable for bot accounts and thus isn't subject to its rate limit requirements.
-      :post,
-      "#{api_base}/channels/#{channel_id}/messages/#{message_id}/ack",
-      nil,
-      Authorization: token
-    )
-  end
-
   # Get the gateway to be used
   def gateway(token)
     request(
@@ -302,19 +281,6 @@ module Discordrb::API
       :get,
       "#{api_base}/gateway/bot",
       Authorization: token
-    )
-  end
-
-  # Validate a token (this request will fail if the token is invalid)
-  def validate_token(token)
-    request(
-      :auth_login,
-      nil,
-      :post,
-      "#{api_base}/auth/login",
-      {}.to_json,
-      Authorization: token,
-      content_type: :json
     )
   end
 
