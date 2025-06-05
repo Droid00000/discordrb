@@ -320,8 +320,8 @@ module Discordrb::API::Channel
 
   # Get a list of pinned messages in a channel
   # https://discord.com/developers/docs/resources/channel#get-pinned-messages
-  def pinned_messages(token, channel_id, limit = 50, after = nil)
-    query = URI.encode_www_form({ after: after, limit: limit }.compact)
+  def pinned_messages(token, channel_id, limit = 50, before = nil)
+    query = URI.encode_www_form({ before: before, limit: limit }.compact)
 
     Discordrb::API.request(
       :channels_cid_pins,
