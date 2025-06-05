@@ -32,7 +32,7 @@ module Discordrb::API::Server
 
   # Update a server
   # https://discord.com/developers/docs/resources/guild#modify-guild
-  def update(token, server_id, name, region, icon, afk_channel_id, afk_timeout, splash, default_message_notifications, verification_level, explicit_content_filter, system_channel_id, reason = nil, features, description)
+  def update(token, server_id, name, region, icon, afk_channel_id, afk_timeout, splash, default_message_notifications, verification_level, explicit_content_filter, system_channel_id, features, description, reason = nil)
     Discordrb::API.request(
       :guilds_sid,
       server_id,

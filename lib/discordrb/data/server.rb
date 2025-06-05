@@ -946,7 +946,6 @@ module Discordrb
                                                new_data[:verification_level] || @verification_level,
                                                new_data[:explicit_content_filter] || @explicit_content_filter,
                                                new_data[:system_channel_id] || @system_channel_id,
-                                               nil,
                                                new_data[:features] || @features.map(&:upcase),
                                                new_data[:description] || @description))
       update_data(response)
