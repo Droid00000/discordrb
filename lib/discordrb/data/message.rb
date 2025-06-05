@@ -5,6 +5,47 @@ module Discordrb
   class Message
     include IDObject
 
+    # Map of message types
+    TYPES = {
+      default: 0,
+      recipient_add: 1,
+      recipient_remove: 2,
+      call: 3,
+      channel_name_change: 4,
+      channel_icon_change: 5,
+      channel_pinned_message: 6,
+      user_join: 7,
+      server_boost: 8,
+      server_boost_tier_one: 9,
+      server_boost_tier_two: 10,
+      server_boost_tier_three: 11,
+      channel_follow_add: 12,
+      server_discovery_disqualified: 14,
+      server_discovery_requalified: 15,
+      server_discovery_grace_period_initial_warning: 16,
+      server_discovery_grace_period_final_warning: 17,
+      thread_created: 18,
+      reply: 19,
+      chat_input_command: 20,
+      thread_starter_message: 21,
+      server_invite_reminder: 22,
+      context_menu_command: 23,
+      auto_moderation_action: 24,
+      role_subscription_purchase: 25,
+      interaction_premium_upsell: 26,
+      stage_start: 27,
+      stage_end: 28,
+      stage_speaker: 29,
+      stage_topic: 31,
+      server_application_premium_subscription: 32,
+      server_incident_alert_mode_enabled: 36,
+      server_incident_alert_mode_disabled: 37,
+      server_incident_report_raid: 38,
+      server_incident_report_false_alarm: 39,
+      purchase_notification: 44,
+      poll_result: 46
+    }.freeze
+
     # @return [String] the content of this message.
     attr_reader :content
     alias_method :text, :content
@@ -78,6 +119,9 @@ module Discordrb
 
     # @return [Channel, nil] The thread that was started from this message, or nil.
     attr_reader :thread
+
+    # @return [Integer] The type of this message.
+    attr_reader :type
 
     # @!visibility private
     def initialize(data, bot)
@@ -400,12 +444,6 @@ module Discordrb
       !@referenced_message.nil?
     end
 
-    # Whether or not this message was of type "CHAT_INPUT_COMMAND"
-    # @return [true, false]
-    def chat_input_command?
-      @type == 20
-    end
-
     # @return [Message, nil] the Message this Message was sent in reply to.
     def referenced_message
       return @referenced_message if @referenced_message
@@ -436,5 +474,87 @@ module Discordrb
     end
 
     alias_method :message, :to_message
+
+    # @!group Types
+    # @!attribute [r] default?
+    #   @return [true, false]
+    # @!attribute [r] recipient_add?
+    #   @return [true, false]
+    # @!attribute [r] recipient_remove?
+    #   @return [true, false]
+    # @!attribute [r] call?
+    #   @return [true, false]
+    # @!attribute [r] channel_name_change?
+    #   @return [true, false]
+    # @!attribute [r] channel_icon_change?
+    #   @return [true, false]
+    # @!attribute [r] channel_pinned_message?
+    #   @return [true, false]
+    # @!attribute [r] user_join?
+    #   @return [true, false]
+    # @!attribute [r] server_boost?
+    #   @return [true, false]
+    # @!attribute [r] server_boost_tier_one?
+    #   @return [true, false]
+    # @!attribute [r] server_boost_tier_two?
+    #   @return [true, false]
+    # @!attribute [r] server_boost_tier_three?
+    #   @return [true, false]
+    # @!attribute [r] channel_follow_add?
+    #   @return [true, false]
+    # @!attribute [r] server_discovery_disqualified?
+    #   @return [true, false]
+    # @!attribute [r] server_discovery_requalified?
+    #   @return [true, false]
+    # @!attribute [r] server_discovery_grace_period_initial_warning?
+    #   @return [true, false]
+    # @!attribute [r] server_discovery_grace_period_final_warning?
+    #   @return [true, false]
+    # @!attribute [r] thread_created?
+    #   @return [true, false]
+    # @!attribute [r] reply?
+    #   @return [true, false]
+    # @!attribute [r] chat_input_command?
+    #   @return [true, false]
+    # @!attribute [r] thread_starter_message?
+    #   @return [true, false]
+    # @!attribute [r] server_invite_reminder?
+    #   @return [true, false]
+    # @!attribute [r] context_menu_command?
+    #   @return [true, false]
+    # @!attribute [r] auto_moderation_action?
+    #   @return [true, false]
+    # @!attribute [r] role_subscription_purchase?
+    #   @return [true, false]
+    # @!attribute [r] interaction_premium_upsell?
+    #   @return [true, false]
+    # @!attribute [r] stage_start?
+    #   @return [true, false]
+    # @!attribute [r] stage_end?
+    #   @return [true, false]
+    # @!attribute [r] stage_speaker?
+    #   @return [true, false]
+    # @!attribute [r] stage_topic?
+    #   @return [true, false]
+    # @!attribute [r] server_application_premium_subscription?
+    #   @return [true, false]
+    # @!attribute [r] server_incident_alert_mode_enabled?
+    #   @return [true, false]
+    # @!attribute [r] server_incident_alert_mode_disabled?
+    #   @return [true, false]
+    # @!attribute [r] server_incident_report_raid?
+    #   @return [true, false]
+    # @!attribute [r] server_incident_report_false_alarm?
+    #   @return [true, false]
+    # @!attribute [r] purchase_notification?
+    #   @return [true, false]
+    # @!attribute [r] poll_result?
+    #   @return [true, false]
+    # @!endgroup
+    TYPES.each do |name, value|
+      define_method("#{name}?") do
+        @type == value
+      end
+    end
   end
 end
