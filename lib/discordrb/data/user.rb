@@ -112,9 +112,7 @@ module Discordrb
     # You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
     # @return [String, nil] the URL to the banner image or nil if the user doesn't have one.
     def banner_url(format = nil)
-      return nil unless @banner_id
-
-      API::User.banner_url(@id, @banner_id, format)
+      API::User.banner_url(@id, @banner_id, format) if @banner_id
     end
 
     # Utility method to get a user's avatar decoration URL.

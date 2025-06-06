@@ -58,14 +58,14 @@ module Discordrb
     # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
     # @return [String, nil] the URL to the avatar image, or nil if the member doesn't have one.
     def server_avatar_url(format = nil)
-      API::Server.member_avatar_url(@server_id, @id, @server_avatar_id, format) if @server_avatar_id
+      API::Server.member_avatar_url(@server_id, @user.id, @server_avatar_id, format) if @server_avatar_id
     end
 
     # Utility method to get a member's server banner URL.
     # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the member has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
     # @return [String, nil] the URL to the banner image, or nil if the member doesn't have one.
     def server_banner_url(format = nil)
-      API::Server.member_banner_url(@server_id, @id, @server_banner_id, format) if @server_banner_id
+      API::Server.member_banner_url(@server_id, @user.id, @server_banner_id, format) if @server_banner_id
     end
 
     # Utility method to get a member's server avatar decoration URL.
