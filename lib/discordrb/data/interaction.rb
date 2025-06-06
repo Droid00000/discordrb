@@ -115,7 +115,10 @@ module Discordrb
       @context = data['context']
       @max_attachment_size = data['attachment_size_limit']
       @application_permissions = Permissions.new(data['app_permissions'])
-      bot.servers[@server_id]&.update_data(data['guild']) if data['guild']
+      if data['guild'] && bot.servers[@server_id]
+        bot.servers[@server_id].update_data(data['guild'])
+        bot.servers[@server_id].cache_member(@user)
+      end
     end
 
     # Respond to the creation of this interaction. An interaction must be responded to or deferred,

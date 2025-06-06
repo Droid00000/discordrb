@@ -200,7 +200,7 @@ module Discordrb
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
       @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset')
-      @primary_server = ServerTag.new(data['primary_guild'], bot) if data['primary_guild']
+      @server_tag = ServerTag.new(data['primary_guild'], bot) if data['primary_guild']
     end
 
     # Get a user's PM channel or send them a PM
