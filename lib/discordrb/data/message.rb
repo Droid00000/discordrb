@@ -468,11 +468,11 @@ module Discordrb
                 elsif channel.private?
                   # Turn the message user into a recipient - we can't use the channel recipient
                   # directly because the bot may also send messages to the channel.
-                  Recipient.new(bot.user(@bot.ensure_user(@author_data)), channel, @bot)
+                  Recipient.new(@bot.user(@bot.ensure_user(@author_data)), channel, @bot)
                 else
                   # Fallback to a {User} if we're unable to resolve a server member.
-                  (server.member(@author_data['id']) || @bot.ensure_user(@author_data)).tap do |author|
-                    LOGGER.debug("Member with ID #{author.id} not cached (possibly left the server).") if author.is_a?(User)
+                  (server.member(@author_data['id']) || @bot.ensure_user(@author_data)).tap do |user|
+                    LOGGER.debug("Member with ID #{user.id} not cached (possibly left the server).") if user.is_a?(User)
                   end
                 end
     end
