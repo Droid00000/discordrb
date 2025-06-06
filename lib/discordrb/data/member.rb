@@ -138,7 +138,7 @@ module Discordrb
       @server_avatar_id = data['avatar']
       @flags = data['flags']
       @pending = data.key?('pending') ? data['pending'] : false
-      @server_avatar_decoration_id = data.dig('avatar_decoration_data', 'asset_id')
+      @server_avatar_decoration_id = data.dig('avatar_decoration_data', 'asset')
     end
 
     # @return [Server] the server this member is on.
@@ -429,8 +429,7 @@ module Discordrb
       @joined_at = Time.parse(data['joined_at']) if data['joined_at']
       timeout_until = data['communication_disabled_until']
       @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
-      decoration = data['avatar_decoration_data']
-      @server_avatar_decoration_id = decoration['asset_id'] if data.key?('avatar_decoration_data')
+      @server_avatar_decoration_id = data.dig('avatar_decoration_data', 'asset') if data.key?('avatar_decoration_data')
     end
 
     include PermissionCalculator

@@ -157,7 +157,7 @@ module Discordrb
       @status = :offline
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
-      @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset_id')
+      @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset')
     end
 
     # Get a user's PM channel or send them a PM
