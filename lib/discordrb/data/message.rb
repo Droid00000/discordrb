@@ -463,7 +463,7 @@ module Discordrb
       @author = if webhook?
                   # This is a webhook user! It would be pointless to try to resolve a member here, so we just create
                   # a User and return that instead.
-                  LOGGER.debug("Webhook user: #{@author_data['id']}")
+                  Discordrb::LOGGER.debug("Webhook user: #{@author_data['id']}")
                   User.new(@author_data.merge({ '_webhook' => true }), @bot)
                 elsif channel.private?
                   # Turn the message user into a recipient - we can't use the channel recipient
@@ -472,7 +472,7 @@ module Discordrb
                 else
                   # Fallback to a {User} if we're unable to resolve a server member.
                   (server.member(@author_data['id']) || @bot.ensure_user(@author_data)).tap do |user|
-                    LOGGER.debug("Member with ID #{user.id} not cached (possibly left the server).") if user.is_a?(User)
+                    Discordrb::LOGGER.debug("Member with ID #{user.id} not cached (possibly left the server).") if user.is_a?(User)
                   end
                 end
     end
