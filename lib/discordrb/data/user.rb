@@ -176,9 +176,8 @@ module Discordrb
     #   on various device types (`:desktop`, `:mobile`, or `:web`). The value will be `nil` if the user is offline or invisible.
     attr_reader :client_status
 
-    # @return [Tag, nil] the server tag information for the user, or nil if they haven't set one
+    # @return [ServerTag, nil] the server tag information for the user, or nil if they haven't set one
     attr_reader :server_tag
-    alias_method :server_tag, :primary_server
 
     # @!visibility private
     def initialize(data, bot)
