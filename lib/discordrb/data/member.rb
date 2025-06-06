@@ -370,7 +370,7 @@ module Discordrb
     end
 
     # @return [String, nil] the avatar decoration that the user displays (server avatar decoration if they have one, user avatar decoration if they have one, nil otherwise)
-    def display_avatar_decoration
+    def display_avatar_decoration_url
       server_avatar_decoration_url || avatar_decoration_url
     end
 
