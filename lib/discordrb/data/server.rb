@@ -524,7 +524,7 @@ module Discordrb
     # @return [Role] the created role.
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, reason: nil, icon: nil, unicode_emoji: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
-      
+
       icon = encode_file(icon) if icon.respond_to?(:read)
 
       permissions = if permissions.is_a?(Array)
