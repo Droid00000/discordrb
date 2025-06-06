@@ -237,9 +237,14 @@ module Discordrb::API
     "#{cdn_url}/role-icons/#{role_id}/#{icon_hash}.#{format}"
   end
 
-  # make an avatar decoration URL from an avatar decoration id.
+  # make an avatar decoration URL from an avatar decoration ID.
   def avatar_decoration_url(avatar_decoration_id, format = 'png')
     "#{cdn_url}/avatar-decoration-presets/#{avatar_decoration_id}.#{format}"
+  end
+
+  # make a tag badge URL from a server ID and badge ID.
+  def server_badge_url(server_id, badge_id, format = 'webp')
+    "#{cdn_url}/clan-badges/#{server_id}/#{badge_id}.#{format || 'webp'}"
   end
 
   # Change an OAuth application's properties

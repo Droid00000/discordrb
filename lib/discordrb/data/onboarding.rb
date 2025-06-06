@@ -9,20 +9,20 @@ module Discordrb
       advanced: 1
     }.freeze
 
-    # @return [Server] The server this onboarding object is for.
+    # @return [Server] the server this onboarding object is for.
     attr_reader :server
 
-    # @return [Integer] The current onboarding mode.
+    # @return [Integer] the current onboarding mode.
     attr_reader :mode
 
-    # @return [true, false] Whether onboarding is enabled or not.
+    # @return [true, false] whether onboarding is enabled or not.
     attr_reader :enabled
     alias_method :enabled?, :enabled
 
-    # @return [Array<Prompt>] Prompts shown during onboarding.
+    # @return [Array<Prompt>] prompts shown during onboarding.
     attr_reader :prompts
 
-    # @return [Array<Channel>] Default channels that members automatically get opted into.
+    # @return [Array<Channel>] default channels that members automatically get opted into.
     attr_reader :default_channels
 
     # @!visibility private
@@ -32,12 +32,12 @@ module Discordrb
       from_other(data)
     end
 
-    # @return [true, false] Whether the onboarding mode only counts default channels towards constraints.
+    # @return [true, false] whether the onboarding mode only counts default channels towards constraints.
     def default?
       @mode == MODES[:default]
     end
 
-    # @return [true, false] Whether the onboarding mode counts default channels and questions towards constraints.
+    # @return [true, false] whether the onboarding mode counts default channels and questions towards constraints.
     def advanced?
       @mode == MODES[:advanced]
     end
@@ -50,25 +50,25 @@ module Discordrb
     end
 
     # Set the default channels for this onboarding flow.
-    # @param channels [Array<Channel, Integer, String>] The new default channels.
+    # @param channels [Array<Channel, Integer, String>] the new default channels.
     def default_channels=(channels)
       update_data(default_channels: channels.map(&:resolve_id))
     end
 
     # Set whether onboarding is enabled or not.
-    # @param enabled [true, false] Whether onboarding is enabled or not.
+    # @param enabled [true, false] whether onboarding is enabled or not.
     def enabled=(enabled)
       update_data(enabled: enabled)
     end
 
     # Set the mode for this onboarding flow.
-    # @param mode [Symbol, Integer] The new onboarding mode.
+    # @param mode [Symbol, Integer] the new onboarding mode.
     def mode=(mode)
       update_data(mode: MODES[mode] || mode)
     end
 
     # Remove a prompt from this onboarding flow.
-    # @param id [Integer, String] The ID of the prompt to remove.
+    # @param id [Integer, String] the ID of the prompt to remove.
     def remove_prompt(id)
       prompts.delete(prompt(id))
 
@@ -110,20 +110,20 @@ module Discordrb
         dropdown: 1
       }.freeze
 
-      # @return [Integer] The type of this prompt.
+      # @return [Integer] the type of this prompt.
       attr_reader :type
 
-      # @return [Array<Option>] Options inside of this prompt.
+      # @return [Array<Option>] options inside of this prompt.
       attr_reader :options
 
-      # @return [String] The title/question of this prompt.
+      # @return [String] the title/question of this prompt.
       attr_reader :title
 
-      # @return [true, false] Whether users are limited to selecting one option for the prompt
+      # @return [true, false] whether users are limited to selecting one option for the prompt
       attr_reader :single_select
       alias_method :single_select?, :single_select
 
-      # @return [true, false] Whether this prompt is required before a user completes the onboarding flow.
+      # @return [true, false] whether this prompt is required before a user completes the onboarding flow.
       attr_reader :required
       alias_method :required?, :required
 
@@ -151,12 +151,12 @@ module Discordrb
         options.find { |option| option.id == id.resolve_id }
       end
 
-      # @return [true, false] Whether this prompt has multiple choices.
+      # @return [true, false] whether this prompt has multiple choices.
       def multiple_choice?
         @type == TYPES[:multiple_choice]
       end
 
-      # @return [true, false] Whether this prompt is a dropdown.
+      # @return [true, false] whether this prompt is a dropdown.
       def dropdown?
         @type == TYPES[:dropdown]
       end
@@ -179,19 +179,19 @@ module Discordrb
     class Option
       include IDObject
 
-      # @return [Emoji, nil] The emoji of this option.
+      # @return [Emoji, nil] the emoji of this option.
       attr_reader :emoji
 
-      # @return [String] The title of this option.
+      # @return [String] the title of this option.
       attr_reader :title
 
-      # @return [String, nil] The description of this option.
+      # @return [String, nil] the description of this option.
       attr_reader :description
 
-      # @return [Array<Role>] Roles assigned to a member when the option is selected.
+      # @return [Array<Role>] roles assigned to a member when the option is selected.
       attr_reader :roles
 
-      # @return [Array<Channel>] Channels a member is added to when the option is selected.
+      # @return [Array<Channel>] channels a member is added to when the option is selected.
       attr_reader :channels
 
       # @!visibility private

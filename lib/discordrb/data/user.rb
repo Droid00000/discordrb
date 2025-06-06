@@ -122,6 +122,45 @@ module Discordrb
     end
   end
 
+  # The server tag information for a user.
+  class ServerTag
+    # @return [Integer] the ID of the primary server.
+    attr_reader :server_id
+
+    # @return [true, false] whether the user is displaying their server tag.
+    attr_reader :enabled
+    alias_method :enabled?, :enabled
+
+    # @return [String] the text of the user's server tag. Maximum of four characters.
+    attr_reader :name
+
+    # @return [String] the ID of this user's current badge, can be used to generate a badge URL.
+    # @see #badge_url
+    attr_reader :badge_id
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @server_id = data['identity_guild_id']&.to_i
+      @enabled = data['identity_enabled']
+      @name = data['tag']
+      @badge_id = data['badge']
+    end
+
+    # @return [Server, nil] the server this tag originates from.
+    # @raise [Errors::NoPermission] When the bot is not in the server associated with this tag.
+    def server
+      @bot.server(@server_id)
+    end
+
+    # Utility method to get a user's badge URL.
+    # @param format [String, nil] If `nil`, the URL will default to `webp`, but you can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @return [String] the URL to the badge image.
+    def badge_url(format = nil)
+      API.server_badge_url(@server_id, @id, format)
+    end
+  end
+
   # User on Discord, including internal data like discriminators
   class User
     include IDObject
@@ -136,6 +175,10 @@ module Discordrb
     # @return [Hash<Symbol, Symbol>] the current online status (`:online`, `:idle` or `:dnd`) of the user
     #   on various device types (`:desktop`, `:mobile`, or `:web`). The value will be `nil` if the user is offline or invisible.
     attr_reader :client_status
+
+    # @return [Tag, nil] the server tag information for the user, or nil if they haven't set one
+    attr_reader :server_tag
+    alias_method :server_tag, :primary_server
 
     # @!visibility private
     def initialize(data, bot)
@@ -158,6 +201,7 @@ module Discordrb
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
       @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset')
+      @primary_server = ServerTag.new(data['primary_guild'], bot) if data['primary_guild']
     end
 
     # Get a user's PM channel or send them a PM
