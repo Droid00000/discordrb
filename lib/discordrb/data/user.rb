@@ -105,6 +105,14 @@ module Discordrb
       define_method("#{name}?") do
         @public_flags.anybits?(value)
       end
+
+      # @return [ServerTag, nil] the server tag information for the user, or nil if they haven't set one
+      attr_reader :server_tag
+
+      # @return [true, false] whether this user has set a server tag or not.
+      def server_tag?
+        !@server_tag.nil?
+      end
     end
 
     # Utility function to get a user's banner URL.
@@ -148,16 +156,16 @@ module Discordrb
     end
 
     # @return [Server, nil] the server this tag originates from.
-    # @raise [Errors::NoPermission] When the bot is not in the server associated with this tag.
+    # @note This will be nil when the bot is not in the server associated with this tag.
     def server
       @bot.server(@server_id)
     end
 
     # Utility method to get a user's badge URL.
-    # @param format [String, nil] If `nil`, the URL will default to `webp`, but you can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
+    # @param format [String, nil] If `nil`, the URL will default to `webp`, but you can otherwise specify one of `webp`, `jpg` or `png` to override this.
     # @return [String] the URL to the badge image.
     def badge_url(format = nil)
-      API.server_badge_url(@server_id, @id, format)
+      API.server_badge_url(@server_id, @badge_id, format)
     end
   end
 
@@ -175,9 +183,6 @@ module Discordrb
     # @return [Hash<Symbol, Symbol>] the current online status (`:online`, `:idle` or `:dnd`) of the user
     #   on various device types (`:desktop`, `:mobile`, or `:web`). The value will be `nil` if the user is offline or invisible.
     attr_reader :client_status
-
-    # @return [ServerTag, nil] the server tag information for the user, or nil if they haven't set one
-    attr_reader :server_tag
 
     # @!visibility private
     def initialize(data, bot)
@@ -200,6 +205,7 @@ module Discordrb
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
       @avatar_decoration_id = data.dig('avatar_decoration_data', 'asset')
+
       @server_tag = ServerTag.new(data['primary_guild'], bot) if data['primary_guild']
     end
 
