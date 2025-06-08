@@ -276,6 +276,8 @@ module Discordrb
                   { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
                 when Emoji
                   { emoji_id: emoji.id, emoji_name: emoji.name, emoji_animated: emoji.animated? }
+                else
+                  raise ArgumentError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
                 end
 
         @options << { title: title, description: description, role_ids: roles.map(&:resolve_id),
