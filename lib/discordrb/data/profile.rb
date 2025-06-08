@@ -29,24 +29,38 @@ module Discordrb
       end
     end
 
-    # Changes the bot's banner.
-    # @param banner [String, #read] The base64 encoded string with the image data
-    #  or something that responds to #read.
-    def banner=(banner)
-      if banner.respond_to? :read
-        update_profile_data(banner: encode_file(banner))
-      else
-        update_profile_data(banner: banner)
-      end
-    end
-
     # Updates the cached profile data with the new one.
     # @note For internal use only.
     # @!visibility private
     def update_data(new_data)
       @username = new_data[:username] || @username
       @avatar_id = new_data[:avatar_id] || @avatar_id
-      @banner_id = new_data[:banner_id] || @banner_id
+    end
+
+    # Sets the user status setting to Online.
+    # @note Only usable on User accounts.
+    def online
+      update_profile_status_setting('online')
+    end
+
+    # Sets the user status setting to Idle.
+    # @note Only usable on User accounts.
+    def idle
+      update_profile_status_setting('idle')
+    end
+
+    # Sets the user status setting to Do Not Disturb.
+    # @note Only usable on User accounts.
+    def dnd
+      update_profile_status_setting('dnd')
+    end
+
+    alias_method(:busy, :dnd)
+
+    # Sets the user status setting to Invisible.
+    # @note Only usable on User accounts.
+    def invisible
+      update_profile_status_setting('invisible')
     end
 
     # The inspect method is overwritten to give more useful output
@@ -56,11 +70,16 @@ module Discordrb
 
     private
 
+    # Internal handler for updating the user's status setting
+    def update_profile_status_setting(status)
+      API::User.change_status_setting(@bot.token, status)
+    end
+
     def update_profile_data(new_data)
       API::User.update_profile(@bot.token,
-                               new_data.key?(:username) ? new_data[:username] : :undef,
-                               new_data.key?(:avatar) ? new_data[:avatar] : :undef,
-                               new_data.key?(:banner) ? new_data[:banner] : :undef)
+                               nil, nil,
+                               new_data[:username] || @username,
+                               new_data.key?(:avatar) ? new_data[:avatar] : @avatar_id)
       update_data(new_data)
     end
   end
