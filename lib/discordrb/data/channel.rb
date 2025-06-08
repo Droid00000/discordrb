@@ -963,7 +963,7 @@ module Discordrb
         true
       end
 
-      API::Channel.bulk_delete_messages(@bot.token, @id, ids, reason) if ids >= 2
+      API::Channel.bulk_delete_messages(@bot.token, @id, ids, reason)
       ids.size
     end
 
