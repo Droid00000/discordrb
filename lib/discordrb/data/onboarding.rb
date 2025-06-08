@@ -252,34 +252,34 @@ module Discordrb
         @prompts << { title: title, type: TYPES[type] || type, single_select: single_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a }
       end
+    end
 
-      # Builder for onboarding options.
-      class OptionBuilder
-        # @return [Array<Hash>]
-        attr_reader :options
-        alias_method :to_a, :options
+    # Builder for onboarding options.
+    class OptionBuilder
+      # @return [Array<Hash>]
+      attr_reader :options
+      alias_method :to_a, :options
 
-        # @!visibility private
-        def initialize
-          @options = []
-        end
+      # @!visibility private
+      def initialize
+        @options = []
+      end
 
-        # @param title [String] The title of the option.
-        # @param description [String, nil] The description of the option.
-        # @param channels [Array<Channel, Integer>] Channels a member is added to when the option is selected.
-        # @param roles [Array<Role, Integer>] Roles assigned to a member when the option is selected.
-        # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
-        def option(title, description: nil, channels: [], roles: [], emoji: nil)
-          emoji = case emoji
-                  when String
-                    { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
-                  when Emoji
-                    { emoji_id: emoji.id, emoji_name: emoji.name, emoji_animated: emoji.animated? }
-                  end
+      # @param title [String] The title of the option.
+      # @param description [String, nil] The description of the option.
+      # @param channels [Array<Channel, Integer>] Channels a member is added to when the option is selected.
+      # @param roles [Array<Role, Integer>] Roles assigned to a member when the option is selected.
+      # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
+      def option(title, description: nil, channels: [], roles: [], emoji: nil)
+        emoji = case emoji
+                when String
+                  { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
+                when Emoji
+                  { emoji_id: emoji.id, emoji_name: emoji.name, emoji_animated: emoji.animated? }
+                end
 
-          @options << { title: title, description: description, role_ids: roles.map(&:resolve_id),
-                        channel_ids: channels.map(&:resolve_id), **emoji }
-        end
+        @options << { title: title, description: description, role_ids: roles.map(&:resolve_id),
+                      channel_ids: channels.map(&:resolve_id), **emoji }
       end
     end
   end
