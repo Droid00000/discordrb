@@ -16,6 +16,12 @@ module Discordrb::API::User
     )
   end
 
+  # @deprecated Please use {Discordrb::API::Server.update_current_member} instead.
+  # https://discord.com/developers/docs/resources/user#modify-current-user-nick
+  def change_own_nickname(token, server_id, nick, reason = nil)
+    Discordrb::API::Server.update_current_member(token, server_id, nick, reason)
+  end
+
   # Get profile data
   # https://discord.com/developers/docs/resources/user#get-current-user
   def profile(token)
@@ -28,9 +34,15 @@ module Discordrb::API::User
     )
   end
 
+  # @deprecated Please use {update_profile} instead.
+  # https://discord.com/developers/docs/resources/user#modify-current-user
+  def update_profile(token, _email, _password, _new_username, avatar, _new_password = nil)
+    update_profile!(token, :undef, avatar, :undef)
+  end
+
   # Update user data
   # https://discord.com/developers/docs/resources/user#modify-current-user
-  def update_profile(token, username = :undef, avatar = :undef, banner = :undef)
+  def update_profile!(token, username = :undef, avatar = :undef, banner = :undef)
     Discordrb::API.request(
       :users_me,
       nil,

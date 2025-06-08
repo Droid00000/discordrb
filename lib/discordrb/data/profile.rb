@@ -54,10 +54,10 @@ module Discordrb
 
     # @!visibility private
     def update_profile_data(new_data)
-      update_data(JSON.parse(API::User.update_profile(@bot.token,
-                                                      new_data.key?(:username) ? new_data[:username] : :undef,
-                                                      new_data.key?(:avatar) ? new_data[:avatar] : :undef,
-                                                      new_data.key?(:banner) ? new_data[:banner] : :undef)))
+      update_data(JSON.parse(API::User.update_profile!(@bot.token,
+                                                       new_data.key?(:username) ? new_data[:username] : :undef,
+                                                       new_data.key?(:avatar) ? new_data[:avatar] : :undef,
+                                                       new_data.key?(:banner) ? new_data[:banner] : :undef)))
     end
   end
 end

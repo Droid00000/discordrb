@@ -11,7 +11,7 @@ module Discordrb::API::Application
       :applications_aid_commands,
       nil,
       :get,
-      "#{Discordrb::API.api_base}/applications/#{application_id}/commands?with_localizations=#{!!with_localizations}",
+      "#{Discordrb::API.api_base}/applications/#{application_id}/commands?with_localizations=#{!with_localizations.nil?}",
       Authorization: token
     )
   end
@@ -89,7 +89,7 @@ module Discordrb::API::Application
       :applications_aid_guilds_gid_commands,
       guild_id,
       :get,
-      "#{Discordrb::API.api_base}/applications/#{application_id}/guilds/#{guild_id}/commands?with_localizations=#{!!with_localizations}",
+      "#{Discordrb::API.api_base}/applications/#{application_id}/guilds/#{guild_id}/commands?with_localizations=#{!with_localizations.nil?}",
       Authorization: token
     )
   end
