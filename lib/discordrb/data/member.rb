@@ -131,7 +131,7 @@ module Discordrb
       @server_avatar_id = data['avatar']
       @flags = data['flags']
       @pending = data.key?('pending') ? data['pending'] : false
-      @server_avatar_decoration = process_server_avatar_decoration(data['avatar_decoration_data'])
+      @server_avatar_decoration = process_avatar_decoration(data['avatar_decoration_data'])
     end
 
     # @return [Server] the server this member is on.
