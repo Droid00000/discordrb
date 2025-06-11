@@ -118,7 +118,7 @@ module Discordrb
     end
   end
 
-  # A utility method to base64 enocde a file like object using its mime type.
+  # A utility method to base64 encode a file like object using its mime type.
   # @param file [File, #read] A file like object that responds to #read.
   # @return [String] The base64 encoded file object as image data.
   def self.encode_file(file)
