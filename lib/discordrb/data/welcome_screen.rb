@@ -6,10 +6,6 @@ module Discordrb
     # @return [Server] The server this welcome screen is for.
     attr_reader :server
 
-    # @return [true, false] Whether the welcome screen is currently enabled.
-    attr_reader :enabled
-    alias_method :enabled?, :enabled
-
     # @return [String] The server description shown in the welcome screen.
     attr_reader :description
 
@@ -37,7 +33,6 @@ module Discordrb
 
     # @!visibility private
     def from_other(new_data)
-      @enabled = new_data['enabled']
       @description = new_data['description']
       @channels = new_data['welcome_channels'].map { |channel| WelcomeChannel.new(channel, @bot) }
     end
