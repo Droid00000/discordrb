@@ -87,7 +87,7 @@ module Discordrb
     def from_other(new_data)
       @mode = new_data['mode']
       @enabled = new_data['enabled']
-      @prompts = new_data['prompts'].map { |prompt| Prompt.new(prompt, server, bot) }
+      @prompts = new_data['prompts'].map { |prompt| Prompt.new(prompt, @server, @bot) }
       @default_channels = new_data['default_channel_ids'].map { |id| @bot.channel(id) }
     end
 
