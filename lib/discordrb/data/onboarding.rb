@@ -88,7 +88,7 @@ module Discordrb
       @mode = new_data['mode']
       @enabled = new_data['enabled']
       @prompts = new_data['prompts'].map { |prompt| Prompt.new(prompt, @server, @bot) }
-      @default_channels = new_data['default_channel_ids'].map { |id| @bot.channel(id) }
+      @default_channels = new_data['default_channel_ids'].filter_map { |id| @bot.channel(id) }
     end
 
     # @!visibility private
