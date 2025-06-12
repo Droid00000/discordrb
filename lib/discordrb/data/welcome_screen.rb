@@ -53,7 +53,7 @@ module Discordrb
       # @return [Channel] The channel this welcome channel represents.
       attr_reader :channel
 
-      # @return [Emoji, String, nil] The custom emoji, unicode emoji, or nil for no emoji.
+      # @return [Emoji, nil] The emoji shown for this welcome channel.
       attr_reader :emoji
 
       # @!visibility private
@@ -61,7 +61,11 @@ module Discordrb
         @bot = bot
         @description = data['description']
         @channel = bot.channel(data['channel_id'])
-        @emoji = data['emoji_id'] ? bot.emoji(data['emoji_id']) : data['emoji_name']
+        @emoji = if data['emoji_name']
+                   Emoji.new({ 'name' => data['emoji_name'], 'animated' => false }, bot)
+                 elsif data['emoji_id']
+                   bot.emoji(data['emoji_id'])
+                 end
       end
     end
   end
