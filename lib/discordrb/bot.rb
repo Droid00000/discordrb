@@ -1142,11 +1142,7 @@ module Discordrb
       server = self.server(server_id)
 
       if (member = server.member(data['user']['id'].to_i))
-        member.update_roles(data['roles'])
-        member.update_nick(data['nick'])
-        member.update_global_name(data['user']['global_name']) if data['user']['global_name']
-        member.update_boosting_since(data['premium_since'])
-        member.update_communication_disabled_until(data['communication_disabled_until'])
+        member.update_data(data)
       else
         Discordrb::LOGGER.warn("update_guild_member attempted to access a member which doesn't exist! Not sure what happened here, ignoring.")
       end
@@ -1652,6 +1648,10 @@ module Discordrb
         when Interaction::TYPES[:modal_submit]
 
           event = ModalSubmitEvent.new(data, self)
+          raise_event(event)
+        when Interaction::TYPES[:autocomplete]
+
+          event = AutocompleteEvent.new(data, self)
           raise_event(event)
         end
       when :WEBHOOKS_UPDATE
