@@ -915,7 +915,7 @@ module Discordrb
     # Fetches a single application emoji from its ID.
     # @param emoji_id [Integer, String] ID of the application emoji.
     # @return [Emoji] The application emoji.
-    def get_application_emoji(emoji_id)
+    def application_emoji(emoji_id)
       response = API::Application.get_application_emoji(@token, profile.id, emoji_id.resolve_id)
       Emoji.new(JSON.parse(response), self)
     end
@@ -924,7 +924,7 @@ module Discordrb
     # @param name [String] The name of emoji to create.
     # @param image [String, #read] Base64 string with the image data, or an object that responds to #read.
     # @return [Emoji] The emoji that has been created.
-    def create_application_emoji(name, image)
+    def create_application_emoji(name:, image:)
       image = image.respond_to?(:read) ? encode_file(image) : image
       response = API::Application.create_application_emoji(@token, profile.id, name, image)
       Emoji.new(JSON.parse(response), self)
@@ -934,7 +934,7 @@ module Discordrb
     # @param emoji_id [Integer, String, Emoji] ID of the application emoji to edit.
     # @param name [String] The new name of the emoji.
     # @return [Emoji] Returns the updated emoji object on success.
-    def edit_application_emoji(emoji_id, name)
+    def edit_application_emoji(emoji_id:, name:)
       response = API::Application.edit_application_emoji(@token, profile.id, emoji_id.resolve_id, name)
       Emoji.new(JSON.parse(response), self)
     end
