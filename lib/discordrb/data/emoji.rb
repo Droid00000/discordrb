@@ -18,8 +18,8 @@ module Discordrb
     attr_reader :roles
 
     # @return [Boolean, nil] if the emoji requires colons to be used, or nil if the emoji's server is unknown
-    attr_reader :require_colons
-    alias_method :require_colons?, :require_colons
+    attr_reader :requires_colons
+    alias_method :requires_colons?, :requires_colons
 
     # @return [Boolean, nil] whether this emoji is managed by an integration, or nil if the emoji's server is unknown
     attr_reader :managed
@@ -45,7 +45,7 @@ module Discordrb
       @animated = data['animated']
       @managed = data['managed']
       @available = data['available']
-      @require_colons = data['require_colons']
+      @requires_colons = data['require_colons']
       @user = data['user'] ? bot.ensure_user(data['user']) : nil
 
       process_roles(data['roles']) if server
