@@ -513,9 +513,10 @@ module Discordrb
     # @param mentionable [true, false]
     # @param permissions [Integer, Array<Symbol>, Permissions, #bits] The permissions to write to the new role.
     # @param icon [String, #read] The base64 encoded image data, or a file like object that responds to #read.
+    # @param unicode_emoji [String, nil] The unicode emoji of the role to create, or nil.
     # @param reason [String] The reason the for the creation of this role.
     # @return [Role] the created role.
-    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, icon: nil, reason: nil)
+    def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, icon: nil, unicode_emoji: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour
 
       permissions = if permissions.is_a?(Array)
@@ -528,7 +529,7 @@ module Discordrb
 
       icon = icon.respond.to?(:read) ? encode_file(icon) : icon
 
-      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, reason, icon)
+      response = API::Server.create_role(@bot.token, @id, name, colour, hoist, mentionable, permissions, reason, icon, unicode_emoji)
 
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
