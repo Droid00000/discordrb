@@ -260,13 +260,13 @@ module Discordrb::API::Server
   # sending TTS messages, embedding links, sending files, reading the history, mentioning everybody,
   # connecting to voice, speaking and voice activity (push-to-talk isn't mandatory)
   # https://discord.com/developers/docs/resources/guild#get-guild-roles
-  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil, icon = nil)
+  def create_role(token, server_id, name, colour, hoist, mentionable, packed_permissions, reason = nil, icon = nil, unicode_emoji = nil)
     Discordrb::API.request(
       :guilds_sid_roles,
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, icon: icon }.to_json,
+      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, icon: icon, unicode_emoji: unicode_emoji }.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
