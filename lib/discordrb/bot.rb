@@ -1153,14 +1153,12 @@ module Discordrb
       server_id = data['guild_id'].to_i
       server = self.server(server_id)
 
-      if (member = server.member(data['user']['id'].to_i))
+      if (member = server.member(data['user']['id'].to_i, false))
         member.update_roles(data['roles'])
         member.update_nick(data['nick'])
         member.update_global_name(data['user']['global_name']) if data['user']['global_name']
         member.update_boosting_since(data['premium_since'])
         member.update_communication_disabled_until(data['communication_disabled_until'])
-      else
-        Discordrb::LOGGER.warn("update_guild_member attempted to access a member which doesn't exist! Not sure what happened here, ignoring.")
       end
     end
 
