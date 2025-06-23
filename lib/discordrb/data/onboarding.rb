@@ -202,8 +202,8 @@ module Discordrb
         @emoji = Discordrb::Emoji.new(data['emoji'], bot) if data['emoji']
         @title = data['title']
         @description = data['description']
-        @roles = data['role_ids'].map { |id| @server.role(id) }
-        @channels = data['channel_ids'].map { |id| @bot.channel(id) }
+        @roles = data['role_ids'].map { |id| server.role(id) }
+        @channels = data['channel_ids'].map { |id| bot.channel(id) }
       end
 
       # @!visibility private
