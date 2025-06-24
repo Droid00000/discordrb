@@ -49,6 +49,13 @@ module Discordrb
       prompts.find { |prompt| prompt.id == id.resolve_id }
     end
 
+    # Get an option by its ID.
+    # @param id [Integer, String] The ID of the option to find.
+    # @return [Option, nil] the option, or nil if it couldn't be found.
+    def option(id)
+      prompts.flat_map(&:options).find { |opt| opt.id == id.resolve_id }
+    end
+
     # Set the default channels for this onboarding flow.
     # @param channels [Array<Channel, Integer, String>] the new default channels.
     def default_channels=(channels)
@@ -69,7 +76,6 @@ module Discordrb
 
     # Remove a prompt from this onboarding flow.
     # @param id [Integer, String] the ID of the prompt to remove.
-    # @param reason [String, nil] the audit log reason for deleting this prompt.
     def delete_prompt(id)
       new_prompts = prompts.dup.tap do |new_array|
         new_array.delete(prompt(id))
@@ -79,7 +85,6 @@ module Discordrb
     end
 
     # Add one or more prompts to this onboarding flow.
-    # @param reason [String, nil] the audit log reason for creating this prompt.
     # @yieldparam [PromptBuilder]
     def create_prompts
       yield (builder = PromptBuilder.new)
@@ -229,12 +234,6 @@ module Discordrb
 
     # Builder for onboarding prompts.
     class PromptBuilder
-      # Map of prompt types.
-      TYPES = {
-        multiple_choice: 0,
-        dropdown: 1
-      }.freeze
-
       # @return [Array<Hash>]
       attr_reader :prompts
       alias_method :to_a, :prompts
@@ -245,7 +244,7 @@ module Discordrb
       end
 
       # @param title [String] The title of the prompt.
-      # @param type [Symbol, Integer] The type of prompt. See {TYPES}.
+      # @param type [Symbol, Integer] The type of prompt. See {Prompt::TYPES}.
       # @param multi_select [Boolean] whether users can select multiple options for the prompt.
       # @param required [Boolean] whether this prompt is required before a user completes the onboarding flow.
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
@@ -254,9 +253,9 @@ module Discordrb
       def prompt(title, type:, required:, multi_select: true, in_onboarding: true)
         yield (builder = OptionBuilder.new)
 
-        @prompts << { title: title, type: TYPES[type] || type, single_select: !multi_select,
-                      required: required, in_onboarding: in_onboarding, options: builder.to_a,
-                      id: @prompts.length + 1 }
+        @prompts << { title: title, type: Prompt::TYPES[type] || type, options: builder.to_a,
+                      required: required, in_onboarding: in_onboarding, id: @prompts.length + 1,
+                      single_select: !multi_select }
       end
     end
 
