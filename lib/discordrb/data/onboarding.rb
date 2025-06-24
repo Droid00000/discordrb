@@ -83,6 +83,8 @@ module Discordrb
       update_data(prompts: prompts.map(&:to_h) + builder.to_a)
     end
 
+    alias_method :add_prompts, :add_prompt
+
     # @!visibility private
     def from_other(new_data)
       @mode = new_data['mode']
