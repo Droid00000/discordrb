@@ -247,7 +247,7 @@ module Discordrb
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
-      def prompt(name:, type:, required:, mutli_select: true, in_onboarding: true)
+      def prompt(name:, type:, required:, multi_select: true, in_onboarding: true)
         builder = OptionBuilder.new
         yield builder if block_given?
 
