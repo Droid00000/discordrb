@@ -608,6 +608,7 @@ module Discordrb::API::Server
       :put,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/onboarding",
       { mode: mode, prompts: prompts, default_channel_ids: default_channels, enabled: enabled }.reject { |_, v| v == :undef }.to_json,
+      content_type: :json,
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
@@ -634,6 +635,7 @@ module Discordrb::API::Server
       :patch,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/welcome-screen",
       { enabled: enabled, welcome_channels: welcome_channels, description: description }.reject { |_, v| v == :undef }.to_json,
+      content_type: :json,
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
