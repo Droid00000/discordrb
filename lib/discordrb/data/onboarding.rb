@@ -247,7 +247,7 @@ module Discordrb
         yield (builder = OptionBuilder.new)
 
         @prompts << { title: title, type: Prompt::TYPES[type] || type, options: builder.to_a,
-                      required: required, in_onboarding: in_onboarding, id: @prompts.length + 1,
+                      required: required, in_onboarding: in_onboarding, id: 1, #@prompts.length + 1,
                       single_select: !multi_select }
       end
     end
