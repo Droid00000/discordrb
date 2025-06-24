@@ -49,13 +49,6 @@ module Discordrb
       prompts.find { |prompt| prompt.id == id.resolve_id }
     end
 
-    # Get an option by its ID.
-    # @param id [Integer, String] The ID of the option to find.
-    # @return [Option, nil] the option, or nil if it couldn't be found.
-    def option(id)
-      prompts.flat_map(&:options).find { |opt| opt.id == id.resolve_id }
-    end
-
     # Set the default channels for this onboarding flow.
     # @param channels [Array<Channel, Integer, String>] the new default channels.
     def default_channels=(channels)
