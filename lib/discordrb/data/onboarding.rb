@@ -258,7 +258,7 @@ module Discordrb
 
         @prompts << { title: name, type: TYPES[type] || type, single_select: !multi_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a,
-                      id: @prompts.size + 1 }
+                      id: @prompts.length + 1 }
       end
     end
 
