@@ -282,8 +282,8 @@ module Discordrb
                   raise ArgumentError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
                 end
 
-        @options << { title: name, description: description, role_ids: roles.map(&:resolve_id),
-                      channel_ids: channels.map(&:resolve_id), **emoji }.compact
+        @options << { title: name, description: description, role_ids: [*roles].map(&:resolve_id),
+                      channel_ids: [*channels].map(&:resolve_id), **emoji }.compact
       end
     end
   end
