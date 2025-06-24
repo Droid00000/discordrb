@@ -252,8 +252,7 @@ module Discordrb
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
       def prompt(title, type:, required:, multi_select: true, in_onboarding: true)
-        builder = OptionBuilder.new
-        yield builder if block_given?
+        yield (builder = OptionBuilder.new)
 
         @prompts << { title: title, type: TYPES[type] || type, single_select: !multi_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a,
