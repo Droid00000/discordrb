@@ -269,8 +269,8 @@ module Discordrb
 
       # @param title [String] The title of the option.
       # @param description [String, nil] The description of the option.
-      # @param channels [Array<Channel, Integer>] Channels a member is added to when the option is selected.
-      # @param roles [Array<Role, Integer>] Roles assigned to a member when the option is selected.
+      # @param channels [Array<Channel, Integer, String>] Channels a member is added to when the option is selected.
+      # @param roles [Array<Role, Integer, String>] Roles assigned to a member when the option is selected.
       # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
       def option(title:, description: nil, channels: [], roles: [], emoji: nil)
         emoji = case emoji
@@ -283,7 +283,7 @@ module Discordrb
                 end
 
         @options << { title: title, description: description, role_ids: roles.map(&:resolve_id),
-                      channel_ids: channels.map(&:resolve_id), **emoji }
+                      channel_ids: channels.map(&:resolve_id), **emoji }.compact
       end
     end
   end
