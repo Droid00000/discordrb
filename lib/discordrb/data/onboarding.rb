@@ -69,21 +69,25 @@ module Discordrb
 
     # Remove a prompt from this onboarding flow.
     # @param id [Integer, String] the ID of the prompt to remove.
-    def remove_prompt(id)
-      prompts.delete(prompt(id))
+    # @param reason [String, nil] the audit log reason for deleting this prompt.
+    def delete_prompt(id, reason: nil)
+      new_prompts = prompts.dup.tap do |new_array|
+        new_array.delete(prompt(id))
+      end
 
-      update_data(prompts: prompts.map(&:to_h))
+      update_data(prompts: new_prompts.map(&:to_h), reason: reason)
     end
 
-    # Add a prompt to this onboarding flow.
+    # Add one or more prompts to this onboarding flow.
+    # @param reason [String, nil] the audit log reason for creating this prompt.
     # @yieldparam [PromptBuilder]
-    def add_prompt
+    def create_prompts(reason: nil)
       yield (builder = PromptBuilder.new)
 
-      update_data(prompts: prompts.map(&:to_h) + builder.to_a)
+      update_data(prompts: prompts.map(&:to_h) + builder.to_a, reason: reason)
     end
-
-    alias_method :add_prompts, :add_prompt
+  
+    alias_method :add_prompts, :create_prompts
 
     # @!visibility private
     def from_other(new_data)
@@ -99,7 +103,8 @@ module Discordrb
                                                           new_data[:mode] || :undef,
                                                           new_data[:prompts]&.to_a || :undef,
                                                           new_data[:default_channels] || :undef,
-                                                          new_data.key?(:enabled) ? new_data[:enabled] : :undef)))
+                                                          new_data.key?(:enabled) ? new_data[:enabled] : :undef,
+                                                          new_data[:reason])))
     end
 
     # A prompt that can be shown during the inital onboarding flow.
