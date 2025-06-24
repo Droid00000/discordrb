@@ -242,16 +242,16 @@ module Discordrb
 
       # @param title [String] The title of the prompt.
       # @param type [Symbol, Integer] The type of prompt. See {TYPES}.
-      # @param single_select [Boolean] whether users are limited to selecting one option for the prompt.
+      # @param multi_select [Boolean] whether users can select multiple options for the prompt.
       # @param required [Boolean] whether this prompt is required before a user completes the onboarding flow.
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
-      def prompt(title:, type:, single_select:, required:, in_onboarding:)
+      def prompt(title:, type:, required:, mutli_select: true, in_onboarding: true)
         builder = OptionBuilder.new
         yield builder if block_given?
 
-        @prompts << { title: title, type: TYPES[type] || type, single_select: single_select,
+        @prompts << { title: title, type: TYPES[type] || type, single_select: !multi_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a }
       end
     end
