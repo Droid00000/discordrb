@@ -115,6 +115,7 @@ module Discordrb::API
 
         if response.body && !e.is_a?(RestClient::TooManyRequests)
           data = JSON.parse(response.body)
+          puts data.inspect
           err_klass = Discordrb::Errors.error_class_for(data['code'] || 0)
           e = err_klass.new(data['message'], data['errors'])
 
