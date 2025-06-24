@@ -44,7 +44,7 @@ module Discordrb
 
     # Get a prompt by its ID.
     # @param id [Integer, String] The ID of the prompt to find.
-    # @return [Prompt, nil] the prompt or nil if it couldn't be found.
+    # @return [Prompt, nil] the prompt, or nil if it couldn't be found.
     def prompt(id)
       prompts.find { |prompt| prompt.id == id.resolve_id }
     end
@@ -70,23 +70,23 @@ module Discordrb
     # Remove a prompt from this onboarding flow.
     # @param id [Integer, String] the ID of the prompt to remove.
     # @param reason [String, nil] the audit log reason for deleting this prompt.
-    def delete_prompt(id, reason: nil)
+    def delete_prompt(id)
       new_prompts = prompts.dup.tap do |new_array|
         new_array.delete(prompt(id))
       end
 
-      update_data(prompts: new_prompts.map(&:to_h), reason: reason)
+      update_data(prompts: new_prompts.map(&:to_h))
     end
 
     # Add one or more prompts to this onboarding flow.
     # @param reason [String, nil] the audit log reason for creating this prompt.
     # @yieldparam [PromptBuilder]
-    def create_prompts(reason: nil)
+    def create_prompts
       yield (builder = PromptBuilder.new)
 
-      update_data(prompts: prompts.map(&:to_h) + builder.to_a, reason: reason)
+      update_data(prompts: prompts.map(&:to_h) + builder.to_a)
     end
-  
+
     alias_method :add_prompts, :create_prompts
 
     # @!visibility private
@@ -103,8 +103,7 @@ module Discordrb
                                                           new_data[:mode] || :undef,
                                                           new_data[:prompts]&.to_a || :undef,
                                                           new_data[:default_channels] || :undef,
-                                                          new_data.key?(:enabled) ? new_data[:enabled] : :undef,
-                                                          new_data[:reason])))
+                                                          new_data.key?(:enabled) ? new_data[:enabled] : :undef)))
     end
 
     # A prompt that can be shown during the inital onboarding flow.
@@ -245,18 +244,18 @@ module Discordrb
         @prompts = []
       end
 
-      # @param name [String] The title of the prompt.
+      # @param title [String] The title of the prompt.
       # @param type [Symbol, Integer] The type of prompt. See {TYPES}.
       # @param multi_select [Boolean] whether users can select multiple options for the prompt.
       # @param required [Boolean] whether this prompt is required before a user completes the onboarding flow.
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
-      def prompt(name:, type:, required:, multi_select: true, in_onboarding: true)
+      def prompt(title, type:, required:, multi_select: true, in_onboarding: true)
         builder = OptionBuilder.new
         yield builder if block_given?
 
-        @prompts << { title: name, type: TYPES[type] || type, single_select: !multi_select,
+        @prompts << { title: title, type: TYPES[type] || type, single_select: !multi_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a,
                       id: @prompts.length + 1 }
       end
@@ -273,12 +272,12 @@ module Discordrb
         @options = []
       end
 
-      # @param name [String] The title of the option.
+      # @param title [String] The title of the option.
       # @param description [String, nil] The description of the option.
       # @param channels [Array<Channel, Integer, String>] Channels a member is added to when the option is selected.
       # @param roles [Array<Role, Integer, String>] Roles assigned to a member when the option is selected.
       # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
-      def option(name:, description: nil, channels: [], roles: [], emoji: nil)
+      def option(title, description: nil, channels: [], roles: [], emoji: nil)
         emoji = case emoji
                 when String
                   { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
@@ -288,7 +287,7 @@ module Discordrb
                   raise ArgumentError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
                 end
 
-        @options << { title: name, description: description, role_ids: [*roles].map(&:resolve_id),
+        @options << { title: title, description: description, role_ids: [*roles].map(&:resolve_id),
                       channel_ids: [*channels].map(&:resolve_id), **emoji }
       end
     end
