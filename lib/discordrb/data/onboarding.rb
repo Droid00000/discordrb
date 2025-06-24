@@ -240,18 +240,18 @@ module Discordrb
         @prompts = []
       end
 
-      # @param title [String] The title of the prompt.
+      # @param name [String] The title of the prompt.
       # @param type [Symbol, Integer] The type of prompt. See {TYPES}.
       # @param multi_select [Boolean] whether users can select multiple options for the prompt.
       # @param required [Boolean] whether this prompt is required before a user completes the onboarding flow.
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
-      def prompt(title:, type:, required:, mutli_select: true, in_onboarding: true)
+      def prompt(name:, type:, required:, mutli_select: true, in_onboarding: true)
         builder = OptionBuilder.new
         yield builder if block_given?
 
-        @prompts << { title: title, type: TYPES[type] || type, single_select: !multi_select,
+        @prompts << { title: name, type: TYPES[type] || type, single_select: !multi_select,
                       required: required, in_onboarding: in_onboarding, options: builder.to_a }
       end
     end
@@ -267,12 +267,12 @@ module Discordrb
         @options = []
       end
 
-      # @param title [String] The title of the option.
+      # @param name [String] The title of the option.
       # @param description [String, nil] The description of the option.
       # @param channels [Array<Channel, Integer, String>] Channels a member is added to when the option is selected.
       # @param roles [Array<Role, Integer, String>] Roles assigned to a member when the option is selected.
       # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
-      def option(title:, description: nil, channels: [], roles: [], emoji: nil)
+      def option(name:, description: nil, channels: [], roles: [], emoji: nil)
         emoji = case emoji
                 when String
                   { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
@@ -282,7 +282,7 @@ module Discordrb
                   raise ArgumentError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
                 end
 
-        @options << { title: title, description: description, role_ids: roles.map(&:resolve_id),
+        @options << { title: name, description: description, role_ids: roles.map(&:resolve_id),
                       channel_ids: channels.map(&:resolve_id), **emoji }.compact
       end
     end
