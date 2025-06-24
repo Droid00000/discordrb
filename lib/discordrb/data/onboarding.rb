@@ -289,7 +289,7 @@ module Discordrb
                 end
 
         @options << { title: name, description: description, role_ids: [*roles].map(&:resolve_id),
-                      channel_ids: [*channels].map(&:resolve_id), **emoji }
+                      channel_ids: [*channels].map(&:resolve_id), **emoji }.compact
       end
     end
   end
