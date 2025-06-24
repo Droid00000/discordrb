@@ -247,7 +247,7 @@ module Discordrb
       # @param in_onboarding [Boolean] whether the prompt is present in the onboarding flow. If false, the prompt
       #   will only appear in the Channels & Roles tab.
       # @yieldparam [OptionBuilder]
-      def prompt(title, type:, single_select:, required:, in_onboarding:)
+      def prompt(title:, type:, single_select:, required:, in_onboarding:)
         builder = OptionBuilder.new
         yield builder if block_given?
 
@@ -272,7 +272,7 @@ module Discordrb
       # @param channels [Array<Channel, Integer>] Channels a member is added to when the option is selected.
       # @param roles [Array<Role, Integer>] Roles assigned to a member when the option is selected.
       # @param emoji [Emoji, String, nil] The emoji object, string for a unicode emoji, or nil for no emoji.
-      def option(title, description: nil, channels: [], roles: [], emoji: nil)
+      def option(title:, description: nil, channels: [], roles: [], emoji: nil)
         emoji = case emoji
                 when String
                   { emoji_id: nil, emoji_name: emoji, emoji_animated: false }
