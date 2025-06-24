@@ -61,11 +61,8 @@ module Discordrb
         @bot = bot
         @description = data['description']
         @channel = bot.channel(data['channel_id'])
-        @emoji = if data['emoji_name']
-                   Emoji.new({ 'name' => data['emoji_name'], 'animated' => false }, bot)
-                 elsif data['emoji_id']
-                   bot.emoji(data['emoji_id'])
-                 end
+        @emoji = bot.emoji(data['emoji_id']) if data['emoji_id']
+        @emoji = Emoji.new({ 'name' => data['emoji_name'], 'animated' => false }, bot) if data['emoji_name']
       end
     end
   end
