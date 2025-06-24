@@ -256,8 +256,9 @@ module Discordrb
         builder = OptionBuilder.new
         yield builder if block_given?
 
-        @prompts << { id: 0, title: name, type: TYPES[type] || type, single_select: !multi_select,
-                      required: required, in_onboarding: in_onboarding, options: builder.to_a }
+        @prompts << { title: name, type: TYPES[type] || type, single_select: !multi_select,
+                      required: required, in_onboarding: in_onboarding, options: builder.to_a,
+                      id: @prompts.size + 1 }
       end
     end
 
