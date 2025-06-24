@@ -602,7 +602,6 @@ module Discordrb::API::Server
   # Modify the onboarding configuration for a server.
   # https://discord.com/developers/docs/resources/guild#modify-guild-onboarding
   def modify_onboarding(token, server_id, mode = :undef, prompts = :undef, default_channels = :undef, enabled = :undef, reason = nil)
-    puts prompts.inspect
     Discordrb::API.request(
       :guilds_sid_onboarding,
       server_id,
