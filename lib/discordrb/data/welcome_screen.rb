@@ -54,13 +54,13 @@ module Discordrb
 
     # Channels and their display options inside of a welcome screen.
     class WelcomeChannel
-      # @return [String] The description shown for this channel.
+      # @return [String] the description shown for this channel.
       attr_reader :description
 
-      # @return [Channel] The channel this welcome channel represents.
+      # @return [Channel] the channel this welcome channel represents.
       attr_reader :channel
 
-      # @return [Emoji, nil] The emoji shown for this welcome channel.
+      # @return [Emoji, nil] the emoji shown for this welcome channel.
       attr_reader :emoji
 
       # @!visibility private
