@@ -851,6 +851,20 @@ module Discordrb
       @bot.channel(@system_channel_id) if @system_channel_id
     end
 
+    # Fetch the onboarding flow for this server.
+    # @return [Onboarding] The onboarding flow for new members in a server.
+    def onboarding
+      response = API::Server.onboarding(@bot.token, @id)
+      Onboarding.new(JSON.parse(response), self, @bot)
+    end
+
+    # Fetch the welcome screen shown to new server members.
+    # @return [WelcomeScreen] The welcome screen for this server.
+    def welcome_screen
+      response = API::Server.welcome_screen(@bot.token, @id)
+      WelcomeScreen.new(JSON.parse(response), self, @bot)
+    end
+
     # Updates the cached data with new data
     # @note For internal use only
     # @!visibility private
