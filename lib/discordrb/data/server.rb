@@ -144,9 +144,11 @@ module Discordrb
 
       # If the SERVER_MEMBERS intent flag isn't set, the gateway won't respond when we ask for members.
       raise 'The :server_members intent is required to get server members' if @bot.gateway.intents.nobits?(INTENTS[:server_members])
-
+      
+      @awaiting_chunks = true
       @bot.request_chunks(@id)
       sleep 0.05 until @chunked
+      @awaiting_chunks = false
       @members.values
     end
 
@@ -851,7 +853,7 @@ module Discordrb
       LOGGER.debug("Finished chunking server #{@id}")
 
       # Reset everything to normal
-      @chunked = true
+      @chunked = true if @awaiting_chunks ||= false
     end
 
     # @return [Channel, nil] the AFK voice channel of this server, or `nil` if none is set.
