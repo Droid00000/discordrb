@@ -339,6 +339,18 @@ module Discordrb
       @server.delete_role(@id)
     end
 
+    # Check if a role has the holographic gradient style applied.
+    # @return [true, false] whether the role's colours are in the holographic style.
+    def holographic?
+      !@colours.tertiary.nil?
+    end
+
+    # Check if a role has set a gradient color.
+    # @return [true, false] if the role has applied a dual tone gradient colour style.
+    def gradient?
+      @colours.secondary && @colours.tertiary.nil?
+    end
+
     # The inspect method is overwritten to give more useful output
     def inspect
       "<Role name=#{@name} permissions=#{@permissions.inspect} hoist=#{@hoist} colour=#{@colour.inspect} server=#{@server.inspect} position=#{@position} mentionable=#{@mentionable}>"
