@@ -1358,7 +1358,7 @@ module Discordrb
         message = create_message(data)
         message = Message.new(data, self) unless message.is_a? Message
 
-        return if message.from_bot? && !should_parse_self
+        return if data['author']['bot'] && !should_parse_self
 
         # Dispatch a ChannelCreateEvent for channels we don't have cached
         if message.channel.private? && @pm_channels[message.channel.recipient.id].nil?
