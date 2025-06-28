@@ -107,6 +107,10 @@ module Discordrb::API
       # If the global mutex happens to be locked right now, wait for that as well.
       mutex_wait(@global_mutex) if @global_mutex.locked?
 
+      if key == :guilds_sid_members_uid
+        ::Discordrb::LOGGER.warn("Guild member #{attributes.first} by #{caller}")
+      end
+
       response = nil
       begin
         response = raw_request(type, attributes)
