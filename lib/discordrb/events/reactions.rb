@@ -21,10 +21,13 @@ module Discordrb::Events
       @user_id = data['user_id'].to_i
       @message_id = data['message_id'].to_i
       @channel_id = data['channel_id'].to_i
+      @member = data['member'] ? Discordrb::Member.new(data['member'], server, bot) : nil
     end
 
     # @return [User, Member] the user that reacted to this message, or member if a server exists.
     def user
+      return @member if @member
+
       # Cache the user so we don't do requests all the time
       @user ||= if server
                   @server.member(@user_id)

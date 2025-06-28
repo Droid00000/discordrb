@@ -229,16 +229,16 @@ module Discordrb::Events
             a == e
           end
         end,
-        matches_all(@attributes[:from], event.author) do |a, e|
+        matches_all(@attributes[:from], event.author_data) do |a, e|
           case a
           when String
-            a == e.name
+            a == e['username']
           when Integer
-            a == e.id
+            a == e['id'].to_i
           when :bot
-            e.current_bot?
+            e['id'].to_i == event.bot.profile.id
           else
-            a == e
+            a.resolve_id == e['id'].to_i
           end
         end,
         matches_all(@attributes[:with_text] || @attributes[:content] || @attributes[:exact_text], event.content) do |a, e|
