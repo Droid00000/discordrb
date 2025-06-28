@@ -107,10 +107,6 @@ module Discordrb::API
       # If the global mutex happens to be locked right now, wait for that as well.
       mutex_wait(@global_mutex) if @global_mutex.locked?
 
-      if key.first == :channels_cid_messages
-        ::Discordrb::LOGGER.warn("Messages #{attributes.first} by #{caller}")
-      end
-
       response = nil
       begin
         response = raw_request(type, attributes)
@@ -165,6 +161,7 @@ module Discordrb::API
   # Handles pre-emptive rate limiting by waiting the given mutex by the difference of the Date header to the
   # X-Ratelimit-Reset header, thus making sure we don't get 429'd in any subsequent requests.
   def handle_preemptive_rl(headers, mutex, key)
+    puts "Special key depleted #{key} for #{caller}"
     Discordrb::LOGGER.ratelimit "RL bucket depletion detected! Date: #{headers[:date]} Reset: #{headers[:x_ratelimit_reset]}"
     delta = headers[:x_ratelimit_reset_after].to_f
     Discordrb::LOGGER.warn("Locking RL mutex (key: #{key}) for #{delta} seconds pre-emptively")
