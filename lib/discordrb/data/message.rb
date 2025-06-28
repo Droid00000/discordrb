@@ -117,10 +117,6 @@ module Discordrb
     # @return [Time, nil] The time this message was pinned at. Only present on messages fetched via {Channel#pins}.
     attr_reader :pinned_at
 
-    # @return [true, false] The raw data hash that represents the user who sent this message.
-    # @note for internal use only.
-    attr_reader :author_data
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot

@@ -229,7 +229,7 @@ module Discordrb::Events
             a == e
           end
         end,
-        matches_all(@attributes[:from], event.message.author_data) do |a, e|
+        matches_all(@attributes[:from], event.message.instance_variable_get("@author_data")) do |a, e|
           case a
           when String
             a == e['username']
