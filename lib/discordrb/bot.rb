@@ -1389,7 +1389,7 @@ module Discordrb
 
         return if (data['author']['id']&.to_i == profile.id) && !should_parse_self
 
-        unless message.author
+        if data['author'].nil?
           LOGGER.debug("Edited a message with nil author! Content: #{message.content.inspect}, channel: #{message.channel.inspect}")
           return
         end
