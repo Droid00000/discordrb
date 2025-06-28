@@ -64,13 +64,7 @@ module Discordrb::Events
 
   # Member joins
   # @see Discordrb::EventContainer#member_join
-  class ServerMemberAddEvent < ServerMemberEvent
-    # Override init_user here since Discord gives us the full member
-    def init_user(data, bot)
-      @user = Discordrb::Member.new(data, @server, bot)
-      @server&.cache_member(@user)
-    end
-  end
+  class ServerMemberAddEvent < ServerMemberEvent; end
 
   # Event handler for {ServerMemberAddEvent}
   class ServerMemberAddEventHandler < ServerMemberEventHandler; end
