@@ -98,6 +98,14 @@ module Discordrb::API
     # and major parameter combination (*not* the HTTP method) uniquely identifies a RL bucket.
     key = [key, major_parameter].freeze
 
+      if key.first == :channels_cid_messages_mid
+        ::Discordrb::LOGGER.warn("Messages #{attributes.first} by #{caller}")
+      end
+
+      if key.first == :guilds_sid_members_uid
+        ::Discordrb::LOGGER.warn("Member #{attributes.first} by #{caller}")
+      end
+
     begin
       mutex = @mutexes[key] ||= Mutex.new
 
