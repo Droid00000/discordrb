@@ -64,14 +64,32 @@ module Discordrb::Events
 
   # Member joins
   # @see Discordrb::EventContainer#member_join
-  class ServerMemberAddEvent < ServerMemberEvent; end
+  class ServerMemberAddEvent < ServerMemberEvent
+    # Override init_user here since Discord gives us the full member
+    def init_user(data, bot)
+      @user = Discordrb::Member.new(data, @server, bot)
+      @server&.cache_member(@user)
+    end
+  end
 
   # Event handler for {ServerMemberAddEvent}
   class ServerMemberAddEventHandler < ServerMemberEventHandler; end
 
   # Member is updated (roles added or deleted)
   # @see Discordrb::EventContainer#member_update
-  class ServerMemberUpdateEvent < ServerMemberEvent; end
+  class ServerMemberUpdateEvent < ServerMemberEvent
+    # Override init_user so we don't make request all the time on large servers
+    def init_user(data, bot)
+      @user_id = data['user']['id']
+    end
+
+    # @return [Member] the member in question.
+    def user
+      @server&.member(@user_id)
+    end
+
+    attr_reader :member, :user
+  end
 
   # Event handler for {ServerMemberUpdateEvent}
   class ServerMemberUpdateEventHandler < ServerMemberEventHandler; end
