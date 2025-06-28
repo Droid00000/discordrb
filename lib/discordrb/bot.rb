@@ -1387,7 +1387,7 @@ module Discordrb
         event = MessageUpdateEvent.new(message, self)
         raise_event(event)
 
-        return if message.from_bot? && !should_parse_self
+        return if (data['author']['id']&.to_i == profile.id) && !should_parse_self
 
         unless message.author
           LOGGER.debug("Edited a message with nil author! Content: #{message.content.inspect}, channel: #{message.channel.inspect}")
