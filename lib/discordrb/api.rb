@@ -111,6 +111,10 @@ module Discordrb::API
         ::Discordrb::LOGGER.warn("Guild member #{attributes.first} by #{caller}")
       end
 
+      if key == :channels_cid_messages
+        ::Discordrb::LOGGER.warn("Messages #{attributes.first} by #{caller}")
+      end
+
       response = nil
       begin
         response = raw_request(type, attributes)
