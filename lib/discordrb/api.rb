@@ -98,14 +98,6 @@ module Discordrb::API
     # and major parameter combination (*not* the HTTP method) uniquely identifies a RL bucket.
     key = [key, major_parameter].freeze
 
-      if key.first == :channels_cid_messages_mid
-        ::Discordrb::LOGGER.warn("Messages #{attributes.first} by #{caller}")
-      end
-
-      if key.first == :guilds_sid_members_uid
-        ::Discordrb::LOGGER.warn("Member #{attributes.first} by #{caller}")
-      end
-
     begin
       mutex = @mutexes[key] ||= Mutex.new
 
@@ -249,11 +241,6 @@ module Discordrb::API
   # make an avatar decoration URL from an avatar decoration ID.
   def avatar_decoration_url(avatar_decoration_id, format = 'png')
     "#{cdn_url}/avatar-decoration-presets/#{avatar_decoration_id}.#{format}"
-  end
-
-  # make a tag badge URL from a server ID and badge ID.
-  def server_badge_url(server_id, badge_id, format = 'webp')
-    "#{cdn_url}/clan-badges/#{server_id}/#{badge_id}.#{format || 'webp'}"
   end
 
   # Change an OAuth application's properties

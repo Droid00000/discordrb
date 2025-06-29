@@ -113,53 +113,6 @@ module Discordrb
     def banner_url(format = nil)
       API::User.banner_url(@id, @banner_id, format) if @banner_id
     end
-
-    # @return [ServerTag, nil] the server tag information for the user, or nil if they haven't set one
-    attr_reader :server_tag
-
-    # @return [true, false] whether this user has set a server tag or not.
-    def server_tag?
-      !@server_tag.nil?
-    end
-  end
-
-  # The server tag information for a user.
-  class ServerTag
-    # @return [Integer] the ID of the primary server.
-    attr_reader :server_id
-
-    # @return [true, false] whether the user is displaying their server tag.
-    attr_reader :enabled
-    alias_method :enabled?, :enabled
-
-    # @return [String] the text of the user's server tag. Maximum of four characters.
-    attr_reader :name
-
-    # @return [String] the ID of this user's current badge, can be used to generate a badge URL.
-    # @see #badge_url
-    attr_reader :badge_id
-
-    # @!visibility private
-    def initialize(data, bot)
-      @bot = bot
-      @server_id = data['identity_guild_id']&.to_i
-      @enabled = data['identity_enabled']
-      @name = data['tag']
-      @badge_id = data['badge']
-    end
-
-    # @return [Server, nil] the server this tag originates from.
-    # @note This will be nil when the bot is not in the server associated with this tag.
-    def server
-      @bot.server(@server_id)
-    end
-
-    # Utility method to get a user's badge URL.
-    # @param format [String, nil] If `nil`, the URL will default to `webp`, but you can otherwise specify one of `webp`, `jpg` or `png` to override this.
-    # @return [String] the URL to the badge image.
-    def badge_url(format = nil)
-      API.server_badge_url(@server_id, @badge_id, format)
-    end
   end
 
   # User on Discord, including internal data like discriminators
@@ -197,8 +150,6 @@ module Discordrb
       @status = :offline
       @client_status = process_client_status(data['client_status'])
       @system_account = data.key?('system') ? data['system'] : false
-
-      @server_tag = ServerTag.new(data['primary_guild'], bot) if data['primary_guild']
 
       @avatar_decoration = process_avatar_decoration(data['avatar_decoration_data'])
     end
