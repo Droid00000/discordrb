@@ -62,9 +62,6 @@ module Discordrb::Events
     # @return [Channel]
     attr_reader :thread
 
-    # @return [Array<Member, User>]
-    attr_reader :added_members
-
     # @return [Array<Integer>]
     attr_reader :removed_member_ids
 
@@ -76,11 +73,16 @@ module Discordrb::Events
     def initialize(data, bot)
       @bot = bot
       @thread = data.is_a?(Discordrb::Channel) ? data : bot.channel(data['id'].to_i)
-      @added_members = data['added_members']&.map do |member|
-        data['guild_id'] ? bot.member(data['guild_id'], member['user_id']) : bot.user(member['user_id'])
-      end || []
+      @added_members_data = data['added_members'] 
       @removed_member_ids = data['removed_member_ids']&.map(&:resolve_id) || []
       @member_count = data['member_count']
+    end
+
+    # @return [Array<Member, User>]
+    def added_members
+      @added_members ||= @added_members_data&.map do |member|
+        data['guild_id'] ? bot.member(data['guild_id'], member['user_id']) : bot.user(member['user_id'])
+      end || []
     end
   end
 
