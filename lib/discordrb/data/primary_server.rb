@@ -10,7 +10,7 @@ module Discordrb
     attr_reader :enabled
     alias_method :enabled?, :enabled
 
-    # @return [String] the text of the primary server's tag. Limited to 4 characters.
+    # @return [String] the text of the primary server's tag. Limited to four characters.
     attr_reader :name
     alias_method :text, :name
 
@@ -29,7 +29,7 @@ module Discordrb
 
     # Get the server associated with this primary server.
     # @return [Server] the server associated with this primary server.
-    # @raise [Discordrb::Errors::NoPermission] This can happen when the bot is not in the associated server.
+    # @raise [Discordrb::Errors::NoPermission] this can happen when the bot is not in the associated server.
     def server
       @bot.server(@server_id)
     end
