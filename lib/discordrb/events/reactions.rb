@@ -34,7 +34,7 @@ module Discordrb::Events
       @channel_id = data['channel_id'].to_i
       @burst = data['burst']
       @type = data['type']
-      @burst_colours = data['burst_colors']&.map { |b| ColourRGB.new(b.delete('#')) } || []
+      @burst_colours = data['burst_colors']&.map { |b| Discordrb::ColourRGB.new(b.delete('#')) } || []
     end
 
     # @return [User, Member] the user that reacted to this message, or member if a server exists.
