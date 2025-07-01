@@ -243,7 +243,7 @@ module Discordrb::API
 
   # make a server tag badge URL from a server ID and badge ID.
   def server_tag_badge_url(server_id, badge_id, format = 'webp')
-    "#{cdn_url}/clan-badges/#{server_id}/#{badge_id}.#{format}"
+    "#{cdn_url}/guild-tag-badges/#{server_id}/#{badge_id}.#{format}"
   end
 
   # Create an OAuth application

@@ -153,7 +153,7 @@ module Discordrb
       @system_account = data['system'] || false
       @avatar_decoration = process_avatar_decoration(data['avatar_decoration_data'])
       @collectibles = Collectibles.new(data['collectibles'] || {}, bot)
-      
+
       @primary_server = process_primary_server(data['primary_guild'] || {})
     end
 
