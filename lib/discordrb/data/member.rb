@@ -54,9 +54,6 @@ module Discordrb
     # @return [AvatarDecoration, nil] the user's current server avatar decoration, or nil for no server avatar decoration.
     attr_reader :server_avatar_decoration
 
-    # @return [Time, nil] when the member will no longer be marked as having unusual DM activity.
-    attr_reader :unusual_dm_activity_until
-
     # Utility method to get a member's server avatar URL.
     # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
     # @return [String, nil] the URL to the avatar image, or nil if the member doesn't have one.
@@ -136,8 +133,6 @@ module Discordrb
       @flags = data['flags'] || 0
       @pending = data.key?('pending') ? data['pending'] : false
       @server_avatar_decoration = process_avatar_decoration(data['avatar_decoration_data'])
-      unusual_dm_activity = data['unusual_dm_activity_until']
-      @unusual_dm_activity_until = unusual_dm_activity ? Time.parse(unusual_dm_activity) : nil
     end
 
     # @return [Server] the server this member is on.
@@ -374,12 +369,6 @@ module Discordrb
     # @param flags [Integer, nil] The new bitwise value of flags for this member, or nil.
     def flags=(flags)
       API::Server.update_member(@bot.token, @server_id, @user.id, flags: flags)
-    end
-
-    # Check if the current member has been marked as having unusual DM activity.
-    # @return [true, false]
-    def unusual_dm_activity?
-      !@unusual_dm_activity_until.nil? && @unusual_dm_activity_until > Time.now
     end
 
     # Update this member's roles
