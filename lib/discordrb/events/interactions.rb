@@ -536,10 +536,10 @@ module Discordrb::Events
 
   # An event for whenever an application command's permissions are updated.
   class ApplicationCommandPermissionsUpdateEvent < Event
-    # @return [Integer] the ID of the server where command permissions were updated.
+    # @return [Integer] the ID of the server where the command permissions were updated.
     attr_reader :server_id
 
-    # @return [Integer, nil] the ID of the command that was updated.
+    # @return [Integer, nil] the ID of the application command that was updated.
     attr_reader :command_id
 
     # @return [Array<ApplicationCommand::Permission>] the permissions that were updated.
