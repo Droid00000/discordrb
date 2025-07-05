@@ -555,7 +555,7 @@ module Discordrb::Events
       @application_id = data['application_id'].to_i
       @command_id = data['id'].to_i if data['id'].to_i != @application_id
       @permissions = data['permissions'].map do |permission|
-        Discordrb::ApplicationCommand::Permission.new(permission.merge('command' => response.except('permissions')), bot)
+        Discordrb::ApplicationCommand::Permission.new(permission.merge('command' => data.except('permissions')), bot)
       end
     end
 
