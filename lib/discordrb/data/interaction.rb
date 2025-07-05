@@ -399,12 +399,12 @@ module Discordrb
       @bot.delete_application_command(@id, server_id: @server_id)
     end
 
-    # @param server_id [Server, Integer, String, nil] the server to fetch command permissions for.
+    # @param server_id [Integer, String, nil] the ID of the server to fetch command permissions for.
     # @return [Array<Permission>] the permissions for this application command in the given server.
     def permissions(server_id: nil)
       raise ArgumentError, 'A server ID must be provided for global application commands' if @server_id.nil?
 
-      response = JSON.parse(API::Application.get_application_command_permissions(@bot.token, @bot.profile.id, @server_id || server_id.resolve_id, @id))
+      response = JSON.parse(API::Application.get_application_command_permissions(@bot.token, @bot.profile.id, @server_id || server_id, @id))
       response['permissions'].map { |permission| Permission.new(permission.merge('command' => response.except('permissions')), @bot) }
     end
 
