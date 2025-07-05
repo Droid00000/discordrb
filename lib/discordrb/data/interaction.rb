@@ -457,7 +457,7 @@ module Discordrb
       end
 
       # Whether this permission is the default for all commands that don't
-      #  contain explicit permission.
+      #  contain explicit permissions.
       # @return [true, false]
       def default?
         @command_id == @application_id
