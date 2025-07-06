@@ -663,7 +663,7 @@ module Discordrb
 
     # This **event** is raised whenever an application command's permissions are updated.
     # @param attributes [Hash] The event's attributes.
-    # @option attributes [String, Integer, ApplicationCommand] :command_id A command ID to match against.
+    # @option attributes [String, Integer] :command_id A command ID to match against.
     # @option attributes [String, Integer] :application_id An application ID to match against.
     # @option attributes [String, Integer, Server] :server A server to match against.
     # @yield The block is executed when the event is raised.
