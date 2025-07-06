@@ -870,8 +870,6 @@ module Discordrb
       process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @server.id, disabled_until&.iso8601, :undef)))
     end
 
-    alias_method :invites_paused_until=, :invites_disabled_until
-
     # Pause the server's DMs, thus stopping any server members that are't friends from direct messaging each other.
     # @param disabled_until [Time, nil] When direct messages should be resumed, or nil to immediately resume them.
     def dms_disabled_until=(disabled_until)
