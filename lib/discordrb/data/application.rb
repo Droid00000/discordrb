@@ -211,7 +211,9 @@ module Discordrb
     # @note For internal use only.
     def process_integration_types(integration_types)
       integration_types.transform_values do |value|
-        InstallParams.new(value, @bot) if value != {}
+        if (params = value['oauth2_install_params'])
+          InstallParams.new(params, @bot)
+        end
       end
     end
 
