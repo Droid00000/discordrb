@@ -69,13 +69,13 @@ module Discordrb
     # @see #cover_image_url
     attr_reader :cover_image_id
 
-    # @return [Integer] the approximate count of server's the application has been added to.
+    # @return [Integer] the approximate amount of server's the application has been added to.
     attr_reader :approximate_server_count
 
-    # @return [Integer] the approximate count of users that have installed the application with the `application.commands` scope.
+    # @return [Integer] the approximate amount of users that have installed the application with the `application.commands` scope.
     attr_reader :approximate_user_install_count
 
-    # @return [Integer] the approximate count of users that have OAuth2 authorizations for the application.
+    # @return [Integer] the approximate amount of users that have OAuth2 authorizations for the application.
     attr_reader :approximate_user_authorization_count
 
     # @return [Array<String>] array of redirect URIs for the application.
