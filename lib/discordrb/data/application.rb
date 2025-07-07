@@ -71,6 +71,7 @@ module Discordrb
 
     # @return [Integer] the approximate amount of server's the application has been added to.
     attr_reader :approximate_server_count
+    alias_method :approximate_server_install_count, :approximate_server_count
 
     # @return [Integer] the approximate amount of users that have installed the application with the `application.commands` scope.
     attr_reader :approximate_user_install_count
