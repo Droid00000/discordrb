@@ -19,10 +19,10 @@ module Discordrb
       application_command_badge: 1 << 23
     }.freeze
 
-    # @return [String] the application name.
+    # @return [String] the application's name.
     attr_reader :name
 
-    # @return [String] the application description.
+    # @return [String] the application's description.
     attr_reader :description
 
     # @return [Array<String>] the application's origins permitted to use RPC.
@@ -31,7 +31,7 @@ module Discordrb
     # @return [Integer] the application's public flags.
     attr_reader :flags
 
-    # @return [User] the user that owns this application.
+    # @return [User] the user that owns the application.
     attr_reader :owner
 
     # @return [String, nil] the ID of the application's icon. Can be used to generate an icon URL.
