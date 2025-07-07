@@ -61,6 +61,18 @@ module Discordrb
     # @return [Integer] the boost level, 0 if no level.
     attr_reader :boost_level
 
+    # @return [Time, nil] the time at when the last raid was detected on this server.
+    attr_reader :raid_detected_at
+
+    # @return [Time, nil] the time at when DM spam was last detected on this server.
+    attr_reader :dm_spam_detected_at
+
+    # @return [Time, nil] the time at when invites will be re-enabled on this server.
+    attr_reader :invites_disabled_until
+
+    # @return [Time, nil] the time at when non friend DMs will be re-enabled on this server.
+    attr_reader :dms_disabled_until
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -637,7 +649,7 @@ module Discordrb
     # @return [BulkBan]
     def bulk_ban(users:, message_seconds: 0, reason: nil)
       raise ArgumentError, 'Can only ban between 1 and 200 users!' unless users.size.between?(1, 200)
-      
+
       return ban(users.first, 0, message_seconds: message_seconds, reason: reason) if users.size == 1
 
       response = API::Server.bulk_ban(@bot.token, @id, users.map(&:resolve_id), message_seconds, reason)
@@ -826,6 +838,46 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
+    # Check if the auto-moderation system has detected a raid.
+    # @return [true, false]
+    def raid_detected?
+      !@raid_detected_at.nil?
+    end
+
+    # Check if the auto-moderation system has detected DM spam.
+    # @return [true, false]
+    def dm_spam_detected?
+      !@dm_spam_detected_at.nil?
+    end
+
+    # Check if the server has disabled non-friend DMs.
+    # @return [true, false]
+    def dms_disabled?
+      !@dms_disabled_until.nil? && @dms_disabled_until > Time.now
+    end
+
+    # Check if the server has paused invites (stopped new members from joining).
+    # @return [true, false]
+    def invites_disabled?
+      !@invites_disabled_until.nil? && @invites_disabled_until > Time.now
+    end
+
+    # Pause the server's invites, preventing any new members from joining the server.
+    # @param disabled_until [Time, nil] When invites should be resumed, or nil to immediately resume them.
+    def invites_disabled_until=(disabled_until)
+      raise ArgumentError, 'Invites can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
+
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @server.id, disabled_until&.iso8601, :undef)))
+    end
+
+    # Pause the server's DMs, thus stopping any server members that are't friends from direct messaging each other.
+    # @param disabled_until [Time, nil] When direct messages should be resumed, or nil to immediately resume them.
+    def dms_disabled_until=(disabled_until)
+      raise ArgumentError, 'Direct messages can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
+
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @server.id, :undef, disabled_until&.iso8601)))
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
@@ -888,6 +940,7 @@ module Discordrb
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
       process_active_threads(new_data['threads']) if new_data['threads']
+      process_incidents_data(new_data['incidents_data']) if new_data.key?('incidents_data')
     end
 
     # Adds a channel to this server's cache
@@ -1017,6 +1070,14 @@ module Discordrb
         @channels << thread
         @channels_by_id[thread.id] = thread
       end
+    end
+
+    def process_incidents_data(incidents)
+      new_data = incidents || {}
+      @raid_detected_at = new_data['raid_detected_at'] ? Time.parse(new_data['raid_detected_at']) : nil
+      @dms_disabled_until = new_data['dms_disabled_until'] ? Time.parse(new_data['dms_disabled_until']) : nil
+      @dm_spam_detected_at = new_data['dm_spam_detected_at'] ? Time.parse(new_data['dm_spam_detected_at']) : nil
+      @invites_disabled_until = new_data['invites_disabled_until'] ? Time.parse(new_data['invites_disabled_until']) : nil
     end
   end
 
