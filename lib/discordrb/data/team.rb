@@ -7,13 +7,13 @@ module Discordrb
 
     # A member that has been invited to a team.
     class Member
-      # @return [Symbol] the team role of this member.
+      # @return [Symbol] the role of this team member.
       attr_reader :role
 
-      # @return [Integer] the membership state of this member.
+      # @return [Integer] the membership state of this team member.
       attr_reader :state
 
-      # @return [Integer] the ID of the user this member is for.
+      # @return [Integer] the ID of the user this team member is for.
       attr_reader :user_id
 
       # @!visibility private
