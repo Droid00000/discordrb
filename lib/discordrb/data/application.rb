@@ -64,6 +64,12 @@ module Discordrb
     # @return [Integer, nil] the ID of the server that is associated with this application.
     attr_reader :server_id
 
+    # @return [String, nil] the URL slug that links to the application's game store page.
+    attr_reader :slug
+
+    # @return [Integer, nil] the game SKU ID if this application is a game sold on Discord.
+    attr_reader :primary_sku_id
+
     # @return [String, nil] the ID of the application's default rich presence invite cover image hash.
     #   Can be used to generate a cover image URL.
     # @see #cover_image_url
@@ -107,6 +113,9 @@ module Discordrb
     # @return [Hash<Integer => InstallParams>] the default scopes and permissions for each supported installation context.
     attr_reader :integration_types_config
 
+    # @return [Array<Integer>] the default supported installation contexts for the application.
+    attr_reader :default_install_contexts
+
     # @return [String, nil] the default custom authorization URL for the app.
     attr_reader :custom_install_url
 
@@ -136,6 +145,74 @@ module Discordrb
     # @return [String, nil] the URL of the icon image (nil if no image is set).
     def cover_image_url(format = 'webp')
       API.app_cover_url(@id, @cover_image_id, format) if @cover_image_id
+    end
+
+    # Set the icon for this application.
+    # @param icon [File, nil] file like object that respond to #read, or nil.
+    def icon=(image)
+      icon = encode_file(icon) if icon.respond_to?(:read)
+      update_application(icon: icon)
+    end
+
+    # Set the cover image for this application.
+    # @param image [File, nil] file like object that respond to #read, or nil.
+    def cover_image=(image)
+      image = encode_file(image) if image.respond_to?(:read)
+      update_application(cover_image: image)
+    end
+
+    # Set the tags descirbing the content and functionality of the application.
+    # @param tags [Array<String>] Maximum of five tags per application, 20 characters per tag.
+    def tags=(tags)
+      update_application(tags: tags)
+    end
+
+    # Set the public flags for the application.
+    # @param flags [Integer] The new flags to set for the application. Only limited intent flags can be updated.
+    def flags=(flags)
+      update_application(flags: flags)
+    end
+
+    # Set the description for the application.
+    # @param description [String] The new description for the application.
+    def description=(description)
+      update_application(description: description)
+    end
+
+    # Set the URL that webhook events will be sent to for the application.
+    # @param events_url [String] The new URL that webhook events will be sent to.
+    def webhook_events_url=(events_url)
+      update_application(event_webhooks_url: events_url)
+    end
+
+    # Set the custom installation URL for the application.
+    # @param install_url [String] The new default custom authorization URL for the application.
+    def custom_install_url=(install_url)
+      update_application(custom_install_url: install_url)
+    end
+
+    # Set the webhook events that the applicaton is subscribed to.
+    # @param event_types [Array<String>] The new webhook event types to subscribe to.
+    def webhook_event_types=(event_types)
+      update_application(event_webhooks_types: event_types)
+    end
+
+    # Set the status of webhook events for the application.
+    # @param events_status [Integer] The new status of webhook events. `1` for disabled, `2` for enabled.
+    def webhook_events_status(events_status)
+      update_application(event_webhooks_status: events_status)
+    end
+
+    # Set the endpoint that will reccieve interaction over HTTP POST for the application.
+    # @param endpoint_url [String] The new endpoint URL. Must pass security validation or the request will fail.
+    def interaction_endpoint_url(endpoint_url)
+      update_application(interaction_endpoint_url: endpoint_url)
+    end
+
+    # Set the role connection verification URL for the application.
+    # @param verification_url [String] The new role connections verification URL for the application.
+    def role_connections_verification_url=(verification_url)
+      update_application(role_connections_verification_url: verification_url)
     end
 
     # The inspect method is overwritten to give more useful output.
@@ -190,30 +267,33 @@ module Discordrb
 
       @server_id = new_data['guild_id']&.to_i
       @cover_image_id = new_data['cover_image']
+      @slug = data['slug']
+      @primary_sku_id = data['primary_sku_id']&.to_i
       @approximate_server_count = new_data['approximate_guild_count'] || 0
       @approximate_user_install_count = new_data['approximate_user_install_count'] || 0
       @approximate_user_authorization_count = new_data['approximate_user_authorization_count'] || 0
+
       @redirect_uris = new_data['redirect_uris'] || []
       @interaction_endpoint_url = new_data['interactions_endpoint_url']
-
       @role_connections_verification_url = new_data['role_connections_verification_url']
       @webhook_events_url = new_data['event_webhooks_url']
       @webhook_events_status = new_data['event_webhooks_status']
+
       @webhook_event_types = new_data['event_webhooks_types'] || []
       @tags = new_data['tags'] || []
       @install_params = new_data['install_params'] ? InstallParams.new(new_data['install_params'], @bot, self) : nil
       @custom_install_url = new_data['custom_install_url']
-
-      @integration_types_config = process_integration_types(new_data['integration_types_config'] || {}).compact
+      @default_install_contexts = new_data['integration_types_config']&.keys&.map(&:to_i) || []
+      @integration_types_config = process_integration_types(new_data['integration_types_config']).compact
     end
 
     # @!visibility private
     # @note For internal use only.
     def process_integration_types(integration_types)
-      integration_types.transform_values do |value|
-        if (params = value['oauth2_install_params'])
-          InstallParams.new(params, @bot)
-        end
+      (integration_types || {}).to_h do |key, value| 
+        params = value['oauth2_install_params']
+
+        [key.to_i, params ? InstallParams.new(params, @bot) : nil]
       end
     end
 
