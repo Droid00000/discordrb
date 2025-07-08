@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # OAuth Application information
+  # Information about a bot's associated application, not to be confused with the bot's actual user account.
   class Application
     include IDObject
 
@@ -43,7 +43,7 @@ module Discordrb
     alias_method :public?, :public
 
     # @return [Profile] the user object of the associated bot for this application.
-    attr_reader :bot_profile
+    attr_reader :profile
 
     # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join servers.
     attr_reader :requires_code_grant
@@ -271,7 +271,7 @@ module Discordrb
       @owner = new_data['owner'] ? @bot.ensure_user(new_data['owner']) : nil
 
       @public = new_data['bot_public']
-      @bot_profile = new_data['bot'] ? Profile.new(new_data['bot'], @bot) : nil
+      @profile = new_data['bot'] ? Profile.new(new_data['bot'], @bot) : nil
       @requires_code_grant = new_data['bot_require_code_grant']
       @terms_of_service_url = new_data['terms_of_service_url']
       @privacy_policy_url = new_data['privacy_policy_url']
