@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # Information about a bot's associated application, not to be confused with the bot's actual user account.
+  # Information about a bot's associated application, not to be confused with the bot user.
   class Application
     include IDObject
 
