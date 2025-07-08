@@ -280,8 +280,8 @@ module Discordrb
 
       @server_id = new_data['guild_id']&.to_i
       @cover_image_id = new_data['cover_image']
-      @slug = data['slug']
-      @primary_sku_id = data['primary_sku_id']&.to_i
+      @slug = new_data['slug']
+      @primary_sku_id = new_data['primary_sku_id']&.to_i
       @approximate_server_count = new_data['approximate_guild_count'] || 0
       @approximate_user_install_count = new_data['approximate_user_install_count'] || 0
       @approximate_user_authorization_count = new_data['approximate_user_authorization_count'] || 0
