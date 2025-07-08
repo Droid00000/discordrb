@@ -31,7 +31,7 @@ module Discordrb
     # @return [Integer] the application's public flags.
     attr_reader :flags
 
-    # @return [User] the user that owns the application.
+    # @return [User, nil] the user that owns the application, or nil if the application belongs to a team.
     attr_reader :owner
 
     # @return [String, nil] the ID of the application's icon. Can be used to generate an icon URL.
@@ -42,7 +42,8 @@ module Discordrb
     attr_reader :public
     alias_method :public?, :public
 
-    # @return [Profile] the user object of the associated bot for this application.
+    # @return [Profile, nil] the user object of the associated bot for this application, or nil if this application doesn't have
+    #   an associated bot user.
     attr_reader :profile
 
     # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join servers.
