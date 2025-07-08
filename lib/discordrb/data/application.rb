@@ -90,7 +90,7 @@ module Discordrb
     alias_method :redirect_urls, :redirect_uris
 
     # @return [String, nil] the interactions endpoint URL for the application.
-    attr_reader :interaction_endpoint_url
+    attr_reader :interactions_endpoint_url
 
     # @return [String, nil] the role connections URL for the application.
     attr_reader :role_connections_verification_url
@@ -150,15 +150,13 @@ module Discordrb
     # Set the icon for the application.
     # @param icon [File, nil] file like object that respond to #read, or nil.
     def icon=(icon)
-      icon = encode_file(icon) if icon.respond_to?(:read)
-      update_application(icon: icon)
+      update_application(icon: icon.respond_to?(:read) ? encode_file(icon) : icon)
     end
 
     # Set the cover image for the application.
     # @param image [File, nil] file like object that respond to #read, or nil.
     def cover_image=(image)
-      image = encode_file(image) if image.respond_to?(:read)
-      update_application(cover_image: image)
+      update_application(cover_image: image.respond_to?(:read) ? encode_file(image) : image)
     end
 
     # Set the default Oauth install scopes for the application when joining a server.
@@ -218,8 +216,8 @@ module Discordrb
 
     # Set the endpoint that will reccieve interaction over HTTP POST for the application.
     # @param endpoint_url [String] The new endpoint URL. Must pass security validation or the request will fail.
-    def interaction_endpoint_url(interaction_endpoint)
-      update_application(interaction_endpoint_url: interaction_endpoint)
+    def interactions_endpoint_url(endpoint_url)
+      update_application(interaction_endpoint_url: endpoint_url)
     end
 
     # Set the role connection verification URL for the application.
@@ -287,7 +285,7 @@ module Discordrb
       @approximate_user_authorization_count = new_data['approximate_user_authorization_count'] || 0
 
       @redirect_uris = new_data['redirect_uris'] || []
-      @interaction_endpoint_url = new_data['interactions_endpoint_url']
+      @interactions_endpoint_url = new_data['interactions_endpoint_url']
       @role_connections_verification_url = new_data['role_connections_verification_url']
       @webhook_events_url = new_data['event_webhooks_url']
       @webhook_events_status = new_data['event_webhooks_status']
