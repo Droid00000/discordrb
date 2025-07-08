@@ -147,18 +147,31 @@ module Discordrb
       API.app_cover_url(@id, @cover_image_id, format) if @cover_image_id
     end
 
-    # Set the icon for this application.
+    # Set the icon for the application.
     # @param icon [File, nil] file like object that respond to #read, or nil.
     def icon=(icon)
       icon = encode_file(icon) if icon.respond_to?(:read)
       update_application(icon: icon)
     end
 
-    # Set the cover image for this application.
+    # Set the cover image for the application.
     # @param image [File, nil] file like object that respond to #read, or nil.
     def cover_image=(image)
       image = encode_file(image) if image.respond_to?(:read)
       update_application(cover_image: image)
+    end
+
+    # Set the default Oauth install scopes for the application when joining a server.
+    # @param scopes [Array<String, Symbol>] the new default OAuth scopes for the application.
+    def install_scopes=(scopes)
+      update_application(install_params: (@install_params || {}).to_h.merge(scopes: scopes.map(&:to_s)))
+    end
+
+    # Set the default permissions the application requests when joining a server.
+    # @param permissions [Permissions, Integer] the new default permissions for the application.
+    def install_permissions=(permissions)
+      permissions = permissions.bits if permissions.respond_to?(:bits)
+      update_application(install_params: (@install_params || {}).to_h.merge(permissions: permissions.to_s))
     end
 
     # Set the tags descirbing the content and functionality of the application.
@@ -192,7 +205,7 @@ module Discordrb
     end
 
     # Set the webhook events that the applicaton is subscribed to.
-    # @param event_types [Array<String>] The new webhook event types to subscribe to.
+    # @param event_types [Array<String>] The new webhook event types to subscribe to for the application.
     def webhook_event_types=(event_types)
       update_application(event_webhooks_types: event_types)
     end
@@ -205,8 +218,8 @@ module Discordrb
 
     # Set the endpoint that will reccieve interaction over HTTP POST for the application.
     # @param endpoint_url [String] The new endpoint URL. Must pass security validation or the request will fail.
-    def interaction_endpoint_url(endpoint_url)
-      update_application(interaction_endpoint_url: endpoint_url)
+    def interaction_endpoint_url(interaction_endpoint)
+      update_application(interaction_endpoint_url: interaction_endpoint)
     end
 
     # Set the role connection verification URL for the application.
@@ -290,7 +303,7 @@ module Discordrb
     # @!visibility private
     # @note For internal use only.
     def process_integration_types(integration_types)
-      (integration_types || {}).to_h do |key, value| 
+      (integration_types || {}).to_h do |key, value|
         params = value['oauth2_install_params']
 
         [key.to_i, params ? InstallParams.new(params, @bot) : nil]
@@ -299,20 +312,20 @@ module Discordrb
 
     # @!visibility private
     def update_application(new_data)
-      from_other(JSON.parse(API::Application.update_current_applicaton(@bot.token,
-                                                                       new_data[:custom_install_url] || :undef,
-                                                                       new_data[:description] || :undef,
-                                                                       new_data[:role_connections_verification_url] || :undef,
-                                                                       new_data[:install_params] || :undef,
-                                                                       new_data[:integration_types_config] || :undef,
-                                                                       new_data[:flags] || :undef,
-                                                                       new_data[:interactions_endpoint_url] || :undef,
-                                                                       new_data[:tags] || :undef,
-                                                                       new_data[:webhook_events_url] || :undef,
-                                                                       new_data[:webhook_events_status] || :undef,
-                                                                       new_data[:webhook_event_types] || :undef,
-                                                                       new_data.key?(:icon) ? new_data[:icon] : :undef,
-                                                                       new_data.key?(:cover_image) ? new_data[:cover_image] : :undef)))
+      update_data(JSON.parse(API::Application.update_current_applicaton(@bot.token,
+                                                                        new_data[:custom_install_url] || :undef,
+                                                                        new_data[:description] || :undef,
+                                                                        new_data[:role_connections_verification_url] || :undef,
+                                                                        new_data[:install_params] || :undef,
+                                                                        new_data[:integration_types_config] || :undef,
+                                                                        new_data[:flags] || :undef,
+                                                                        new_data[:interactions_endpoint_url] || :undef,
+                                                                        new_data[:tags] || :undef,
+                                                                        new_data[:webhook_events_url] || :undef,
+                                                                        new_data[:webhook_events_status] || :undef,
+                                                                        new_data[:webhook_event_types] || :undef,
+                                                                        new_data.key?(:icon) ? new_data[:icon] : :undef,
+                                                                        new_data.key?(:cover_image) ? new_data[:cover_image] : :undef)))
     end
   end
 end

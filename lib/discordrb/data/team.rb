@@ -19,18 +19,18 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @role = data['role']
+        @role = data['role'].to_sym
         @state = data['membership_state']
         @user_id = data['user']['id'].to_i
       end
 
-      # Check whether this member has been invited to the team, but hasn't accepted yet.
+      # Check whether this member has been invited to the team, but hasn't accepted the invite yet.
       # @return [true, false]
       def invited?
         @state == 1
       end
 
-      # Check whether this member has been invited to the team, and they have accepted the invite
+      # Check whether this member has been invited to the team, and if they have accepted the invite.
       # @return [true, false]
       def accepted?
         @state == 2
