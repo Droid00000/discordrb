@@ -24,13 +24,13 @@ module Discordrb
         @user_id = data['user']['id'].to_i
       end
 
-      # Check whether this member has been invited to the team, but hasn't accepted the invite yet.
+      # Whether this team member has been invited to the team, but hasn't accepted the invite yet.
       # @return [true, false]
       def invited?
         @state == 1
       end
 
-      # Check whether this member has been invited to the team, and if they have accepted the invite.
+      # Whether this team member has been invited to the team, and if they have accepted the invite.
       # @return [true, false]
       def accepted?
         @state == 2
