@@ -42,8 +42,7 @@ module Discordrb
     attr_reader :public
     alias_method :public?, :public
 
-    # @return [Profile, nil] the user object of the associated bot for this application, or nil if this application doesn't have
-    #   an associated bot user.
+    # @return [Profile] the user object of the associated bot for this application.
     attr_reader :profile
 
     # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join servers.
