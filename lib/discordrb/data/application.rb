@@ -211,13 +211,13 @@ module Discordrb
 
     # Set the status of webhook events for the application.
     # @param events_status [Integer] The new status of webhook events. `1` for disabled, `2` for enabled.
-    def webhook_events_status(events_status)
+    def webhook_events_status=(events_status)
       update_application(event_webhooks_status: events_status)
     end
 
     # Set the endpoint that will reccieve interaction over HTTP POST for the application.
     # @param endpoint_url [String] The new endpoint URL. Must pass security validation or the request will fail.
-    def interactions_endpoint_url(endpoint_url)
+    def interactions_endpoint_url=(endpoint_url)
       update_application(interaction_endpoint_url: endpoint_url)
     end
 
