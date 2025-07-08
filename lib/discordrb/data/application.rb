@@ -150,8 +150,8 @@ module Discordrb
 
     # Set the icon for the application.
     # @param icon [File, nil] file like object that respond to #read, or nil.
-    def icon=(icon)
-      update_application(icon: icon.respond_to?(:read) ? encode_file(icon) : icon)
+    def icon=(image)
+      update_application(icon: image.respond_to?(:read) ? encode_file(image) : image)
     end
 
     # Set the cover image for the application.
