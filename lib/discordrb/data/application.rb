@@ -55,7 +55,7 @@ module Discordrb
     # @return [String, nil] the URL to the application's privacy policy.
     attr_reader :privacy_policy_url
 
-    # @return [String] Hex encoded key for verification in interactions and the GameSDK.
+    # @return [String] the hex encoded key for verification in interactions and the GameSDK.
     attr_reader :verify_key
 
     # @return [Team, nil] the team that owns this application, or nil if the application isn't owned by a team.
@@ -85,7 +85,7 @@ module Discordrb
     # @return [Integer] the approximate amount of users that have OAuth2 authorizations for the application.
     attr_reader :approximate_user_authorization_count
 
-    # @return [Array<String>] array of redirect URIs for the application.
+    # @return [Array<String>] an array of redirect URIs for the application.
     attr_reader :redirect_uris
     alias_method :redirect_urls, :redirect_uris
 
@@ -149,7 +149,7 @@ module Discordrb
 
     # Set the icon for this application.
     # @param icon [File, nil] file like object that respond to #read, or nil.
-    def icon=(image)
+    def icon=(icon)
       icon = encode_file(icon) if icon.respond_to?(:read)
       update_application(icon: icon)
     end
