@@ -78,7 +78,6 @@ module Discordrb
 
     # @return [Integer] the approximate amount of server's the application has been added to.
     attr_reader :approximate_server_count
-    alias_method :approximate_server_install_count, :approximate_server_count
 
     # @return [Integer] the approximate amount of users that have installed the application with the `application.commands` scope.
     attr_reader :approximate_user_install_count
@@ -117,7 +116,7 @@ module Discordrb
     # @return [Array<Integer>] the default supported installation contexts for the application.
     attr_reader :default_install_contexts
 
-    # @return [String, nil] the default custom authorization URL for the app.
+    # @return [String, nil] the default custom authorization URL for the application.
     attr_reader :custom_install_url
 
     # @!visibility private
