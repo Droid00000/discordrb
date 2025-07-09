@@ -148,6 +148,28 @@ module Discordrb
       API.app_cover_url(@id, @cover_image_id, format) if @cover_image_id
     end
 
+    # Remove an intergration types config for the application.
+    # @param type [Integer, String] the type of the intergration types config to remove.
+    def remove_intergration_types_config(type)
+      @integration_types_config.delete(type.to_i)
+      update_application(integration_types_config: collect_intergration_types)
+    end
+
+    # Add an intergration types config for the application.
+    # @param type [Integer, String] The type of the intergration type.
+    # @param scopes [Array<String, Symbol>] The default Oauth scopes for the config.
+    # @param permissions [Permissions, String, Integer] The default permissions for the config.
+    def add_intergration_types_config(type:, scopes:, permissions:)
+      permissions = permisisons.bits if permissions.respond_to?(:bits)
+
+      @integration_types_config[type.to_i] = {
+        scopes: scopes.map(&:to_s),
+        permissions: permissions.to_s
+      }
+
+      update_application(integration_types_config: collect_intergration_types)
+    end
+
     # Set the icon for the application.
     # @param icon [File, nil] file like object that respond to #read, or nil.
     def icon=(image)
@@ -303,9 +325,18 @@ module Discordrb
     # @note For internal use only.
     def process_integration_types(integration_types)
       (integration_types || {}).to_h do |key, value|
-        params = value['oauth2_install_params']
+        value = value['oauth2_install_params']
 
-        [key.to_i, params ? InstallParams.new(params, @bot) : nil]
+        [key.to_i, value ? InstallParams.new(value, @bot) : nil]
+      end
+    end
+
+    # @!visibility private
+    # @note For internal use only.
+    def collect_intergration_types
+      new_integration_types = @default_install_contexts.each_with_object({}) do |type, hash|
+        install_params = @integration_types_config[type]
+        hash[type.to_s] = configuration ? { oauth2_install_params: install_params.to_h } : {}
       end
     end
 
