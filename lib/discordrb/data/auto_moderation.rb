@@ -98,11 +98,36 @@ module Discordrb
       update_data(exempt_channels: exempt_channels.map(&:resolve_id))
     end
 
-    # Delete this auto moderation rule.
+    # Delete this automod rule.
     # @param reason [String, nil] the reason for deleting this automod rule.
     def delete(reason = nil)
       API::Server.delete_automod_rule(@bot.token, @server.id, @id, reason)
-      @server.delete_automod_rule(@id)
+    end
+
+    # Edit the actions taken when this automod rule is triggered.
+    # @param custom_message [String, nil] the custom message to show when a message is blocked.
+    # @param alert_channel [Channel, Integer, nil] the channel where user content should be logged.
+    # @param block_message [true, false] whether to block a member's message and prevent it from being posted.
+    # @param timeout_duration [Integer, nil] the duration to timeout a user for when the rule is triggered.
+    # @param block_interaction [true, false] whether to prevent a member from using text, voice, or other interactions.
+    # @param reason [String, nil] the reason for editing the actions of this automod rule.
+    def edit_actions(custom_message: :undef, alert_channel: :undef, block_message: :undef,
+                     timeout_duration: :undef, block_interaction: :undef, reason: nil)
+      new_action = lambda do |type, metadata|
+        { type: type, metadata: metadata.compact } if metadata
+      end
+
+      actions = @actions.to_h { |action| [action.type, action] }
+
+      actions[1] = new_action.call(1, custom_message: custom_message) if block_message != :undef || custom_message != :undef
+
+      actions[2] = new_action.call(2, channel_id: alert_channel&.resolve_id) if alert_channel != :undef
+
+      actions[3] = new_action.call(3, duration_seconds: timeout_duration) if timeout_duration != :undef
+
+      actions[4] = new_action.call(4, block_member_interaction) if block_member_interaction != :undef
+
+      update_data(actions: actions.compact.values.map(&:to_h), reason: reason)
     end
 
     # @!visibility private
@@ -112,7 +137,7 @@ module Discordrb
       @event_type = new_data['event_type']
       @actions = new_data['actions'].map { |action| Action.new(action, @bot) }
       @exempt_roles = new_data['exempt_roles'].map { |role_id| @server.role(role_id) }
-      @exempt_channels = new_data['exempt_channels'].map { |chan_id| @bot.channel(chan_id) }
+      @exempt_channels = new_data['exempt_channels'].filter_map { |chan_id| @bot.channel(chan_id) }
       @trigger = Trigger.new(new_data['trigger_metadata'].merge({ 'type' => new_data['trigger_type'] }), self, @bot)
     end
 
@@ -278,7 +303,7 @@ module Discordrb
         @type = data['type']
         @channel_id = data['metadata']['channel_id']
         @custom_message = data['metadata']['custom_message']
-        @timeout_duration = data['metadata']['timeout_duration']
+        @timeout_duration = data['metadata']['duration_seconds']
       end
 
       # @return [Channel, nil] The channel to which user content should be logged.
@@ -286,8 +311,6 @@ module Discordrb
       def alert_channel
         @bot.channel(@channel_id) if @channel_id
       end
-
-      alias_method :channel, :alert_channel
 
       # @!method block_message?
       #   @return [true, false] whether the type of this action is 1 (block_message).
@@ -312,7 +335,7 @@ module Discordrb
             channel_id: @channel_id,
             timeout_duration: @timeout_duration
           }.compact
-        }.reject(&:empty?)
+        }
       end
     end
   end

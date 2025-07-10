@@ -83,7 +83,7 @@ module Discordrb::Events
 
     # @return [Message, nil] System auto moderation message posted as a result of this action.
     def alert_message
-      @alert_channel ||= automod_rule.actions.find(&:send_alert_message?)&.channel
+      @alert_channel ||= automod_rule.actions.find(&:send_alert_message?)&.alert_channel
 
       @alert_channel&.load_message(@alert_message_id) if @alert_message_id
     end
