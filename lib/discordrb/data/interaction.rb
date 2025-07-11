@@ -406,7 +406,7 @@ module Discordrb
       raise ArgumentError, 'A server ID must be provided for global application commands' if @server_id.nil? && server.nil?
 
       response = JSON.parse(API::Application.get_application_command_permissions(@bot.token, @bot.profile.id, @server_id || server&.resolve_id, @id))
-      response['permissions'].map { |permission| Permission.new(permission.merge('_command' => response.except('permissions')), @bot) }
+      response['permissions'].map { |permission| Permission.new(permission.merge('command' => response.except('permissions')), @bot) }
     end
 
     # An application command permission for a channel, member, or a role.
