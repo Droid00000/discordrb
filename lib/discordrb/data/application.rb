@@ -247,7 +247,7 @@ module Discordrb
 
     # The inspect method is overwritten to give more useful output.
     def inspect
-      "<Application name=#{@name} id=#{@id} public=#{@public} owner=#{@owner&.id} server_id=#{@server_id} tags=#{@tags}>"
+      "<Application name=#{@name} id=#{@id} public=#{@public} owner=#{@owner&.id} server_id=#{@server_id} tags=#{@tags} flags=#{@flags}>"
     end
 
     # @!method automod_rule_badge?
