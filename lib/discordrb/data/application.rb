@@ -329,7 +329,7 @@ module Discordrb
 
     # @!visibility private
     def update_application(new_data)
-      update_data(JSON.parse(API::Application.update_current_applicaton(@bot.token,
+      update_data(JSON.parse(API::Application.update_current_application(@bot.token,
                                                                         new_data[:custom_install_url] || :undef,
                                                                         new_data[:description] || :undef,
                                                                         new_data[:role_connections_verification_url] || :undef,
