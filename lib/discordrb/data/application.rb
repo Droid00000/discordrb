@@ -153,15 +153,15 @@ module Discordrb
 
     # Add an intergration types config for the application.
     # @param type [Integer, String] The type of the intergration type.
-    # @param scopes [Array<String, Symbol>] The default Oauth scopes for the config.
-    # @param permissions [Permissions, String, Integer] The default permissions for the config.
-    def add_intergration_types_config(type:, scopes:, permissions:)
+    # @param scopes [Array<String, Symbol>, nil] The default Oauth scopes for the config.
+    # @param permissions [Permissions, String, Integer, nil] The default permissions for the config.
+    def add_intergration_types_config(type:, scopes: nil, permissions: nil)
       permissions = permisisons.bits if permissions.respond_to?(:bits)
 
       @integration_types_config[type.to_i] = {
-        scopes: scopes.map(&:to_s),
-        permissions: permissions.to_s
-      }
+        scopes: scopes&.map(&:to_s),
+        permissions: permissions&.to_s
+      }.compact
 
       update_application(integration_types_config: collect_integration_types)
     end
