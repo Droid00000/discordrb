@@ -113,9 +113,6 @@ module Discordrb
     # @return [Hash<Integer => InstallParams>] the default scopes and permissions for each supported installation context.
     attr_reader :integration_types_config
 
-    # @return [Array<Integer>] the default supported installation contexts for the application.
-    attr_reader :default_install_contexts
-
     # @return [String, nil] the default custom authorization URL for the application.
     attr_reader :custom_install_url
 
@@ -151,7 +148,7 @@ module Discordrb
     # @param type [Integer, String] the type of the intergration types config to remove.
     def remove_intergration_types_config(type)
       @integration_types_config.delete(type.to_i)
-      update_application(integration_types_config: collect_intergration_types)
+      update_application(integration_types_config: collect_integration_types)
     end
 
     # Add an intergration types config for the application.
@@ -166,7 +163,7 @@ module Discordrb
         permissions: permissions.to_s
       }
 
-      update_application(integration_types_config: collect_intergration_types)
+      update_application(integration_types_config: collect_integration_types)
     end
 
     # Set the icon for the application.
@@ -266,7 +263,7 @@ module Discordrb
     # @!method pending_server_limit_verification?
     #   @return [true, false] if the application has underwent unusual growth that is preventing it from being verified.
     # @!method embedded?
-    #   @return [true, false] if the application is embedded within the Discord client (currently unavailable publicly).
+    #   @return [true, false] if the application is embedded within the Discord application (currently unavailable publicly).
     # @!method message_content_intent?
     #   @return [true, false] if the application is in more than 100 servers and has access to the message content intent.
     # @!method limited_message_content_intent?
@@ -316,26 +313,17 @@ module Discordrb
       @tags = new_data['tags'] || []
       @install_params = new_data['install_params'] ? InstallParams.new(new_data['install_params'], @bot, self) : nil
       @custom_install_url = new_data['custom_install_url']
-      @default_install_contexts = new_data['integration_types_config']&.keys&.map(&:to_i) || []
-      @integration_types_config = process_integration_types(new_data['integration_types_config']).compact
-    end
 
-    # @!visibility private
-    # @note For internal use only.
-    def process_integration_types(integration_types)
-      (integration_types || {}).to_h do |key, value|
-        value = value['oauth2_install_params']
-
-        [key.to_i, value ? InstallParams.new(value, @bot) : nil]
+      @integration_types_config = (new_data['integration_types_config'] || {}).to_h do |key, value|
+        [key.to_i, InstallParams.new(value['oauth2_install_params'] || {}, @bot)]
       end
     end
 
     # @!visibility private
     # @note For internal use only.
-    def collect_intergration_types
-      new_integration_types = @default_install_contexts.each_with_object({}) do |type, hash|
-        install_params = @integration_types_config[type]
-        hash[type.to_s] = configuration ? { oauth2_install_params: install_params.to_h } : {}
+    def collect_integration_types
+      @integration_types_config.each_with_object({}) do |(key, value), result|
+        result[key.to_s] = value.to_h.any? ? { oauth2_install_params: value.to_h } : {}
       end
     end
 

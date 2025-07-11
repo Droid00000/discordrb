@@ -12,16 +12,13 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @scopes = data['scopes']
-      @permissions = Permissions.new(data['permissions'])
+      @scopes = data['scopes'] || []
+      @permissions = data['permissions'] ? Permissions.new(data['permissions']) : nil
     end
 
     # @!visibility private
     def to_h
-      {
-        scopes: @scopes,
-        permissions: @permissions.bits.to_s
-      }
+      { scopes: @scopes.any? ? @scopes : nil, permissions: @permissions&.bits&.to_s }.compact
     end
   end
 end

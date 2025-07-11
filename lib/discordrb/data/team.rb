@@ -10,6 +10,9 @@ module Discordrb
       # @return [Symbol] the role of this team member.
       attr_reader :role
 
+      # @return [Team] the team this member is a part of.
+      attr_reader :team
+
       # @return [Integer] the membership state of this team member.
       attr_reader :state
 
@@ -17,8 +20,9 @@ module Discordrb
       attr_reader :user_id
 
       # @!visibility private
-      def initialize(data, bot)
+      def initialize(data, team, bot)
         @bot = bot
+        @team = team
         @role = data['role'].to_sym
         @state = data['membership_state']
         @user_id = data['user']['id'].to_i
@@ -49,7 +53,7 @@ module Discordrb
     # @return [Member] the owner of this team.
     attr_reader :owner
 
-    # @return [String] the ID of this team's icon. Can be used to generate an icon URL.
+    # @return [String, nil] the ID of this team's icon. Can be used to generate an icon URL.
     # @see #icon_url
     attr_reader :icon_id
 
@@ -62,15 +66,15 @@ module Discordrb
       @id = data['id'].to_i
       @name = data['name']
       @icon_id = data['icon']
-      @members = data['members'].map { |member| Member.new(member, bot) }
+      @members = data['members'].map { |member| Member.new(member, self, bot) }
       @owner = @members.find { |member| member.user_id == data['owner_user_id'].to_i }
     end
 
     # Utility method to get a team's icon URL.
     # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-    # @return [String] the URL of the icon image.
+    # @return [String, nil] the URL to the icon image (nil if no image is set).
     def icon_url(format = 'webp')
-      API.team_icon_url(@id, @icon_id, format)
+      API.team_icon_url(@id, @icon_id, format) if @icon_id
     end
   end
 end
