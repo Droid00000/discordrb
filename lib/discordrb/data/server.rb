@@ -1073,11 +1073,11 @@ module Discordrb
     end
 
     def process_incidents_data(incidents)
-      new_data = incidents || {}
-      @raid_detected_at = new_data['raid_detected_at'] ? Time.parse(new_data['raid_detected_at']) : nil
-      @dms_disabled_until = new_data['dms_disabled_until'] ? Time.parse(new_data['dms_disabled_until']) : nil
-      @dm_spam_detected_at = new_data['dm_spam_detected_at'] ? Time.parse(new_data['dm_spam_detected_at']) : nil
-      @invites_disabled_until = new_data['invites_disabled_until'] ? Time.parse(new_data['invites_disabled_until']) : nil
+      incidents ||= {}
+      @raid_detected_at = incidents['raid_detected_at'] ? Time.parse(incidents['raid_detected_at']) : nil
+      @dms_disabled_until = incidents['dms_disabled_until'] ? Time.parse(incidents['dms_disabled_until']) : nil
+      @dm_spam_detected_at = incidents['dm_spam_detected_at'] ? Time.parse(incidents['dm_spam_detected_at']) : nil
+      @invites_disabled_until = incidents['invites_disabled_until'] ? Time.parse(incidents['invites_disabled_until']) : nil
     end
   end
 
