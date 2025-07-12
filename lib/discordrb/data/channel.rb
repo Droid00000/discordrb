@@ -659,11 +659,29 @@ module Discordrb
 
     alias_method :message, :load_message
 
-    # Requests all pinned messages in a channel.
-    # @return [Array<Message>] the received messages.
-    def pins
-      msgs = API::Channel.pinned_messages(@bot.token, @id)
-      JSON.parse(msgs).map { |msg| Message.new(msg, @bot) }
+    # Requests the pinned messages in a channel.
+    # @param limit [Integer, nil] the limit of how many pinned messages to retrieve. `nil` will return all messages.
+    # @return [Array<Message>] the messages pinned in the channel.
+    def pins(limit: 50)
+      get_pins = proc do |fetch_limit, before = nil|
+        resp = API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before)
+        JSON.parse(resp)['items'].map { |pin| Message.new(pin['message'].merge({ 'pinned_at' => pin['pinned_at'] }), @bot) }
+      end
+
+      # Can be done without pagination.
+      return get_pins.call(limit) if limit && limit <= 50
+
+      paginator = Paginator.new(limit, :down) do |last_page|
+        if last_page && last_page.count < 50
+          []
+        else
+          # Assign a seperate variable so rubocop doesn't complain.
+          page = last_page&.last
+          get_pins.call(50, page&.pinned_at&.iso8601)
+        end
+      end
+
+      paginator.to_a
     end
 
     # Delete the last N messages on this channel.
