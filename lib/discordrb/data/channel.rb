@@ -664,6 +664,7 @@ module Discordrb
     # @return [Array<Message>] the messages pinned in the channel.
     def pins(limit: 50)
       get_pins = proc do |fetch_limit, before = nil|
+        puts "Making one request! #{before} && #{before.class}"
         resp = API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before)
         JSON.parse(resp)['items'].map { |pin| Message.new(pin['message'].merge({ 'pinned_at' => pin['pinned_at'] }), @bot) }
       end
