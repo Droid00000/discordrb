@@ -660,12 +660,11 @@ module Discordrb
     alias_method :message, :load_message
 
     # Requests the pinned messages in a channel.
-    # @param limit [Integer, nil] the limit of how many pinned messages to retrieve. `nil` will return all messages.
+    # @param limit [Integer, nil] the limit of how many pinned messages to retrieve. `nil` will return all the pinned messages.
     # @return [Array<Message>] the messages pinned in the channel.
     def pins(limit: 50)
       get_pins = proc do |fetch_limit, before = nil|
-        puts "Making one request! #{before} && #{before.class}"
-        resp = API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before)
+        resp = API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before&.iso8601)
         JSON.parse(resp)['items'].map { |pin| Message.new(pin['message'].merge({ 'pinned_at' => pin['pinned_at'] }), @bot) }
       end
 
@@ -676,9 +675,7 @@ module Discordrb
         if last_page && last_page.count < 50
           []
         else
-          # Assign a seperate variable so rubocop doesn't complain.
-          page = last_page&.last
-          get_pins.call(50, page&.pinned_at&.iso8601)
+          get_pins.call(50, last_page&.last&.pinned_at)
         end
       end
 
