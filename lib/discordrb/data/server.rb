@@ -867,7 +867,7 @@ module Discordrb
     def invites_disabled_until=(disabled_until)
       raise ArgumentError, 'Invites can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
 
-      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @server.id, disabled_until&.iso8601, :undef)))
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, disabled_until&.iso8601, :undef)))
     end
 
     # Pause the server's DMs, thus stopping any server members that are't friends from direct messaging each other.
@@ -875,7 +875,7 @@ module Discordrb
     def dms_disabled_until=(disabled_until)
       raise ArgumentError, 'Direct messages can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
 
-      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @server.id, :undef, disabled_until&.iso8601)))
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, :undef, disabled_until&.iso8601)))
     end
 
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
