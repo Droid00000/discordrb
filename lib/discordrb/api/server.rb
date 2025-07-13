@@ -630,13 +630,13 @@ module Discordrb::API::Server
 
   # Modify the incident actions for a server.
   # https://discord.com/developers/docs/resources/guild#modify-guild-incident-actions
-  def update_incident_actions(token, server_id, invites_disabled_until = :undef, dms_disabled_until = :undef, reason = nil)
+  def update_incident_actions(token, server_id, invites_disabled_until, dms_disabled_until, reason = nil)
     Discordrb::API.request(
       :guilds_sid_incidents,
       server_id,
       :put,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/incident-actions",
-      { invites_disabled_until: invites_disabled_until, dms_disabled_until: dms_disabled_until }.reject { |_, v| v == :undef }.to_json,
+      { invites_disabled_until: invites_disabled_until, dms_disabled_until: dms_disabled_until }.to_json,
       content_type: :json,
       Authorization: token,
       'X-Audit-Log-Reason': reason
