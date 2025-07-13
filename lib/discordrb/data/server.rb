@@ -866,16 +866,20 @@ module Discordrb
     # @param disabled_until [Time, nil] When invites should be resumed, or nil to immediately resume them.
     def invites_disabled_until=(disabled_until)
       raise ArgumentError, 'Invites can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
+      # The endpoint modifies incident data destructively, so pass in the other values as well.
+      dms_disabled = dms_disabled? ? dms_disabled_until.iso8601 : nil
 
-      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, disabled_until&.iso8601, :undef)))
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, disabled_until&.iso8601, dms_disabled)))
     end
 
     # Pause the server's DMs, thus stopping any server members that are't friends from direct messaging each other.
     # @param disabled_until [Time, nil] When direct messages should be resumed, or nil to immediately resume them.
     def dms_disabled_until=(disabled_until)
       raise ArgumentError, 'Direct messages can be only be paused for a maximum of 24 hours' if disabled_until && disabled_until > (Time.now + 86_400)
+      # The endpoint modifies incident data destructively, so pass in the other values as well.
+      invites_disabled = invites_disabled? ? invites_disabled_until.iso8601 : nil
 
-      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, :undef, disabled_until&.iso8601)))
+      process_incidents_data(JSON.parse(API::Server.update_incident_actions(@bot.token, @id, invites_disabled, disabled_until&.iso8601)))
     end
 
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
