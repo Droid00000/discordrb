@@ -859,7 +859,7 @@ module Discordrb
     # Check if the server has paused invites (stopped new members from joining).
     # @return [true, false]
     def invites_disabled?
-      !@invites_disabled_until.nil? && @invites_disabled_until > Time.now
+      (!@invites_disabled_until.nil? && @invites_disabled_until > Time.now) || @features.include?(:invites_disabled)
     end
 
     # Pause the server's invites, preventing any new members from joining the server.
