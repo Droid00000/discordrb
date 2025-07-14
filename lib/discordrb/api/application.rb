@@ -200,6 +200,18 @@ module Discordrb::API::Application
     )
   end
 
+  # Get the permissions for a specific command in a guild.
+  # https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions
+  def get_application_command_permissions(token, application_id, guild_id, command_id)
+    Discordrb::API.request(
+      :applications_aid_guilds_gid_commands_cid_permissions,
+      guild_id,
+      :get,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/guilds/#{guild_id}/commands/#{command_id}/permissions",
+      Authorization: token
+    )
+  end
+
   # Edit the current application for the requesting bot user.
   # https://discord.com/developers/docs/resources/application#edit-current-application
   def update_current_application(token, custom_install_url = :undef, description = :undef, role_connections_verification_url = :undef, install_params = :undef, integration_types_config = :undef, flags = :undef, interactions_endpoint_url = :undef, tags = :undef, event_webhooks_url = :undef, event_webhooks_status = :undef, event_webhooks_types = :undef, icon = :undef, cover_image = :undef)
