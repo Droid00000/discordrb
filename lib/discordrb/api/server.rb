@@ -632,7 +632,7 @@ module Discordrb::API::Server
   # https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild
   def list_automod_rules(token, server_id)
     Discordrb::API.request(
-      :guilds_sid_automod_rules,
+      :guilds_sid_auto_moderation_rules,
       server_id,
       :get,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/auto-moderation/rules",
@@ -644,7 +644,7 @@ module Discordrb::API::Server
   # https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule
   def get_automod_rule(token, server_id, rule_id)
     Discordrb::API.request(
-      :guilds_sid_automod_rules,
+      :guilds_sid_auto_moderation_rule_rid,
       server_id,
       :get,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/auto-moderation/rules/#{rule_id}",
@@ -656,7 +656,7 @@ module Discordrb::API::Server
   # https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule
   def create_automod_rule(token, server_id, name, event_type, trigger_type, trigger_metadata, actions, enabled, exempt_roles, exempt_channels, reason = nil)
     Discordrb::API.request(
-      :guilds_sid_automod_rules,
+      :guilds_sid_auto_moderation_rules,
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/auto-moderation/rules",
@@ -671,7 +671,7 @@ module Discordrb::API::Server
   # https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule
   def update_automod_rule(token, server_id, rule_id, name = nil, event_type = nil, trigger_metadata = nil, actions = nil, enabled = nil, exempt_roles = nil, exempt_channels = nil, reason = nil)
     Discordrb::API.request(
-      :guilds_sid_automod_rules_rid,
+      :guilds_sid_auto_moderation_rule_rid,
       server_id,
       :patch,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/auto-moderation/rules/#{rule_id}",
@@ -686,7 +686,7 @@ module Discordrb::API::Server
   # https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule
   def delete_automod_rule(token, server_id, rule_id, reason = nil)
     Discordrb::API.request(
-      :guilds_sid_automod_rules_rid,
+      :guilds_sid_auto_moderation_rule_rid,
       server_id,
       :delete,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/auto-moderation/rules/#{rule_id}",
