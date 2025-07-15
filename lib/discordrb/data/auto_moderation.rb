@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # An automatic moderator for a server that can trigger based on a set critera.
+  # Automod rules are a feature which allow a server to set up rules that can trigger based on a criteria.
   class AutoModRule
     include IDObject
 
@@ -15,7 +15,7 @@ module Discordrb
     attr_reader :name
 
     # @return [Integer] the event type of this automod rule.
-    # @see {EVENT_TYPES}
+    # @see EVENT_TYPES
     attr_reader :event_type
 
     # @return [Trigger] how this automod rule can be triggered.
@@ -81,7 +81,7 @@ module Discordrb
     end
 
     # Set the event type of this automod rule.
-    # @param event_type [Symbol, Integer] the new event type of this automod rule.
+    # @param type [Symbol, Integer] the new event type of this automod rule.
     def event_type=(type)
       update_data(event_type: EVENT_TYPES[type] || type)
     end
@@ -100,34 +100,36 @@ module Discordrb
 
     # Delete this automod rule.
     # @param reason [String, nil] the reason for deleting this automod rule.
+    # @return [void]
     def delete(reason = nil)
       API::Server.delete_automod_rule(@bot.token, @server.id, @id, reason)
     end
 
-    # Edit the actions taken when this automod rule is triggered.
-    # @param custom_message [String, nil] the custom message to show when a message is blocked.
-    # @param alert_channel [Channel, Integer, nil] the channel where user content should be logged.
-    # @param block_message [true, false] whether to block a member's message and prevent it from being posted.
-    # @param timeout_duration [Integer, nil] the duration to timeout a user for when the rule is triggered.
-    # @param block_interaction [true, false] whether to prevent a member from using text, voice, or other interactions.
-    # @param reason [String, nil] the reason for editing the actions of this automod rule.
-    def edit_actions(custom_message: :undef, alert_channel: :undef, block_message: :undef,
-                     timeout_duration: :undef, block_interaction: :undef, reason: nil)
-      new_action = lambda do |type, metadata|
-        { type: type, metadata: metadata.compact } if metadata
+    # Add one or more actions that will execute when this automod rule is triggered.
+    # @note Creating a new action for an existing type will overwrite the current one.
+    # @yieldparam [ActionBuilder]
+    # @return [void]
+    def add_actions
+      yield (builder = ActionBuilder.new)
+
+      actions = @actions.to_h { |actio| [actio.type, actio] }
+
+      update_data(actions: actions.merge(builder.to_h).values)
+    end
+
+    # Delete one or more actions from this automod rule.
+    # @param types [Array<Integer, Symbol>, Integer, Symbol] the action type(s) to delete.
+    # @return [void]
+    def delete_actions(types)
+      types = [*types].map do |type|
+        Action::TYPES[type] || type
       end
 
-      actions = @actions.to_h { |action| [action.type, action] }
+      actions = actions.reject do |action|
+        types.include?(action.type)
+      end
 
-      actions[1] = new_action.call(1, custom_message: custom_message) if block_message != :undef || custom_message != :undef
-
-      actions[2] = new_action.call(2, channel_id: alert_channel&.resolve_id) if alert_channel != :undef
-
-      actions[3] = new_action.call(3, duration_seconds: timeout_duration) if timeout_duration != :undef
-
-      actions[4] = new_action.call(4, block_member_interaction) if block_member_interaction != :undef
-
-      update_data(actions: actions.compact.values.map(&:to_h), reason: reason)
+      update_data(actions: actions.map(&:to_h))
     end
 
     # @!visibility private
@@ -170,7 +172,7 @@ module Discordrb
       }.freeze
 
       # @return [Integer] the type of this automod trigger.
-      # @see {TYPES}
+      # @see TYPES
       attr_reader :type
 
       # @return [Array<String>] substrings that can trigger the automod rule.
@@ -180,7 +182,7 @@ module Discordrb
       attr_reader :regex_patterns
 
       # @return [Array<Integer>] set of word types that can trigger the automod rule.
-      # @see {PRESET_TYPES}
+      # @see PRESET_TYPES
       attr_reader :keyword_presets
 
       # @return [Array<String>] substrings that should not trigger the automod rule.
@@ -231,13 +233,13 @@ module Discordrb
       end
 
       # Set whether mention raid protection is enabled for the rule or not.
-      # @param mention_raid_protection [true, false]
+      # @param raid_protection [true, false]
       def mention_raid_protection=(raid_protection)
         @rule.update_data(trigger: to_h.merge(mention_raid_protection_enabled: raid_protection))
       end
 
       # Set the keyword presets for this rule.
-      # @param keyword_presets [Array<Integer, Symbol>]
+      # @param presets [Array<Integer, Symbol>]
       def keyword_presets=(presets)
         presets.map! { |type| PRESET_TYPES[type] || type }
 
@@ -286,7 +288,7 @@ module Discordrb
       }.freeze
 
       # @return [Integer] the type of action that will execute.
-      # @see {TYPES}
+      # @see TYPES
       attr_reader :type
 
       # @return [Integer, nil] the timeout duration for this action.
@@ -336,6 +338,34 @@ module Discordrb
             timeout_duration: @timeout_duration
           }.compact
         }
+      end
+    end
+
+    # Builder for automod actions.
+    class ActionBuilder
+      # @return [Array<Hash>]
+      attr_reader :actions
+      alias_method :to_a, :actions
+
+      # @!visibility private
+      def initialize
+        @actions = []
+      end
+
+      # Add an action to the builder.
+      # @param type [Integer, String, Symbol] the type of the action to create. See {Action::TYPES}.
+      # @param alert_channel [Integer, String, Channel, nil] the channel to which user content should be logged.
+      # @param timeout_duration [Integer, nil] the duration of the timeout in seconds.
+      # @param custom_message [String, nil] the additional explanation that will be shown to members when their message is blocked.
+      def action(type:, alert_channel: nil, timeout_duration: nil, custom_message: nil)
+        metadata = { channel_id: alert_channel&.resolve_id, duration_seconds: timeout_duration, custom_message: custom_message }.compact
+
+        @actions << { type: type.is_a?(Numeric) ? type : Action::TYPES[type.to_sym], metadata: metadata.empty? ? nil : metadata }.compact
+      end
+
+      # @return [Hash<Integer => Hash>]
+      def to_h
+        @actions.to_h { |action| [action[:type], action] }
       end
     end
   end
