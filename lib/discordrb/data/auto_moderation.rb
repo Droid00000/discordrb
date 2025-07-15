@@ -179,6 +179,7 @@ module Discordrb
       attr_reader :keyword_filter
 
       # @return [Array<String>] regex patterns that when matched can trigger this rule.
+      # @note the regex patterns will be rust-flavoured. Each regex pattern must be 260 characters or less.
       attr_reader :regex_patterns
 
       # @return [Array<Integer>] set of word types that can trigger the automod rule.
@@ -291,7 +292,7 @@ module Discordrb
       # @see TYPES
       attr_reader :type
 
-      # @return [Integer, nil] the timeout duration for this action.
+      # @return [Integer, nil] the timeout duration in seconds for this action.
       # @note Only returns a non-nil value when the action type is 3 (timeout).
       attr_reader :timeout_duration
 
