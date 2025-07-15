@@ -673,6 +673,51 @@ module Discordrb
       register_event(ApplicationCommandPermissionsUpdateEvent, attributes, block)
     end
 
+    # This **event** is raised whenever an automod rule is created.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Regexp] :name A name to match against.
+    # @option attributes [String, Integer, AutoModRule] :automod_rule An automod rule to match against.
+    # @option attributes [String, Integer, User, Member] :creator A creator to match against.
+    # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
+    # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [AutomodRuleCreateEvent] The event that was raised.
+    # @return [AutomodRuleCreateEventHandler] The event handler that was registered.
+    def automod_rule_create(attributes = {}, &block)
+      register_event(AutomodRuleCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an automod rule is updated.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Regexp] :name A name to match against.
+    # @option attributes [String, Integer, AutoModRule] :automod_rule An automod rule to match against.
+    # @option attributes [String, Integer, User, Member] :creator A creator to match against.
+    # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
+    # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [AutomodRuleUpdateEvent] The event that was raised.
+    # @return [AutomodRuleUpdateEventHandler] The event handler that was registered.
+    def automod_rule_update(attributes = {}, &block)
+      register_event(AutomodRuleUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an automod rule is deleted.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Regexp] :name A name to match against.
+    # @option attributes [String, Integer, AutoModRule] :automod_rule An automod rule to match against.
+    # @option attributes [String, Integer, User, Member] :creator A creator to match against.
+    # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
+    # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [AutomodRuleDeleteEvent] The event that was raised.
+    # @return [AutomodRuleDeleteEventHandler] The event handler that was registered.
+    def automod_rule_delete(attributes = {}, &block)
+      register_event(AutomodRuleDeleteEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.

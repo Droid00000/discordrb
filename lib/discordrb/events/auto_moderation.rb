@@ -100,6 +100,15 @@ module Discordrb::Events
           a.resolve_id == e
         end,
 
+        matches_all(@attributes[:name], event.automod_rule.name) do |a, e|
+          case a
+          when String, Symbol
+            a.to_s == e
+          when Regexp
+            a.match?(e)
+          end
+        end,
+
         matches_all(@attributes[:automod_rule], event.automod_rule) do |a, e|
           a.resolve_id == e
         end,
@@ -158,7 +167,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            a.match?(e) if e
+            e ? a.match?(e) : false
           end
         end,
 
@@ -176,7 +185,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            a.match?(e) if e
+            e ? a.match?(e) : false
           end
         end,
 
@@ -185,7 +194,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            a.match?(e) if e
+            e ? a.match?(e) : false
           end
         end,
 
