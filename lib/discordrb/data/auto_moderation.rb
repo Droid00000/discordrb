@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # Automod rules are a feature which allow a server to set up rules that can trigger based on a criteria.
+  # Automod rules allow a server to set up rules that can trigger based on a criteria.
+  #   These rules can take "moderator" actions such as timing out a user when a specific word is said.
   class AutoModRule
     include IDObject
 
@@ -60,9 +61,9 @@ module Discordrb
     def exempt?(other)
       case other
       when Discordrb::Member
-        other.permission?(:manage_server) || other.roles.intersect?(exempt_roles)
+        other.permission?(:manage_server) || other.roles.intersect?(@exempt_roles)
       when Role, Channel
-        exempt_roles.any?(other) || exempt_channels.any?(other)
+        @exempt_roles.any?(other) || @exempt_channels.any?(other)
       else
         raise ArgumentError, "Unsupported type: #{other.class}"
       end
@@ -125,7 +126,7 @@ module Discordrb
         Action::TYPES[type] || type
       end
 
-      actions = actions.reject do |action|
+      actions = @actions.reject do |action|
         types.include?(action.type)
       end
 
