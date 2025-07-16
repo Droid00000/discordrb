@@ -230,7 +230,7 @@ module Discordrb
       # Set the substrings that should not trigger the automod rule.
       # @param exempt_keywords [Array<String>]
       def exempt_keywords=(exempt_keywords)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         @rule.update_data(trigger: to_h.merge(allow_list: exempt_keywords))
       end
@@ -238,7 +238,7 @@ module Discordrb
       # Set the regex patterns that can trigger the automod rule.
       # @param regex_patterns [Array<String>]
       def regex_patterns=(regex_patterns)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         @rule.update_data(trigger: to_h.merge(regex_patterns: regex_patterns))
       end
@@ -246,7 +246,7 @@ module Discordrb
       # Set the substrings that can trigger the automod rule.
       # @param keyword_filter [Array<String>]
       def keyword_filter=(keyword_filter)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         @rule.update_data(trigger: to_h.merge(keyword_filter: keyword_filter))
       end
@@ -254,7 +254,7 @@ module Discordrb
       # Set the maximum amount of unique mentions allowed for the rule.
       # @param mention_limit [Integer]
       def total_mention_limit=(mention_limit)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         @rule.update_data(trigger: to_h.merge(mention_total_limit: mention_limit))
       end
@@ -262,7 +262,7 @@ module Discordrb
       # Set whether mention raid protection is enabled for the rule or not.
       # @param raid_protection [true, false]
       def mention_raid_protection=(raid_protection)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         @rule.update_data(trigger: to_h.merge(mention_raid_protection_enabled: raid_protection))
       end
@@ -270,7 +270,7 @@ module Discordrb
       # Set the keyword presets for this rule.
       # @param presets [Array<Integer, Symbol>]
       def keyword_presets=(presets)
-        validate_trigger(__method__)
+        validate_trigger(field: __method__)
 
         presets.map! { |type| PRESET_TYPES[type] || type }
 
@@ -296,7 +296,7 @@ module Discordrb
       end
 
       # @!visibility private
-      def validate_trigger(field)
+      def validate_trigger(field:)
         value = case field.to_s.delete_suffix('=').to_sym
                 when :total_mention_limit, :mention_raid_protection
                   mention_spam?
