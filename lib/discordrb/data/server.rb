@@ -476,6 +476,20 @@ module Discordrb
       end
     end
 
+    # Add an automod rule to the cache.
+    # @note For internal use only
+    # @!visibility private
+    def cache_automod_rule(rule)
+      @automod_rules[rule.id] = rule
+    end
+
+    # Delete an existing automod rule from the cache.
+    # @note For internal use only
+    # @!visibility private
+    def delete_automod_rule(rule)
+      @automod_rules.delete(rule.resolve_id)
+    end
+
     # Creates a channel on this server with the given name.
     # @note If parent is provided, permission overwrites have the follow behavior:
     #
