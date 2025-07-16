@@ -118,6 +118,8 @@ module Discordrb
       update_data(actions: actions.merge(builder.to_h).values)
     end
 
+    alias_method :add_action, :add_actions
+
     # Delete one or more actions from this automod rule.
     # @param types [Array<Integer, Symbol>, Integer, Symbol] the action type(s) to delete.
     # @return [void]
@@ -132,6 +134,8 @@ module Discordrb
 
       update_data(actions: actions.map(&:to_h))
     end
+
+    alias_method :delete_action, :delete_actions
 
     # @!visibility private
     def from_other(new_data)
@@ -359,6 +363,8 @@ module Discordrb
       # @param alert_channel [Integer, String, Channel, nil] the channel to which user content should be logged.
       # @param timeout_duration [Integer, nil] the duration of the timeout in seconds.
       # @param custom_message [String, nil] the additional explanation that will be shown to members when their message is blocked.
+      # @note Certain types require certain arguments to be passed. To learn which types require which arguments to be passed, please refer to:
+      #   https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object
       def action(type:, alert_channel: nil, timeout_duration: nil, custom_message: nil)
         metadata = { channel_id: alert_channel&.resolve_id, duration_seconds: timeout_duration, custom_message: custom_message }.compact
 
