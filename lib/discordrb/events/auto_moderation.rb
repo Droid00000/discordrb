@@ -18,20 +18,20 @@ module Discordrb::Events
   end
 
   # Raised when an auto moderation rule is created.
-  class AutomodRuleCreateEvent < AutoModRuleEvent; end
+  class AutoModRuleCreateEvent < AutoModRuleEvent; end
 
   # Raised when an auto moderation rule is updated.
-  class AutomodRuleUpdateEvent < AutoModRuleEvent; end
+  class AutoModRuleUpdateEvent < AutoModRuleEvent; end
 
   # Raised when an auto moderation rule is deleted.
-  class AutomodRuleDeleteEvent < AutoModRuleEvent
+  class AutoModRuleDeleteEvent < AutoModRuleEvent
     # Override the initializer, since the event provides the rule,
     #   but it won't exist in the cache because it was just deleted.
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
       @server = bot.server(data['guild_id'].to_i)
-      @automod_rule = Discordrb::AutomodRule.new(data, bot, server)
+      @automod_rule = Discordrb::AutoModRule.new(data, bot, server)
     end
   end
 
@@ -138,7 +138,7 @@ module Discordrb::Events
         matches_all(@attributes[:event_type], event.automod_rule.event_type) do |a, e|
           case a
           when Symbol, String
-            e == Discordrb::AutomodRule::EVENT_TYPES[a.to_sym]
+            e == Discordrb::AutoModRule::EVENT_TYPES[a.to_sym]
           when Integer
             e == a
           end
@@ -147,7 +147,7 @@ module Discordrb::Events
         matches_all(@attributes[:trigger_type], event.automod_rule.trigger_type) do |a, e|
           case a
           when Symbol, String
-            e == Discordrb::AutomodRule::Trigger::TYPES[a.to_sym]
+            e == Discordrb::AutoModRule::Trigger::TYPES[a.to_sym]
           when Integer
             e == a
           end
@@ -192,7 +192,7 @@ module Discordrb::Events
         matches_all(@attributes[:trigger_type], event.trigger_type) do |a, e|
           case a
           when Symbol, String
-            e == Discordrb::AutomodRule::Trigger::TYPES[a.to_sym]
+            e == Discordrb::AutoModRule::Trigger::TYPES[a.to_sym]
           when Integer
             e == a
           end
@@ -219,7 +219,7 @@ module Discordrb::Events
         matches_all(@attributes[:event_type], event.automod_rule.event_type) do |a, e|
           case a
           when Symbol, String
-            e == Discordrb::AutomodRule::EVENT_TYPES[a.to_sym]
+            e == Discordrb::AutoModRule::EVENT_TYPES[a.to_sym]
           when Integer
             e == a
           end
