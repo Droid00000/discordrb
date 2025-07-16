@@ -35,6 +35,64 @@ module Discordrb::Events
     end
   end
 
+  # Event handler for generic auto-moderation rule events.
+  class AutoModRuleEventHandler < EventHandler
+    # @!visibility private
+    def matches?(event)
+      return false unless event.is_a? AutoModRuleEvent
+
+      [
+        matches_all(@attributes[:server], event.server) do |a, e|
+          a.resolve_id == e
+        end,
+
+        matches_all(@attributes[:name], event.automod_rule.name) do |a, e|
+          case a
+          when String, Symbol
+            a.to_s == e
+          when Regexp
+            a.match?(e)
+          end
+        end,
+
+        matches_all(@attributes[:automod_rule], event.automod_rule) do |a, e|
+          a.resolve_id == e
+        end,
+
+        matches_all(@attributes[:creator], event.automod_rule.creator) do |a, e|
+          a.resolve_id == e
+        end,
+
+        matches_all(@attributes[:event_type], event.automod_rule.event_type) do |a, e|
+          case a
+          when Symbol, String
+            e == Discordrb::AutoModRule::EVENT_TYPES[a.to_sym]
+          when Integer
+            e == a
+          end
+        end,
+
+        matches_all(@attributes[:trigger_type], event.automod_rule.trigger_type) do |a, e|
+          case a
+          when Symbol, String
+            e == Discordrb::AutoModRule::Trigger::TYPES[a.to_sym]
+          when Integer
+            e == a
+          end
+        end
+      ].reduce(true, &:&)
+    end
+  end
+
+  # Event handler for :AUTO_MODERATION_RULE_CREATE events.
+  class AutoModRuleCreateEventHandler < AutoModRuleEventHandler; end
+
+  # Event handler for :AUTO_MODERATION_RULE_UPDATE events.
+  class AutoModRuleUpdateEventHandler < AutoModRuleEventHandler; end
+
+  # Event handler for :AUTO_MODERATION_RULE_DELETE events.
+  class AutoModRuleDeleteEventHandler < AutoModRuleEventHandler; end
+
   # This event is raised whenever an automod rule is triggered.
   class AutoModActionEvent < Event
     # @!visibility private
@@ -104,55 +162,6 @@ module Discordrb::Events
       @alert_channel ||= automod_rule.actions.find(&:send_alert_message?)&.alert_channel
 
       @alert_channel&.load_message(@alert_message_id) if @alert_message_id
-    end
-  end
-
-  # Event handler for generic auto-moderation rule events.
-  class AutoModRuleEventHandler < EventHandler
-    # @!visibility private
-    def matches?(event)
-      return false unless event.is_a? AutoModRuleEvent
-
-      [
-        matches_all(@attributes[:server], event.server) do |a, e|
-          a.resolve_id == e
-        end,
-
-        matches_all(@attributes[:name], event.automod_rule.name) do |a, e|
-          case a
-          when String, Symbol
-            a.to_s == e
-          when Regexp
-            a.match?(e)
-          end
-        end,
-
-        matches_all(@attributes[:automod_rule], event.automod_rule) do |a, e|
-          a.resolve_id == e
-        end,
-
-        matches_all(@attributes[:creator], event.automod_rule.creator) do |a, e|
-          a.resolve_id == e
-        end,
-
-        matches_all(@attributes[:event_type], event.automod_rule.event_type) do |a, e|
-          case a
-          when Symbol, String
-            e == Discordrb::AutoModRule::EVENT_TYPES[a.to_sym]
-          when Integer
-            e == a
-          end
-        end,
-
-        matches_all(@attributes[:trigger_type], event.automod_rule.trigger_type) do |a, e|
-          case a
-          when Symbol, String
-            e == Discordrb::AutoModRule::Trigger::TYPES[a.to_sym]
-          when Integer
-            e == a
-          end
-        end
-      ].reduce(true, &:&)
     end
   end
 

@@ -635,14 +635,14 @@ module Discordrb
 
     # Create an automod rule on this server. Requires the `manage_server` permission.
     # @param name [String] The name of the automod rule to create.
-    # @param event_type [Integer, Symbol] The event type of the automod rule. See {Discordrb::AutomodRule::EVENT_TYPES}.
-    # @param trigger_type [Integer, Symbol] The type of the automod rule's trigger. See {Discordrb::AutomodRule::Trigger::TYPES}.
+    # @param event_type [Integer, Symbol] The event type of the automod rule. See {AutoModRule::EVENT_TYPES}.
+    # @param trigger_type [Integer, Symbol] The type of the automod rule's trigger. See {AutoModRule::Trigger::TYPES}.
     # @param enabled [true, false] Whether the automod rule should be enabled. False by default.
     # @param exempt_roles [Array<Integer, String, Role>] The roles that should be ignored by the automod rule. Max of 20.
     # @param exempt_channels [Array<Integer, String, Channel>] The channels that should be ignored by the automod rule. Max of 50.
     # @param keyword_filter [Array<String>, nil] The substrings that should trigger the automod rule.
     # @param regex_patterns [Array<String>, nil] Rust flavoured regex patterns that when matched can trigger the automod rule.
-    # @param keyword_presets [Array<Integer, Symbol>, nil] Set of word types that can trigger the automod rule. See {Discordrb::AutomodRule::Trigger::PRESET_TYPES}.
+    # @param keyword_presets [Array<Integer, Symbol>, nil] Set of word types that can trigger the automod rule. See {AutoModRule::Trigger::PRESET_TYPES}.
     # @param exempt_keywords [Array<String>, nil] Substrings that should not trigger the automod rule.
     # @param mention_limit [Integer, nil] The total number of unique role and user mentions allowed per message.
     # @param mention_raid_protection [true, false, nil] Whether the automod rule should automatically detect mention raids.
@@ -666,8 +666,8 @@ module Discordrb
 
       yield (builder = AutoModRule::ActionBuilder.new)
 
-      response = API::Server.create_automod_rule(@bot.token, @id, name, AutomodRule::EVENT_TYPES[event_type] || event_type,
-                                                 AutomodRule::Trigger::TYPES[trigger_type] || trigger_type, metadata, builder.to_a, enabled,
+      response = API::Server.create_automod_rule(@bot.token, @id, name, AutoModRule::EVENT_TYPES[event_type] || event_type,
+                                                 AutoModRule::Trigger::TYPES[trigger_type] || trigger_type, metadata, builder.to_a, enabled,
                                                  exempt_roles.map(&:resolve_id), exempt_channels.map(&:resolve_id), reason)
       rule = AutoModRule.new(JSON.parse(response), @bot, self)
       @automod_rules[rule.id] = rule

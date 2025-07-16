@@ -682,10 +682,10 @@ module Discordrb
     # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
     # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
     # @yield The block is executed when the event is raised.
-    # @yieldparam event [AutomodRuleCreateEvent] The event that was raised.
-    # @return [AutomodRuleCreateEventHandler] The event handler that was registered.
+    # @yieldparam event [AutoModRuleCreateEvent] The event that was raised.
+    # @return [AutoModRuleCreateEventHandler] The event handler that was registered.
     def automod_rule_create(attributes = {}, &block)
-      register_event(AutomodRuleCreateEvent, attributes, block)
+      register_event(AutoModRuleCreateEvent, attributes, block)
     end
 
     # This **event** is raised whenever an automod rule is updated.
@@ -697,10 +697,10 @@ module Discordrb
     # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
     # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
     # @yield The block is executed when the event is raised.
-    # @yieldparam event [AutomodRuleUpdateEvent] The event that was raised.
-    # @return [AutomodRuleUpdateEventHandler] The event handler that was registered.
+    # @yieldparam event [AutoModRuleUpdateEvent] The event that was raised.
+    # @return [AutoModRuleUpdateEventHandler] The event handler that was registered.
     def automod_rule_update(attributes = {}, &block)
-      register_event(AutomodRuleUpdateEvent, attributes, block)
+      register_event(AutoModRuleUpdateEvent, attributes, block)
     end
 
     # This **event** is raised whenever an automod rule is deleted.
@@ -712,10 +712,10 @@ module Discordrb
     # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
     # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
     # @yield The block is executed when the event is raised.
-    # @yieldparam event [AutomodRuleDeleteEvent] The event that was raised.
-    # @return [AutomodRuleDeleteEventHandler] The event handler that was registered.
+    # @yieldparam event [AutoModRuleDeleteEvent] The event that was raised.
+    # @return [AutoModRuleDeleteEventHandler] The event handler that was registered.
     def automod_rule_delete(attributes = {}, &block)
-      register_event(AutomodRuleDeleteEvent, attributes, block)
+      register_event(AutoModRuleDeleteEvent, attributes, block)
     end
 
     # This **event** is raised whenever an automod rule is triggered and takes an action, e.g. blocking a message.
