@@ -69,6 +69,18 @@ module Discordrb
       end
     end
 
+    # @return [true, false] whether this rule can be triggered
+    #   when a member sends or edits a message in the server.
+    def message_send?
+      @event_type == EVENT_TYPES[:message_send]
+    end
+
+    # @return [true, false] whether this rule can be triggered
+    #   when a member edits their profile.
+    def member_update?
+      @event_type == EVENT_TYPES[:member_update]
+    end
+
     # Set the name of this automod rule.
     # @param name [String] the new name of this automod rule.
     def name=(name)
