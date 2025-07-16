@@ -17,6 +17,24 @@ module Discordrb::Events
     end
   end
 
+  # Raised when an auto moderation rule is created.
+  class AutomodRuleCreateEvent < AutoModRuleEvent; end
+
+  # Raised when an auto moderation rule is updated.
+  class AutomodRuleUpdateEvent < AutoModRuleEvent; end
+
+  # Raised when an auto moderation rule is deleted.
+  class AutomodRuleDeleteEvent < AutoModRuleEvent
+    # Override the initializer, since the event provides the rule,
+    #   but it won't exist in the cache because it was just deleted.
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @server = bot.server(data['guild_id'].to_i)
+      @automod_rule = Discordrb::AutomodRule.new(data, bot, server)
+    end
+  end
+
   # This event is raised whenever an automod rule is triggered.
   class AutoModActionEvent < Event
     # @!visibility private
