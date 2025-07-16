@@ -104,6 +104,7 @@ module Discordrb
     # @return [void]
     def delete(reason = nil)
       API::Server.delete_automod_rule(@bot.token, @server.id, @id, reason)
+      server.delete_automod_rule(@id)
     end
 
     # Add one or more actions that will execute when this automod rule is triggered.
