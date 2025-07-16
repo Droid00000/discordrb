@@ -718,6 +718,24 @@ module Discordrb
       register_event(AutomodRuleDeleteEvent, attributes, block)
     end
 
+    # This **event** is raised whenever an automod rule is triggered and takes an action, e.g. blocking a message.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Member] :user The user which generated the content that triggered the rule to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Integer, Channel] :channel channel in which user content was posted to match against.
+    # @option attributes [String, Integer, AutoModRule] :automod_rule An automod rule to match against.
+    # @option attributes [String, Regexp] :content User generated content which triggered the rule to match against.
+    # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
+    # @option attributes [String, Regexp] :matched_content The substring in content that triggered the rule to match against.
+    # @option attributes [String, Regexp] :matched_keyword The keyword or phrase that triggered the rule to match against.
+    # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [AutoModActionEvent] The event that was raised.
+    # @return [AutoModActionEventHandler] The event handler that was registered.
+    def automod_action(attributes = {}, &block)
+      register_event(AutoModActionEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.
