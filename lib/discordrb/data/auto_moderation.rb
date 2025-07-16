@@ -150,7 +150,7 @@ module Discordrb
 
     # @!visibility private
     def update_data(new_data)
-      from_other(JSON.parse(API::Server.update_automod_rule(@bot.token, @server.id, @id,
+      from_other(JSON.parse(API::Server.update_automod_rule(@bot.token, server.id, @id,
                                                             new_data[:name], new_data[:event_type],
                                                             new_data[:trigger], new_data[:actions],
                                                             new_data[:enabled], new_data[:exempt_roles],
@@ -176,14 +176,14 @@ module Discordrb
         slurs: 3
       }.freeze
 
-      # @return [Integer] the type of this automod trigger.
+      # @return [Integer] the type of the automod rule's trigger.
       # @see TYPES
       attr_reader :type
 
       # @return [Array<String>] substrings that can trigger the automod rule.
       attr_reader :keyword_filter
 
-      # @return [Array<String>] regex patterns that when matched can trigger this rule.
+      # @return [Array<String>] regex patterns that when matched can trigger the automod rule.
       # @note the regex patterns will be rust-flavoured. Each regex pattern must be 260 characters or less.
       attr_reader :regex_patterns
 
@@ -349,10 +349,6 @@ module Discordrb
 
     # Builder for automod actions.
     class ActionBuilder
-      # @return [Array<Hash>]
-      attr_reader :actions
-      alias_method :to_a, :actions
-
       # @!visibility private
       def initialize
         @actions = []
@@ -371,6 +367,13 @@ module Discordrb
         @actions << { type: type.is_a?(Numeric) ? type : Action::TYPES[type.to_sym], metadata: metadata.empty? ? nil : metadata }.compact
       end
 
+      # @!visibility private
+      # @return [Array<Hash>]
+      def to_a
+        to_h.values
+      end
+
+      # @!visibility private
       # @return [Hash<Integer => Hash>]
       def to_h
         @actions.to_h { |action| [action[:type], action] }
