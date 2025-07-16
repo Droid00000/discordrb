@@ -33,8 +33,8 @@ module Discordrb
     direct_messages: 1 << 12,
     direct_message_reactions: 1 << 13,
     direct_message_typing: 1 << 14,
-    server_auto_moderation: 1 << 20,
-    server_auto_moderation_exection: 1 << 21
+    server_automod: 1 << 20,
+    server_automod_execution: 1 << 21
   }.freeze
 
   # All available intents
