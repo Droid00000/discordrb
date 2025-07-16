@@ -20,6 +20,7 @@ require 'discordrb/events/webhooks'
 require 'discordrb/events/invites'
 require 'discordrb/events/interactions'
 require 'discordrb/events/threads'
+require 'discordrb/events/auto_moderation'
 
 require 'discordrb/api'
 require 'discordrb/api/channel'
