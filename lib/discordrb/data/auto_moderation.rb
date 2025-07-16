@@ -208,7 +208,7 @@ module Discordrb
       attr_reader :exempt_keywords
 
       # @return [Integer] total number of unique role and user mentions allowed per message.
-      attr_reader :mention_limit
+      attr_reader :total_mention_limit
 
       # @return [true, false] whether the automod rule will automatically detect mention raids.
       attr_reader :mention_raid_protection
@@ -223,43 +223,55 @@ module Discordrb
         @regex_patterns = data['regex_patterns'] || []
         @keyword_presets = data['presets'] || []
         @exempt_keywords = data['allow_list'] || []
-        @mention_limit = data['mention_total_limit'] || 0
+        @total_mention_limit = data['mention_total_limit'] || 0
         @mention_raid_protection = data['mention_raid_protection_enabled'] || false
       end
 
       # Set the substrings that should not trigger the automod rule.
       # @param exempt_keywords [Array<String>]
       def exempt_keywords=(exempt_keywords)
+        validate_trigger(__method__)
+
         @rule.update_data(trigger: to_h.merge(allow_list: exempt_keywords))
       end
 
       # Set the regex patterns that can trigger the automod rule.
       # @param regex_patterns [Array<String>]
       def regex_patterns=(regex_patterns)
+        validate_trigger(__method__)
+
         @rule.update_data(trigger: to_h.merge(regex_patterns: regex_patterns))
       end
 
       # Set the substrings that can trigger the automod rule.
       # @param keyword_filter [Array<String>]
       def keyword_filter=(keyword_filter)
+        validate_trigger(__method__)
+
         @rule.update_data(trigger: to_h.merge(keyword_filter: keyword_filter))
       end
 
       # Set the maximum amount of unique mentions allowed for the rule.
       # @param mention_limit [Integer]
-      def mention_limit=(mention_limit)
+      def total_mention_limit=(mention_limit)
+        validate_trigger(__method__)
+
         @rule.update_data(trigger: to_h.merge(mention_total_limit: mention_limit))
       end
 
       # Set whether mention raid protection is enabled for the rule or not.
       # @param raid_protection [true, false]
       def mention_raid_protection=(raid_protection)
+        validate_trigger(__method__)
+
         @rule.update_data(trigger: to_h.merge(mention_raid_protection_enabled: raid_protection))
       end
 
       # Set the keyword presets for this rule.
       # @param presets [Array<Integer, Symbol>]
       def keyword_presets=(presets)
+        validate_trigger(__method__)
+
         presets.map! { |type| PRESET_TYPES[type] || type }
 
         @rule.update_data(trigger: to_h.merge(presets: presets))
@@ -284,14 +296,30 @@ module Discordrb
       end
 
       # @!visibility private
+      def validate_trigger(field)
+        value = case field.to_s.delete_suffix('=').to_sym
+                when :total_mention_limit, :mention_raid_protection
+                  mention_spam?
+                when :keyword_presets
+                  keyword_preset?
+                when :keyword_filter, :regex_patterns
+                  keyword? || member_profile?
+                when :exempt_keywords
+                  keyword? || keyword_preset? || member_profile?
+                end
+
+        raise "Cannot set #{field} for trigger type #{@type}" unless value
+      end
+
+      # @!visibility private
       def to_h
         {
-          keyword_filter: keyword_filter,
-          regex_patterns: regex_patterns,
-          presets: keyword_presets,
-          allow_list: exempt_keywords,
-          mention_total_limit: mention_limit,
-          mention_raid_protection_enabled: mention_raid_protection
+          keyword_filter: @keyword_filter,
+          regex_patterns: @regex_patterns,
+          presets: @keyword_presets,
+          allow_list: @exempt_keywords,
+          mention_total_limit: @total_mention_limit,
+          mention_raid_protection_enabled: @mention_raid_protection
         }.compact
       end
     end
