@@ -608,7 +608,7 @@ module Discordrb
       return @automod_rules[id] if @automod_rules[id]
       return nil unless request
 
-      rule = AutoModRule.new(API::Server.get_automod_rule(@bot.token, @id, id), @bot, self)
+      rule = AutoModRule.new(JSON.parse(API::Server.get_automod_rule(@bot.token, @id, id)), @bot, self)
       @automod_rules[rule.id] = rule
     rescue StandardError
       nil
@@ -619,8 +619,8 @@ module Discordrb
     def automod_rules
       return @automod_rules if @rules_requested
 
-      JSON.parse(API::Server.list_automod_rules(@bot.token, @id)).map do |data|
-        rule = AutoModRule.new(data, @bot, self)
+      JSON.parse(API::Server.list_automod_rules(@bot.token, @id)).map do |rule|
+        rule = AutoModRule.new(rule, @bot, self)
         @automod_rules[rule.id] = rule
       end
 
