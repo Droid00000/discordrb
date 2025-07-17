@@ -150,6 +150,11 @@ module Discordrb
 
     alias_method :delete_action, :delete_actions
 
+    # The default `inspect` method is overwritten to give more useful output.
+    def inspect
+      "<AutoModRule name=#{@name} creator_id=#{@creator_id} enabled=#{@enabled} server_id=#{@server_id} exempt_roles=#{@exempt_roles.map(&:resolve_id)} exempt_channels=#{@exempt_channels.map(&:resolve_id)} event_type=#{@event_type}>"
+    end
+
     # @!visibility private
     def from_other(new_data)
       @name = new_data['name']
