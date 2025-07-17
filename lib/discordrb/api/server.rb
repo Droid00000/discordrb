@@ -670,7 +670,6 @@ module Discordrb::API::Server
   # Update an auto-moderation rule in the server.
   # https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule
   def update_automod_rule(token, server_id, rule_id, name = nil, event_type = nil, trigger_metadata = nil, actions = nil, enabled = nil, exempt_roles = nil, exempt_channels = nil, reason = nil)
-    puts actions.inspect
     Discordrb::API.request(
       :guilds_sid_auto_moderation_rules_rid,
       server_id,
