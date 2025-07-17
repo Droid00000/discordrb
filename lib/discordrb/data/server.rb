@@ -650,7 +650,7 @@ module Discordrb
     # @yieldparam action_builder [AutoModRule::ActionBuilder] The action builder allows you to add actions that should execute when the rule is triggered.
     # @return [AutoModRule] the newly created automod rule.
     # @note Arguments that default to `nil` are not required to be passed. The `trigger_type` field is what determines which values should be set.
-    #   To understand which `trigger_type` values require which fields to be set please refer to:
+    #   To understand which `trigger_type` values require which fields to be set, please refer to:
     #   https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata
     def create_automod_rule(name:, event_type:, trigger_type:, enabled: false, exempt_roles: [], exempt_channels: [],
                             keyword_filter: nil, regex_patterns: nil, keyword_presets: nil, exempt_keywords: nil,
