@@ -411,6 +411,7 @@ module Discordrb
       # @param custom_message [String, nil] the additional explanation that will be shown to members when their message is blocked.
       # @note Certain types require certain arguments to be passed. To learn which types require which arguments to be passed, please refer to:
       #   https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object
+      # @return [void]
       def action(type:, alert_channel: nil, timeout_duration: nil, custom_message: nil)
         metadata = { channel_id: alert_channel&.resolve_id, duration_seconds: timeout_duration, custom_message: custom_message }.compact
 
