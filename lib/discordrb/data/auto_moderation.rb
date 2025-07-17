@@ -390,8 +390,8 @@ module Discordrb
           type: @type,
           metadata: {
             custom_message: @custom_message,
-            channel_id: @channel_id,
-            timeout_duration: @timeout_duration
+            channel_id: @alert_channel_id,
+            duration_seconds: @timeout_duration
           }.compact
         }
       end
