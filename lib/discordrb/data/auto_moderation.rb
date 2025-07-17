@@ -152,7 +152,7 @@ module Discordrb
 
     # The default `inspect` method is overwritten to give more useful output.
     def inspect
-      "<AutoModRule name=#{@name} creator_id=#{@creator_id} enabled=#{@enabled} server_id=#{@server_id} exempt_roles=#{@exempt_roles.map(&:resolve_id)} exempt_channels=#{@exempt_channels.map(&:resolve_id)} event_type=#{@event_type}>"
+      "<AutoModRule name=#{@name} creator_id=#{@creator_id} enabled=#{@enabled} server_id=#{@server_id} exempt_roles=#{@exempt_roles.map(&:resolve_id)} exempt_channels=#{@exempt_channels.map(&:resolve_id)} event_type=#{@event_type} trigger=#{@trigger.to_h} actions=#{@actions.map(&:to_h)}>"
     end
 
     # @!visibility private
