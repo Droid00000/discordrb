@@ -121,14 +121,14 @@ module Discordrb
 
     # Add one or more actions that will execute when this automod rule is triggered.
     # @note Creating a new action for an existing type will overwrite the current one.
-    # @yieldparam [ActionBuilder]
+    # @yieldparam builder [ActionBuilder] builder subclass for creating automod actions.
     # @return [void]
     def add_actions
       yield (builder = ActionBuilder.new)
 
-      actions = @actions.to_h { |actio| [actio.type, actio] }
+      actions = @actions.to_h { |action| [action.type, action] }
 
-      update_data(actions: actions.merge(builder.to_h).values)
+      update_data(actions: actions.merge(builder.to_h).values.map(&:to_h))
     end
 
     alias_method :add_action, :add_actions
