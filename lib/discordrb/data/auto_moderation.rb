@@ -339,31 +339,35 @@ module Discordrb
         block_member_interaction: 4
       }.freeze
 
-      # @return [Integer] the type of action that will execute.
+      # @return [Integer] the type of the action that will execute.
       # @see TYPES
       attr_reader :type
 
-      # @return [Integer, nil] the timeout duration in seconds for this action.
-      # @note Only returns a non-nil value when the action type is 3 (timeout).
-      attr_reader :timeout_duration
-
-      # @return [String, nil] explanation shown to members whenever their message is blocked.
-      # @note Only returns a non-nil value when the action type is 1 (block_message).
+      # @return [String, nil] the explanation shown to members whenever their message is blocked.
+      # @note Only returns a non-nil value when the action type is `:block_message`.
       attr_reader :custom_message
+
+      # @return [Integer, nil] The ID of the channel to which user content should be logged.
+      # @note Only returns a non-nil value when the action type is `:send_alert_message`.
+      attr_reader :alert_channel_id
+
+      # @return [Integer, nil] the timeout duration in seconds for this action.
+      # @note Only returns a non-nil value when the action type is `:timeout`.
+      attr_reader :timeout_duration
 
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
         @type = data['type']
-        @channel_id = data['metadata']['channel_id']
         @custom_message = data['metadata']['custom_message']
+        @alert_channel_id = data['metadata']['channel_id']&.to_i
         @timeout_duration = data['metadata']['duration_seconds']
       end
 
       # @return [Channel, nil] The channel to which user content should be logged.
-      # @note Only returns a non-nil value when the action type is 2 (send_alert_message).
+      # @note Only returns a non-nil value when the action type is `:send_alert_message`.
       def alert_channel
-        @bot.channel(@channel_id) if @channel_id
+        @bot.channel(@alert_channel_id) if @alert_channel_id
       end
 
       # @!method block_message?
