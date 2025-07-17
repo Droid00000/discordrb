@@ -313,7 +313,7 @@ module Discordrb
                   keyword? || keyword_preset? || member_profile?
                 end
 
-        raise "Cannot set #{field} for trigger type #{@type}" unless value
+        raise "Cannot set #{field} for trigger type: #{@type}" unless value
       end
 
       # @!visibility private
