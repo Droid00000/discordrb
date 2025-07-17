@@ -617,9 +617,9 @@ module Discordrb
     # Get a list of all the automod rules configured on the server.
     # @return [Array<AutoModRule>] the configured automod rules on the server.
     def automod_rules
-      return @automod_rules if @rules_requested
+      return @automod_rules.values if @rules_requested
 
-      JSON.parse(API::Server.list_automod_rules(@bot.token, @id)).map do |rule|
+      JSON.parse(API::Server.list_automod_rules(@bot.token, @id)).each do |rule|
         rule = AutoModRule.new(rule, @bot, self)
         @automod_rules[rule.id] = rule
       end
