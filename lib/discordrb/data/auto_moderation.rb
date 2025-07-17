@@ -335,7 +335,7 @@ module Discordrb
       TYPES = {
         block_message: 1,
         send_alert_message: 2,
-        timeout: 3,
+        timeout_member: 3,
         block_member_interaction: 4
       }.freeze
 
@@ -370,7 +370,7 @@ module Discordrb
       #   @return [true, false] whether the type of this action is 1 (block_message).
       # @!method send_alert_message?
       #   @return [true, false] whether the type of this action is 2 (send_alert_message).
-      # @!method timeout?
+      # @!method timeout_member?
       #   @return [true, false] whether the type of this action is 3 (timeout).
       # @!method block_member_interaction?
       #   @return [true, false] whether the type of this action is 4 (block_member_interaction).
