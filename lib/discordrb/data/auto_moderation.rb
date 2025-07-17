@@ -134,10 +134,10 @@ module Discordrb
     alias_method :add_action, :add_actions
 
     # Delete one or more actions from this automod rule.
-    # @param types [Array<Integer, Symbol>, Integer, Symbol] the action type(s) to delete.
+    # @param types [Integer, Symbol] the action type(s) to delete.
     # @return [void]
-    def delete_actions(types)
-      types = [*types].map do |type|
+    def delete_actions(*types)
+      types.map! do |type|
         Action::TYPES[type] || type
       end
 
