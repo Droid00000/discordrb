@@ -134,7 +134,7 @@ module Discordrb
     alias_method :add_action, :add_actions
 
     # Delete one or more actions from this automod rule.
-    # @param types [Integer, Symbol] the action type(s) to delete.
+    # @param types [Integer, Symbol] the action types to delete.
     # @return [void]
     def delete_actions(*types)
       types.map! do |type|
@@ -235,7 +235,7 @@ module Discordrb
       # Set the substrings that should not trigger the automod rule.
       # @param exempt_keywords [Array<String>]
       def exempt_keywords=(exempt_keywords)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :exempt_keywords)
 
         @rule.update_data(trigger: to_h.merge(allow_list: exempt_keywords))
       end
@@ -243,7 +243,7 @@ module Discordrb
       # Set the regex patterns that can trigger the automod rule.
       # @param regex_patterns [Array<String>]
       def regex_patterns=(regex_patterns)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :regex_patterns)
 
         @rule.update_data(trigger: to_h.merge(regex_patterns: regex_patterns))
       end
@@ -251,7 +251,7 @@ module Discordrb
       # Set the substrings that can trigger the automod rule.
       # @param keyword_filter [Array<String>]
       def keyword_filter=(keyword_filter)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :keyword_filter)
 
         @rule.update_data(trigger: to_h.merge(keyword_filter: keyword_filter))
       end
@@ -259,7 +259,7 @@ module Discordrb
       # Set the maximum amount of unique mentions allowed for the rule.
       # @param mention_limit [Integer]
       def total_mention_limit=(mention_limit)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :total_mention_limit)
 
         @rule.update_data(trigger: to_h.merge(mention_total_limit: mention_limit))
       end
@@ -267,7 +267,7 @@ module Discordrb
       # Set whether mention raid protection is enabled for the rule or not.
       # @param raid_protection [true, false]
       def mention_raid_protection=(raid_protection)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :mention_raid_protection)
 
         @rule.update_data(trigger: to_h.merge(mention_raid_protection_enabled: raid_protection))
       end
@@ -275,7 +275,7 @@ module Discordrb
       # Set the keyword presets for this rule.
       # @param presets [Array<Integer, Symbol>]
       def keyword_presets=(presets)
-        validate_trigger(field: __method__)
+        validate_trigger(field: :keyword_presets)
 
         presets.map! { |type| PRESET_TYPES[type] || type }
 
@@ -302,7 +302,7 @@ module Discordrb
 
       # @!visibility private
       def validate_trigger(field:)
-        value = case field.to_s.delete_suffix('=').to_sym
+        value = case field
                 when :total_mention_limit, :mention_raid_protection
                   mention_spam?
                 when :keyword_presets
@@ -367,13 +367,13 @@ module Discordrb
       end
 
       # @!method block_message?
-      #   @return [true, false] whether the type of this action is 1 (block_message).
+      #   @return [true, false] whether this action will block a message.
       # @!method send_alert_message?
-      #   @return [true, false] whether the type of this action is 2 (send_alert_message).
+      #   @return [true, false] whether this action will send an alert message.
       # @!method timeout_member?
-      #   @return [true, false] whether the type of this action is 3 (timeout).
+      #   @return [true, false] whether the action will timeout a server member.
       # @!method block_member_interaction?
-      #   @return [true, false] whether the type of this action is 4 (block_member_interaction).
+      #   @return [true, false] whether the action will block a member from interacting in a server.
       TYPES.each do |name, value|
         define_method("#{name}?") do
           @type == value
