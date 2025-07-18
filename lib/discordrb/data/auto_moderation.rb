@@ -162,7 +162,7 @@ module Discordrb
       @event_type = new_data['event_type']
       @actions = new_data['actions'].map { |action| Action.new(action, @bot) }
       @exempt_roles = new_data['exempt_roles'].map { |role_id| server.role(role_id) }
-      @exempt_channels = new_data['exempt_channels'].filter_map { |chan_id| @bot.channel(chan_id) }
+      @exempt_channels = new_data['exempt_channels'].filter_map { |channel_id| @bot.channel(channel_id) }
       @trigger = Trigger.new(new_data['trigger_metadata'].merge({ 'type' => new_data['trigger_type'] }), self, @bot)
     end
 
