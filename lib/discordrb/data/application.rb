@@ -59,7 +59,7 @@ module Discordrb
     # @return [String] the hex encoded key for verification in interactions and the GameSDK.
     attr_reader :verify_key
 
-    # @return [Team, nil] the team that owns this application, or nil if the application isn't owned by a team.
+    # @return [Team, nil] the team that owns this application, or `nil` if the application isn't owned by a team.
     attr_reader :team
 
     # @return [Integer, nil] the ID of the server that is associated with this application.
@@ -71,7 +71,7 @@ module Discordrb
     # @return [Integer, nil] the game SKU ID if this application is a game sold on Discord.
     attr_reader :primary_sku_id
 
-    # @return [String, nil] the ID of the application's default rich presence invite cover image hash.
+    # @return [String, nil] the ID of the application's default rich presence invite cover image.
     #   Can be used to generate a cover image URL.
     # @see #cover_image_url
     attr_reader :cover_image_id
