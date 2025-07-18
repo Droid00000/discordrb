@@ -145,6 +145,7 @@ module Discordrb::Events
     end
 
     # @return [User, Member] the user or member which generated the content that triggered the automod rule.
+    #   Should usually be a member unless the member was recently removed from the server.
     def user
       server.member(@user_id) || @bot.user(@user_id)
     end
@@ -158,9 +159,9 @@ module Discordrb::Events
 
     # @return [Message, nil] the system generated automod message posted as a result of this action.
     def alert_message
-      @alert_channel ||= automod_rule.actions.find(&:send_alert_message?)&.alert_channel
+      return nil unless action.send_alert_message? && @alert_message_id
 
-      @alert_channel&.load_message(@alert_message_id) if @alert_message_id
+      @alert_message ||= action.alert_channel&.load_message(@alert_message_id)
     end
   end
 
