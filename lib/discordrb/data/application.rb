@@ -107,7 +107,7 @@ module Discordrb
     # @return [Array<String>] an array of tags describing the content and functionality of the application.
     attr_reader :tags
 
-    # @return [InstallParams, nil] the settings for the application's default in-app authorization link.
+    # @return [InstallParams] the settings for the application's default in-app authorization link.
     attr_reader :install_params
 
     # @return [Hash<Integer => InstallParams>] the default scopes and permissions for each supported installation context.
@@ -181,14 +181,14 @@ module Discordrb
     # Set the default Oauth install scopes for the application when joining a server.
     # @param scopes [Array<String, Symbol>] the new default OAuth scopes for the application.
     def install_scopes=(scopes)
-      update_application(install_params: (@install_params || {}).to_h.merge(scopes: scopes.map(&:to_s)))
+      update_application(install_params: @install_params.to_h.merge(scopes: scopes.map(&:to_s)))
     end
 
     # Set the default permissions the application requests when joining a server.
-    # @param permissions [Permissions, Integer] the new default permissions for the application.
+    # @param permissions [Permissions, Integer, String] the new default permissions for the application.
     def install_permissions=(permissions)
       permissions = permissions.bits if permissions.respond_to?(:bits)
-      update_application(install_params: (@install_params || {}).to_h.merge(permissions: permissions.to_s))
+      update_application(install_params: @install_params.to_h.merge(permissions: permissions.to_s))
     end
 
     # Set the tags descirbing the content and functionality of the application.
@@ -311,7 +311,7 @@ module Discordrb
 
       @webhook_event_types = new_data['event_webhooks_types'] || []
       @tags = new_data['tags'] || []
-      @install_params = new_data['install_params'] ? InstallParams.new(new_data['install_params'], @bot, self) : nil
+      @install_params = InstallParams.new(new_data['install_params'] || {}, @bot)
       @custom_install_url = new_data['custom_install_url']
 
       @integration_types_config = (new_data['integration_types_config'] || {}).to_h do |key, value|
@@ -338,9 +338,9 @@ module Discordrb
                                                                         new_data[:flags] || :undef,
                                                                         new_data[:interactions_endpoint_url] || :undef,
                                                                         new_data[:tags] || :undef,
-                                                                        new_data[:webhook_events_url] || :undef,
-                                                                        new_data[:webhook_events_status] || :undef,
-                                                                        new_data[:webhook_event_types] || :undef,
+                                                                        new_data[:event_webhooks_url] || :undef,
+                                                                        new_data[:event_webhooks_status] || :undef,
+                                                                        new_data[:event_webhooks_types] || :undef,
                                                                         new_data.key?(:icon) ? new_data[:icon] : :undef,
                                                                         new_data.key?(:cover_image) ? new_data[:cover_image] : :undef)))
     end
