@@ -725,10 +725,11 @@ module Discordrb
     # @option attributes [String, Integer, Channel] :channel channel in which user content was posted to match against.
     # @option attributes [String, Integer, AutoModRule] :automod_rule An automod rule to match against.
     # @option attributes [String, Regexp] :content User generated content which triggered the rule to match against.
-    # @option attributes [Symbol, Integer, String] :trigger_type A trigger type to match against.
+    # @option attributes [Symbol, Integer] :trigger_type A trigger type to match against.
     # @option attributes [String, Regexp] :matched_content The substring in content that triggered the rule to match against.
     # @option attributes [String, Regexp] :matched_keyword The keyword or phrase that triggered the rule to match against.
-    # @option attributes [Symbol, Integer, String] :event_type An event type to match against.
+    # @option attributes [Symbol, Integer] :event_type An event type to match against.
+    # @option attributes [Symbol, Integer] :action_type The type of the action that was triggered to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [AutoModActionEvent] The event that was raised.
     # @return [AutoModActionEventHandler] The event handler that was registered.

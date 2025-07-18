@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb::Events
-  # Generic subclass for auto moderation rule events (create/update/delete)
+  # Generic subclass for automod rule events (create/update/delete).
   class AutoModRuleEvent < Event
     # @return [AutoModRule] the automod rule in question.
     attr_reader :automod_rule
@@ -17,17 +17,16 @@ module Discordrb::Events
     end
   end
 
-  # Raised when an auto moderation rule is created.
+  # Raised when an automod rule is created.
   class AutoModRuleCreateEvent < AutoModRuleEvent; end
 
-  # Raised when an auto moderation rule is updated.
+  # Raised when an automod rule is updated.
   class AutoModRuleUpdateEvent < AutoModRuleEvent; end
 
-  # Raised when an auto moderation rule is deleted.
+  # Raised when an automod rule is deleted.
   class AutoModRuleDeleteEvent < AutoModRuleEvent
-    # Override the initializer, since the event provides the rule,
-    #   but it won't exist in the cache because we just evicted it.
     # @!visibility private
+    # @note Override the initializer to account for the deleted rule.
     def initialize(data, bot)
       @bot = bot
       @server = bot.server(data['guild_id'].to_i)
@@ -101,16 +100,16 @@ module Discordrb::Events
     # @return [AutoModRule::Action] the action which was taken.
     attr_reader :action
 
-    # @return [Integer] Trigger type of the rule which was triggered.
+    # @return [Integer] the trigger type of the automod rule which was triggered.
     attr_reader :trigger_type
 
-    # @return [String] User generated content that triggered the rule.
+    # @return [String] the user-generated content that triggered the automod rule.
     attr_reader :content
 
-    # @return [String, nil] Word or phrase that triggered the rule.
+    # @return [String, nil] the word or phrase that triggered the automod rule.
     attr_reader :matched_keyword
 
-    # @return [String, nil] The substring in content that triggered the rule.
+    # @return [String, nil] the substring in content that triggered the automod rule.
     attr_reader :matched_content
 
     # @!visibility private
@@ -152,7 +151,7 @@ module Discordrb::Events
 
     alias_method :member, :user
 
-    # @return [Message, nil] the message which contants user generated content that triggered the automod rule.
+    # @return [Message, nil] the message that contains the user-generated content which triggered the automod rule.
     def message
       @message_id ? (@message ||= channel.load_message(@message_id)) : nil
     end
@@ -172,7 +171,6 @@ module Discordrb::Events
       return false unless event.is_a? AutoModActionEvent
 
       [
-
         matches_all(@attributes[:user], event.user_id) do |a, e|
           a.resolve_id == e
         end,
@@ -229,6 +227,15 @@ module Discordrb::Events
           case a
           when Symbol, String
             e == Discordrb::AutoModRule::EVENT_TYPES[a.to_sym]
+          when Integer
+            e == a
+          end
+        end,
+
+        matches_all(@attributes[:action_type], event.action.type) do |a, e|
+          case a
+          when Symbol, String
+            e == Discordrb::AutoModRule::Action::TYPES[a.to_sym]
           when Integer
             e == a
           end
