@@ -194,7 +194,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            e ? a.match?(e) : false
+            e&.match?(a)
           end
         end,
 
@@ -212,7 +212,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            e ? a.match?(e) : false
+            e&.match?(a)
           end
         end,
 
@@ -221,7 +221,7 @@ module Discordrb::Events
           when String
             e == a
           when Regexp
-            e ? a.match?(e) : false
+            e&.match?(a)
           end
         end,
 
