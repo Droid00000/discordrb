@@ -31,7 +31,7 @@ module Discordrb::Events
     def initialize(data, bot)
       @bot = bot
       @server = bot.server(data['guild_id'].to_i)
-      @automod_rule = Discordrb::AutoModRule.new(data, bot, server)
+      @automod_rule = Discordrb::AutoModRule.new(data, bot, @server)
     end
   end
 
@@ -135,29 +135,29 @@ module Discordrb::Events
       @bot.server(@server_id)
     end
 
-    # @return [Channel] channel in which user content was posted.
+    # @return [Channel] the channel in which user content was posted.
     def channel
       @bot.channel(@channel_id) if @channel_id
     end
 
-    # @return [AutoModRule] the rule that was triggered for this event.
+    # @return [AutoModRule] the automod rule that was triggered.
     def automod_rule
-      @automod_rule ||= server.automod_rule(@rule_id)
+      server.automod_rule(@rule_id)
     end
 
-    # @return [User, Member] the user or member which generated the content that triggered the rule.
+    # @return [User, Member] the user or member which generated the content that triggered the automod rule.
     def user
       server.member(@user_id) || @bot.user(@user_id)
     end
 
     alias_method :member, :user
 
-    # @return [Message, nil] message which contants user generated content that triggered this rule.
+    # @return [Message, nil] the message which contants user generated content that triggered the automod rule.
     def message
       @message_id ? (@message ||= channel.load_message(@message_id)) : nil
     end
 
-    # @return [Message, nil] System auto moderation message posted as a result of this action.
+    # @return [Message, nil] the system generated automod message posted as a result of this action.
     def alert_message
       @alert_channel ||= automod_rule.actions.find(&:send_alert_message?)&.alert_channel
 
