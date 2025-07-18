@@ -3,7 +3,7 @@
 module Discordrb::Events
   # Generic subclass for auto moderation rule events (create/update/delete)
   class AutoModRuleEvent < Event
-    # @return [AutoModRule] the auto moderation rule in question.
+    # @return [AutoModRule] the automod rule in question.
     attr_reader :automod_rule
 
     # @return [Server] the server the automod rule is from.
@@ -26,7 +26,7 @@ module Discordrb::Events
   # Raised when an auto moderation rule is deleted.
   class AutoModRuleDeleteEvent < AutoModRuleEvent
     # Override the initializer, since the event provides the rule,
-    #   but it won't exist in the cache because it was just deleted.
+    #   but it won't exist in the cache because we just evicted it.
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
