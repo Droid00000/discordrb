@@ -602,7 +602,8 @@ module Discordrb
 
     # Get a single automod rule.
     # @param id [Integer] The ID of the automod rule to look for.
-    # @param request [true, false] Whether the automod rule should be requested from Discord if it's not cached.
+    # @param request [true, false] Whether the automod rule should be requested from Discord if it's not cached. Defaults to true.
+    # @return [AutoModRule, nil] the automod rule in question, or nil if it couldn't be found.
     def automod_rule(id, request = true)
       id = id.resolve_id
       return @automod_rules[id] if @automod_rules[id]

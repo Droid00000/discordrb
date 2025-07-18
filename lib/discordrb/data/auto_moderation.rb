@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # Automod rules allow a server to set up rules that can trigger based on a criteria.
-  #   These rules can take "moderator" actions such as timing out a user when a specific word is said.
+  # Automod rules allow a server to set up rules that can trigger based on a criteria. These rules can
+  #   take moderation actions such as timing out a user when a specific word is said. Accessing any 
+  #   automod resource (including gateway events) requires the `:manage_server` permission.
   class AutoModRule
     include IDObject
 
