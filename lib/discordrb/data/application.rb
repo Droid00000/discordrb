@@ -44,7 +44,7 @@ module Discordrb
 
     # @return [Profile] the user object of the associated bot for this application.
     attr_reader :profile
-    alias_method :bot_user, :profile
+    alias_method :bot, :profile
 
     # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join servers.
     attr_reader :requires_code_grant
