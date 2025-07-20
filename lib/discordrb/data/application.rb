@@ -167,25 +167,25 @@ module Discordrb
     end
 
     # Set the icon for the application.
-    # @param image [File, nil] file like object that respond to #read, or nil.
+    # @param image [File, nil] File like object that respond to #read, or nil.
     def icon=(image)
-      update_application(icon: image.respond_to?(:read) ? encode_file(image) : image)
+      update_application(icon: image.respond_to?(:read) ? Discordrb.encode64(image) : image)
     end
 
     # Set the cover image for the application.
-    # @param image [File, nil] file like object that respond to #read, or nil.
+    # @param image [File, nil] File like object that respond to #read, or nil.
     def cover_image=(image)
-      update_application(cover_image: image.respond_to?(:read) ? encode_file(image) : image)
+      update_application(cover_image: image.respond_to?(:read) ? Discordrb.encode64(image) : image)
     end
 
     # Set the default Oauth install scopes for the application when joining a server.
-    # @param scopes [Array<String, Symbol>] the new default OAuth scopes for the application.
+    # @param scopes [Array<String, Symbol>] The new default OAuth scopes for the application.
     def install_scopes=(scopes)
       update_application(install_params: @install_params.to_h.merge(scopes: scopes.map(&:to_s)))
     end
 
     # Set the default permissions the application requests when joining a server.
-    # @param permissions [Permissions, Integer, String] the new default permissions for the application.
+    # @param permissions [Permissions, Integer, String] The new default permissions for the application.
     def install_permissions=(permissions)
       permissions = permissions.bits if permissions.respond_to?(:bits)
       update_application(install_params: @install_params.to_h.merge(permissions: permissions.to_s))
