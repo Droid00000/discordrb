@@ -45,18 +45,6 @@ module Discordrb
       def user
         @bot.user(@user_id)
       end
-
-      # Comparison based off of user ID and team ID.
-      # @return [true, false] if the two objects are equal.
-      def ==(other)
-        return false unless other.is_a?(Member)
-
-        return false unless @team == other.team
-
-        Discordrb.id_compare(other.user_id, @user_id)
-      end
-
-      alias_method :eql?, :==
     end
 
     # @return [String] the name of this team.
