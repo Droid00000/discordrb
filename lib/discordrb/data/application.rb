@@ -77,13 +77,13 @@ module Discordrb
     attr_reader :cover_image_id
 
     # @return [Integer] the approximate amount of server's the application has been added to.
-    attr_reader :approximate_server_count
+    attr_reader :server_install_count
 
     # @return [Integer] the approximate amount of users that have installed the application with the `application.commands` scope.
-    attr_reader :approximate_user_install_count
+    attr_reader :user_install_count
 
     # @return [Integer] the approximate amount of users that have OAuth2 authorizations for the application.
-    attr_reader :approximate_user_authorization_count
+    attr_reader :user_authorization_count
 
     # @return [Array<String>] an array of redirect URIs for the application.
     attr_reader :redirect_uris
@@ -299,9 +299,9 @@ module Discordrb
       @cover_image_id = new_data['cover_image']
       @slug = new_data['slug']
       @primary_sku_id = new_data['primary_sku_id']&.to_i
-      @approximate_server_count = new_data['approximate_guild_count'] || 0
-      @approximate_user_install_count = new_data['approximate_user_install_count'] || 0
-      @approximate_user_authorization_count = new_data['approximate_user_authorization_count'] || 0
+      @server_install_count = new_data['approximate_guild_count'] || 0
+      @user_install_count = new_data['approximate_user_install_count'] || 0
+      @user_authorization_count = new_data['approximate_user_authorization_count'] || 0
 
       @redirect_uris = new_data['redirect_uris'] || []
       @interactions_endpoint_url = new_data['interactions_endpoint_url']
