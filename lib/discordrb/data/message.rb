@@ -76,6 +76,9 @@ module Discordrb
     # @return [Time, nil] the time at when this message was pinned. Only present on messages fetched via {Channel#pins}.
     attr_reader :pinned_at
 
+    # @return [Array<Snapshot>] the message snapshots included in this message.
+    attr_reader :snapshots
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -152,6 +155,8 @@ module Discordrb
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
 
       @pinned_at = data['pinned_at'] ? Time.parse(data['pinned_at']) : nil
+
+      @snapshots = data['message_snapshots']&.map { |snapshot| Snapshot.new(snapshot, @bot) } || []
     end
 
     # @return [Member, User] the user that sent this message. (Will be a {Member} most of the time, it should only be a
@@ -413,7 +418,7 @@ module Discordrb
       return nil unless @message_reference
 
       referenced_channel = @bot.channel(@message_reference['channel_id'])
-      @referenced_message = referenced_channel.message(@message_reference['message_id'])
+      @referenced_message = referenced_channel&.message(@message_reference['message_id'])
     end
 
     # @return [Array<Components::Button>]
@@ -437,5 +442,16 @@ module Discordrb
     end
 
     alias_method :message, :to_message
+
+    # @return [true, false] whether the message contains a forwarded message.
+    def has_forward?
+      @message_reference && @message_reference['type'] == 1
+    end
+
+    # Convert this message to a hash that can be used to reference this message as a forward.
+    # @return [Hash] the message as a hashed representation that can be used for forwarding.
+    def to_forward
+      { type: 1, message_id: @id, channel_id: @channel.id }
+    end
   end
 end
