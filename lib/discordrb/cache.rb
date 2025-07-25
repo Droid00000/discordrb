@@ -134,6 +134,16 @@ module Discordrb
 
     alias_method :private_channel, :pm_channel
 
+    # Get the preview of a server. If the bot isn't a member of the server in question, the server must be discoverable.
+    # @param id [Integer, String, Server] the ID of the server whose preview should be fetched.
+    # @return [ServerPreview, nil] the server preview, or `nil` if the server isn't accessible.
+    def server_preview(id)
+      response = API::Server.preview(token, id.resolve_id)
+      ServerPreview.new(JSON.parse(response), self)
+    rescue StandardError
+      nil
+    end
+
     # Ensures a given user object is cached and if not, cache it from the given data hash.
     # @param data [Hash] A data hash representing a user.
     # @return [User] the user represented by the data hash.

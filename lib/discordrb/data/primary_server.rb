@@ -42,6 +42,7 @@ module Discordrb
     end
 
     # Comparison based off of server ID.
+    # @return [true, false] if the other object is equal to this primary server.
     def ==(other)
       return false unless other.is_a?(PrimaryServer)
 
