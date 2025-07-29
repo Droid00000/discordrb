@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # Information about a bot's associated application, not to be confused with the bot user.
+  # Information about a bot's associated application.
   class Application
     include IDObject
 
@@ -125,7 +125,7 @@ module Discordrb
 
     # Get the server associated with this application.
     # @return [Server, nil] This will be nil if the bot does not have an associated server set.
-    # @raise [Errors::NoPermission] This can happen when the bot is not in the associated server.
+    # @raise [Discordrb::Errors::NoPermission] This can happen when the bot is not in the associated server.
     def server
       @bot.server(@server_id) if @server_id
     end
