@@ -25,7 +25,7 @@ module Discordrb
       @name = data['name']
       @icon_id = data['icon']
       @members = data['members'].map { |member| Member.new(member, self, bot) }
-      @owner = @members.find { |member| member.user_id == data['owner_user_id'].to_i }
+      @owner = @members.find { |member| member.user.id == data['owner_user_id'].to_i }
     end
 
     # Utility method to get a team's icon URL.
