@@ -60,14 +60,8 @@ module Discordrb
 
       # Whether this team member has been invited to the team, but hasn't accepted the invite yet.
       # @return [true, false]
-      def invited?
+      def pending?
         @state == 1
-      end
-
-      # Whether this team member has been invited to the team, and has accepted the invite to join.
-      # @return [true, false]
-      def joined?
-        @state == 2
       end
 
       # Whether this team member is the owner of the team.
