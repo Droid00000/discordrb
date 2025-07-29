@@ -70,6 +70,18 @@ module Discordrb
         @team.owner == self
       end
 
+      # @!method admin?
+      #   @return [true, false] whether this team member is an admin.
+      # @!method developer?
+      #   @return [true, false] whether this team member is a developer.
+      # @!method read_only?
+      #   @return [true, false] whether this team member is a read only developer.
+      %i[admin developer read_only].each do |role|
+        define_method("#{role}?") do
+          @role == role
+        end
+      end
+
       # Comparison based off of user ID and team ID.
       # @return [true, false] if the two objects are equal.
       def ==(other)
