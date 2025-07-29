@@ -168,9 +168,9 @@ module Discordrb
     end
 
     # Update the flags of this application. I recommend using this instead of {#flags=}.
-    # @param add [Array<Integer, Symbol> Integer, Symbol] the flags to add to the application.
-    # @param remove [Array<Integer, Symbol> Integer, Symbol] the flags to remove from the application.
-    # @note The flags to remove will be removed first, and then the flags to be added will be added.
+    # @param add [Array<Integer, Symbol> Integer, Symbol] The flags to add to the application.
+    # @param remove [Array<Integer, Symbol> Integer, Symbol] The flags to remove from the application.
+    # @note The flags will be removed first, then added. Only limited intent flags can be updated.
     def update_flags(add: 0, remove: 0)
       flags = lambda do |value|
         [*value].map { |flag_bit| FLAGS[flag_bit] || flag_bit.to_i }.reduce(&:|)
@@ -247,7 +247,7 @@ module Discordrb
     end
 
     # Set the endpoint that will reccieve interaction over HTTP POST for the application.
-    # @param endpoint_url [String] The new endpoint URL. Must pass security validation or the request will fail.
+    # @param endpoint_url [String] The new endpoint. Must pass security validation or the request will fail.
     def interactions_endpoint_url=(endpoint_url)
       update_application(interaction_endpoint_url: endpoint_url)
     end
