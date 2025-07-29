@@ -249,7 +249,7 @@ module Discordrb
     # Set the endpoint that will reccieve interaction over HTTP POST for the application.
     # @param endpoint_url [String] The new endpoint. Must pass security validation or the request will fail.
     def interactions_endpoint_url=(endpoint_url)
-      update_application(interaction_endpoint_url: endpoint_url)
+      update_application(interactions_endpoint_url: endpoint_url)
     end
 
     # Set the role connection verification URL for the application.
