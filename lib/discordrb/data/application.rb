@@ -79,7 +79,8 @@ module Discordrb
     # @return [Integer] the approximate amount of server's the application has been added to.
     attr_reader :server_install_count
 
-    # @return [Integer] the approximate amount of users that have installed the application with the `application.commands` scope.
+    # @return [Integer] the approximate amount of users that have installed the application with the
+    #   `application.commands` oauth scope.
     attr_reader :user_install_count
 
     # @return [Integer] the approximate amount of users that have OAuth2 authorizations for the application.
