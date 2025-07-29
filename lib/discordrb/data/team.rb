@@ -66,7 +66,7 @@ module Discordrb
 
       # Whether this team member has been invited to the team, and has accepted the invite to join.
       # @return [true, false]
-      def accepted?
+      def joined?
         @state == 2
       end
 
@@ -74,12 +74,6 @@ module Discordrb
       # @return [true, false]
       def owner?
         @team.owner == self
-      end
-
-      # Get the user associated with the team member.
-      # @return [User]
-      def user
-        @bot.user(@user_id)
       end
 
       # Comparison based off of user ID and team ID.
