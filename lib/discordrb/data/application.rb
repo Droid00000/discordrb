@@ -167,6 +167,18 @@ module Discordrb
       update_application(integration_types_config: collect_integration_types)
     end
 
+    # Update the flags of this application. I recommend using this instead of {#flags=}.
+    # @param add [Array<Integer, Symbol> Integer, Symbol] the flags to add to the application.
+    # @param remove [Array<Integer, Symbol> Integer, Symbol] the flags to remove from the application.
+    # @note The flags to remove will be removed first, and then the flags to be added will be added.
+    def update_flags(add: 0, remove: 0)
+      flags = lambda do |value|
+        [*value].map { |flag_bit| FLAGS[flag_bit] || flag_bit.to_i }.reduce(&:|)
+      end
+
+      update_application(flags: ((@flags & ~flags.call(remove)) | flags.call(add)))
+    end
+
     # Set the icon for the application.
     # @param image [File, nil] File like object that respond to #read, or nil.
     def icon=(image)
