@@ -145,18 +145,18 @@ module Discordrb
       API.app_cover_url(@id, @cover_image_id, format) if @cover_image_id
     end
 
-    # Delete an intergration types config for the application.
-    # @param type [Integer, String] the type of the intergration type to remove.
-    def delete_intergration_type(type)
+    # Delete an integration types config for the application.
+    # @param type [Integer, String] the type of the integration type to remove.
+    def delete_integration_type(type)
       @integration_types.delete(type.to_i)
       update_application(integration_types_config: collect_integration_types)
     end
 
-    # Add an intergration types config for the application.
-    # @param type [Integer, String] The type of the intergration type.
+    # Add an integration types config for the application.
+    # @param type [Integer, String] The type of the integration type.
     # @param scopes [Array<String, Symbol>, nil] The default Oauth scopes for the config.
     # @param permissions [Permissions, String, Integer, nil] The default permissions for the config.
-    def add_intergration_type(type:, scopes: nil, permissions: nil)
+    def add_integration_type(type:, scopes: nil, permissions: nil)
       permissions = permisisons.bits if permissions.respond_to?(:bits)
 
       @integration_types[type.to_i] = {
