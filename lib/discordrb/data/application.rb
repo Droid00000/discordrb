@@ -112,7 +112,7 @@ module Discordrb
     attr_reader :install_params
 
     # @return [Hash<Integer => InstallParams>] the default scopes and permissions for each supported installation context.
-    attr_reader :integration_types_config
+    attr_reader :integration_types
 
     # @return [String, nil] the default custom authorization URL for the application.
     attr_reader :custom_install_url
@@ -145,10 +145,10 @@ module Discordrb
       API.app_cover_url(@id, @cover_image_id, format) if @cover_image_id
     end
 
-    # Remove an intergration types config for the application.
-    # @param type [Integer, String] the type of the intergration types config to remove.
-    def remove_intergration_types_config(type)
-      @integration_types_config.delete(type.to_i)
+    # Delete an intergration types config for the application.
+    # @param type [Integer, String] the type of the intergration type to remove.
+    def delete_intergration_type(type)
+      @integration_types.delete(type.to_i)
       update_application(integration_types_config: collect_integration_types)
     end
 
@@ -156,10 +156,10 @@ module Discordrb
     # @param type [Integer, String] The type of the intergration type.
     # @param scopes [Array<String, Symbol>, nil] The default Oauth scopes for the config.
     # @param permissions [Permissions, String, Integer, nil] The default permissions for the config.
-    def add_intergration_types_config(type:, scopes: nil, permissions: nil)
+    def add_intergration_type(type:, scopes: nil, permissions: nil)
       permissions = permisisons.bits if permissions.respond_to?(:bits)
 
-      @integration_types_config[type.to_i] = {
+      @integration_types[type.to_i] = {
         scopes: scopes&.map(&:to_s),
         permissions: permissions&.to_s
       }.compact
@@ -315,7 +315,7 @@ module Discordrb
       @install_params = InstallParams.new(new_data['install_params'] || {}, @bot)
       @custom_install_url = new_data['custom_install_url']
 
-      @integration_types_config = (new_data['integration_types_config'] || {}).to_h do |key, value|
+      @integration_types = (new_data['integration_types_config'] || {}).to_h do |key, value|
         [key.to_i, InstallParams.new(value['oauth2_install_params'] || {}, @bot)]
       end
     end
@@ -323,7 +323,7 @@ module Discordrb
     # @!visibility private
     # @note For internal use only.
     def collect_integration_types
-      @integration_types_config.each_with_object({}) do |(key, value), result|
+      @integration_types.each_with_object({}) do |(key, value), result|
         result[key.to_s] = value.to_h.any? ? { oauth2_install_params: value.to_h } : {}
       end
     end
