@@ -46,8 +46,8 @@ module Discordrb
       # @return [Integer] the membership state of this team member.
       attr_reader :state
 
-      # @return [Integer] the ID of the user this team member is for.
-      attr_reader :user_id
+      # @return [Integer] the user associated with this team member.
+      attr_reader :user
 
       # @!visibility private
       def initialize(data, team, bot)
@@ -55,7 +55,7 @@ module Discordrb
         @team = team
         @role = data['role'].to_sym
         @state = data['membership_state']
-        @user_id = data['user']['id'].to_i
+        @user = bot.ensure_user(data['user'])
       end
 
       # Whether this team member has been invited to the team, but hasn't accepted the invite yet.
@@ -89,7 +89,7 @@ module Discordrb
 
         return false unless @team == other.team
 
-        Discordrb.id_compare(other.user_id, @user_id)
+        Discordrb.id_compare(other.user.id, @user.id)
       end
 
       alias_method :eql?, :==
