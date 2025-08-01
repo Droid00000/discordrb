@@ -22,6 +22,7 @@ module Discordrb
       @channels = {}
       @pm_channels = {}
       @thread_members = {}
+      @server_previews = {}
     end
 
     # Returns or caches the available voice regions
@@ -134,12 +135,15 @@ module Discordrb
 
     alias_method :private_channel, :pm_channel
 
-    # Get the preview of a server. If the bot isn't a member of the server in question, the server must be discoverable.
-    # @param id [Integer, String, Server] the ID of the server whose preview should be fetched.
+    # Get a server preview. If the bot isn't a member of the server, the server must be discoverable.
+    # @param id [Integer, String, Server] the ID of the server preview to get.
     # @return [ServerPreview, nil] the server preview, or `nil` if the server isn't accessible.
     def server_preview(id)
-      response = API::Server.preview(token, id.resolve_id)
-      ServerPreview.new(JSON.parse(response), self)
+      id = id.resolve_id
+      return @server_previews[id] if @server_previews[id]
+
+      response = JSON.parse(API::Server.preview(token, id))
+      @server_previews[id] = ServerPreview.new(response, self)
     rescue StandardError
       nil
     end

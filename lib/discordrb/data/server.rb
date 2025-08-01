@@ -325,6 +325,11 @@ module Discordrb
       @channels.reject { |c| c.parent || c.category? }
     end
 
+    # @return [ServerPreview] the preview of this server shown in the discovery page.
+    def preview
+      @bot.server_preview(@id)
+    end
+
     # @return [String, nil] the widget URL to the server that displays the amount of online members in a
     #   stylish way. `nil` if the widget is not enabled.
     def widget_url
