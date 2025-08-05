@@ -662,26 +662,9 @@ module Discordrb
     # Requests all pinned messages in a channel.
     # @param limit [Integer, nil] 1-50 number of pins to request. {nil} requests all pins.
     # @return [Array<Message>] the received messages.
-    def pins(limit: nil)
-      get_pins = proc do |amount, before = nil|
-        resp = JSON.parse(API::Channel.pinned_messages(@bot.token, @channel.id, @id, amount, before))
-        resp['items'].map { |m| Message.new(m['message'].merge('pinned_at' => m['pinned_at']), @bot) }
-      end
-
-      # Can be done without pagination
-      return get_pins.call(limit) if limit && limit <= 50
-
-      paginator = Paginator.new(limit, :down) do |last_page|
-        if last_page && last_page.count < 50
-          []
-        else
-          # rubocop:disable Style/SafeNavigationChainLength
-          get_pins.call(50, last_page&.last&.pinned_at&.iso8601)
-          # rubocop:enable Style/SafeNavigationChainLength
-        end
-      end
-
-      paginator.to_a
+    def pins
+      resp = API::Channel.pinned_messages(@bot.token, @id)
+      JSON.parse(resp).map { |pin| Message.new(pin, @bot) }
     end
 
     # Delete the last N messages on this channel.
