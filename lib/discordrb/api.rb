@@ -104,8 +104,12 @@ module Discordrb::API
       # Lock and unlock, i.e. wait for the mutex to unlock and don't do anything with it afterwards
       mutex_wait(mutex)
 
-      # If the global mutex happens to be locked right now, wait for that as well.
-      mutex_wait(@global_mutex) if @global_mutex.locked?
+      # If we're doing something interaction related, we can bypass the RL queue, since interaction
+      # responses aren't bound to the global ratelimit.
+      unless %i[interactions_iid_token_callback webhooks_wid_messages webhooks_wid].include?(key.first)
+        # If the global mutex happens to be locked right now, wait for that as well.
+        mutex_wait(@global_mutex) if @global_mutex.locked?
+      end
 
       response = nil
       begin
