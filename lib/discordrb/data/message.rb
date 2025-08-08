@@ -76,6 +76,9 @@ module Discordrb
     # @return [Time, nil] the time at when this message was pinned. Only present on messages fetched via {Channel#pins}.
     attr_reader :pinned_at
 
+    # @return [Poll, nil] the poll that was sent with this message, or nil.
+    attr_reader :poll
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -152,6 +155,8 @@ module Discordrb
       @thread = data['thread'] ? @bot.ensure_channel(data['thread'], @server) : nil
 
       @pinned_at = data['pinned_at'] ? Time.parse(data['pinned_at']) : nil
+
+      @poll = data['poll'] ? Poll.new(data['poll'], self, @bot) : nil
     end
 
     # @return [Member, User] the user that sent this message. (Will be a {Member} most of the time, it should only be a

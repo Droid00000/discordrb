@@ -20,6 +20,7 @@ require 'discordrb/events/webhooks'
 require 'discordrb/events/invites'
 require 'discordrb/events/interactions'
 require 'discordrb/events/threads'
+require 'discordrb/events/polls'
 
 require 'discordrb/api'
 require 'discordrb/api/channel'
@@ -1664,6 +1665,14 @@ module Discordrb
         end
 
         event = ThreadMembersUpdateEvent.new(data, self)
+        raise_event(event)
+      when :MESSAGE_POLL_VOTE_ADD
+        event = PollVoteAddEvent.new(data, self)
+
+        raise_event(event)
+      when :MESSAGE_POLL_VOTE_REMOVE
+        event = PollVoteRemoveEvent.new(data, self)
+
         raise_event(event)
       else
         # another event that we don't support yet

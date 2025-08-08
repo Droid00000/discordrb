@@ -609,4 +609,31 @@ module Discordrb::API::Channel
       Authorization: token
     )
   end
+
+  # Get a list of users that have voted for a poll answer.
+  # https://discord.com/developers/docs/resources/poll#get-answer-voters
+  def get_poll_answer_voters(token, channel_id, message_id, answer_id, limit = 100, after = nil, before = nil)
+    query = URI.encode_www_form({ before: before, after: after, limit: limit }.compact)
+
+    Discordrb::API.request(
+      :channels_cid_polls_mid_answers_aid,
+      channel_id,
+      :get,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/polls/#{message_id}/answers/#{answer_id}?#{query}",
+      Authorization: token
+    )
+  end
+
+  # End a poll created by the current user.
+  # https://discord.com/developers/docs/resources/poll#end-poll
+  def end_poll(token, channel_id, message_id)
+    Discordrb::API.request(
+      :channels_cid_polls_mid_expire,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/polls/#{message_id}/expire",
+      nil,
+      Authorization: token
+    )
+  end
 end
