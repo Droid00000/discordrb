@@ -64,11 +64,16 @@ module Discordrb
 
     # Whether the results of this poll are tied.
     # @return [true, false] whether or not there are poll answers with the same amount of votes.
-    # @note This method will return `true` if there aren't any answers that have been voted for.
     def tied?
       return true if @results.values.sum.zero?
 
       @results.values.reject(&:zero?).tally.any? { |_, vote| vote > 1 }
+    end
+
+    # Get the original duration of this poll in hours.
+    # @return [Integer, nil] the duration of this poll, or `nil` if it doesn't have a duration.
+    def duration
+      ((@expires_at - @message.creation_time) / 3600).round(0) if @expires_at
     end
 
     # Immediately ends this poll. This can only be done if the author of the poll is the current bot.
@@ -86,7 +91,7 @@ module Discordrb
         answers: @answers.map(&:to_h),
         allow_multiselect: @multiselect,
         layout_type: @layout_type,
-        duration: ((@expires_at - @message.creation_time) / 86_400.0).round
+        duration: duration
       }
     end
 
@@ -143,7 +148,7 @@ module Discordrb
       # @yield The block is executed when the event is raised.
       # @yieldparam event [PollVoteAddEvent] The event that was raised.
       def await_vote!(**attributes, &block)
-        @bot.add_await!(Discordrb::Events::PollVoteAddEvent, attributes.merge({ answer: @id, message: @message.id }), &block)
+        @bot.add_await!(Discordrb::Events::PollVoteAddEvent, { answer: @id, message: @message.id }.merge(attributes), &block)
       end
 
       # @!visibility private
@@ -187,10 +192,10 @@ module Discordrb
       end
 
       # Set the duration of the poll.
-      # @param duration [Time, Integer] the duration of the poll in days,
-      #   or the time at when the poll should expire, maximum of 32 days.
+      # @param duration [Time, Integer] the duration of the poll in hours,
+      #   or the time at when the poll should expire. A poll's maximum duration is 768 hours.
       def duration=(duration)
-        @duration = duration.is_a?(Time) ? ((duration - Time.now) / 86_400.0).round : duration
+        @duration = duration.is_a?(Time) ? ((duration - Time.now) / 3600).round(0) : duration
       end
 
       alias_method :expires_at=, :duration=
@@ -218,7 +223,7 @@ module Discordrb
           answers: @answers,
           allow_multiselect: @multiselect,
           layout_type: @layout_type,
-          duration: @duration
+          duration: @duration&.clamp(1, 768)
         }
       end
     end
