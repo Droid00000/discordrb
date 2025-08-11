@@ -244,7 +244,7 @@ module Discordrb::API::Server
       server_id,
       :post,
       "#{Discordrb::API.api_base}/guilds/#{server_id}/roles",
-      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, colors: colours }.to_json,
+      { color: colour, name: name, hoist: hoist, mentionable: mentionable, permissions: packed_permissions, colors: colours }.compact.to_json,
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
