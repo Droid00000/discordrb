@@ -72,7 +72,7 @@ module Discordrb
 
     # Get the original duration of this poll in hours.
     # @return [Integer, nil] the duration of this poll, or `nil` if it doesn't have a duration.
-    def duration
+    def original_duration
       ((@expires_at - @message.creation_time) / 3600).round(0) if @expires_at
     end
 
@@ -91,7 +91,7 @@ module Discordrb
         answers: @answers.map(&:to_h),
         allow_multiselect: @multiselect,
         layout_type: @layout_type,
-        duration: duration
+        duration: original_duration
       }
     end
 
