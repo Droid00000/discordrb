@@ -112,7 +112,7 @@ module Discordrb
     def initialize(data, bot, server = nil)
       @bot = bot
       @server = server
-      @permissions = Permissions.new(data['permissions'], RoleWriter.new(self, @bot.token))
+      @permissions = Permissions.new(data['permissions'].to_i, RoleWriter.new(self, @bot.token))
       @name = data['name']
       @id = data['id'].to_i
 
@@ -179,6 +179,7 @@ module Discordrb
       @mentionable = new_data['mentionable']
       @flags = new_data['flags']
       colours = new_data['colors']
+      @permissions.bits = data['permissions'].to_i
       @colour = ColourRGB.new(colours['primary_color'])
       @secondary_color = ColourRGB.new(colours['secondary_color']) if colours['secondary_color']
       @tertiary_colour = ColourRGB.new(colours['tertiary_color']) if colours['tertiary_color']
