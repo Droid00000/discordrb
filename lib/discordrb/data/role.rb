@@ -179,7 +179,7 @@ module Discordrb
       @mentionable = new_data['mentionable']
       @flags = new_data['flags']
       colours = new_data['colors']
-      @permissions.bits = data['permissions'].to_i
+      @permissions.bits = new_data['permissions'].to_i
       @colour = ColourRGB.new(colours['primary_color'])
       @secondary_color = ColourRGB.new(colours['secondary_color']) if colours['secondary_color']
       @tertiary_colour = ColourRGB.new(colours['tertiary_color']) if colours['tertiary_color']
