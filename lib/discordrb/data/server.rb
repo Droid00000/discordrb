@@ -538,7 +538,7 @@ module Discordrb
         secondary_color: secondary_colour&.to_i
       }
 
-      response = API::Server.create_role(@bot.token, @id, name, nil, hoist, mentionable, permissions, reason, colours)
+      response = API::Server.create_role(@bot.token, @id, name, nil, hoist, mentionable, permissions&.to_s, reason, colours)
 
       role = Role.new(JSON.parse(response), @bot, self)
       @roles << role
