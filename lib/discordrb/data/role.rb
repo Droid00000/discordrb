@@ -263,6 +263,18 @@ module Discordrb
       end
     end
 
+    # Whether or not the role is of the holographic style.
+    # @return [true, false]
+    def holographic?
+      !@tertiary_colour.nil?
+    end
+
+    # Whether or not the role has a two-point gradient.
+    # @return [true, false]
+    def gradient?
+      @secondary_colour && @tertiary_colour.nil?
+    end
+
     alias_method :color=, :colour=
     alias_method :secondary_color=, :secondary_colour=
     alias_method :tertiary_color=, :tertiary_colour=
