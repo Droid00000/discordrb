@@ -518,8 +518,8 @@ module Discordrb
     # @param mentionable [true, false] whether this role can mentioned by anyone in the server.
     # @param permissions [Integer, Array<Symbol>, Permissions, #bits] The permissions to write to the new role.
     # @param reason [String] The reason the for the creation of this role.
-    # @param secondary_colour [Integer, ColourRGB, nil] The roles secondary colour.
-    # @param tertiary_colour [Integer, ColourRGB, nil] The roles tertiary colour.
+    # @param secondary_colour [Integer, ColourRGB, nil] The secondary colour of the role to create.
+    # @param tertiary_colour [Integer, ColourRGB, nil] The tertiary colour of the role to create.
     # @return [Role] the created role.
     def create_role(name: 'new role', colour: 0, hoist: false, mentionable: false, permissions: 104_324_161, secondary_colour: nil, tertiary_colour: nil, reason: nil)
       colour = colour.respond_to?(:combined) ? colour.combined : colour

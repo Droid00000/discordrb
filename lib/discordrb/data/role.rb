@@ -5,13 +5,6 @@ module Discordrb
   class Role
     include IDObject
 
-    # Colour combination for the holographic colour style.
-    HOLOGRAPHIC_COLOURS = {
-      primary_color: 11_127_295,
-      tertiary_color: 16_761_760,
-      secondary_color: 16_759_788
-    }.freeze
-
     # @return [Permissions] this role's permissions.
     attr_reader :permissions
 
@@ -215,6 +208,18 @@ module Discordrb
       update_colors(primary: colour)
     end
 
+    # Sets the secondary role colour to something new.
+    # @param colour [ColourRGB, Integer, nil] The new secondary colour.
+    def secondary_colour=(colour)
+      update_colours(secondary: colour)
+    end
+
+    # Sets the tertiary role colour to something new.
+    # @param colour [ColourRGB, Integer, nil] The new tertiary colour.
+    def tertiary_colour=(colour)
+      update_colours(tertiary: colour)
+    end
+
     # Upload a role icon for servers with the ROLE_ICONS feature.
     # @param file [File, nil] File like object that responds to #read, or nil.
     def icon=(file)
@@ -259,21 +264,7 @@ module Discordrb
     end
 
     alias_method :color=, :colour=
-
-    # Sets the secondary role colour to something new.
-    # @param colour [ColourRGB, Integer, nil] The new secondary colour.
-    def secondary_colour=(colour)
-      update_colors(secondary: colour)
-    end
-
     alias_method :secondary_color=, :secondary_colour=
-
-    # Sets the tertiary role colour to something new.
-    # @param colour [ColourRGB, Integer, nil] The new tertiary colour.
-    def tertiary_colour=(colour)
-      update_colors(tertiary: colour)
-    end
-
     alias_method :tertiary_color=, :tertiary_colour=
 
     # Changes this role's permissions to a fixed bitfield. This allows setting multiple permissions at once with just
@@ -330,7 +321,13 @@ module Discordrb
         secondary_color: (secondary == :undef ? @secondary_colour : secondary)&.to_i
       }
 
-      update_role_data(colours: holographic == true ? HOLOGRAPHIC_COLOURS : colours)
+      holographic_colours = {
+        primary_color: 11_127_295,
+        tertiary_color: 16_761_760,
+        secondary_color: 16_759_788
+      }
+
+      update_role_data(colours: holographic == true ? holographic_colours : colours)
     end
 
     alias_method :update_colors, :update_colours
@@ -346,8 +343,8 @@ module Discordrb
       update_data(JSON.parse(API::Server.update_role(@bot.token, @server.id, @id,
                                                      new_data[:name] || @name,
                                                      :undef,
-                                                     new_data[:hoist].nil? ? @hoist : new_data[:hoist],
-                                                     new_data[:mentionable].nil? ? @mentionable : new_data[:mentionable],
+                                                     new_data.key?(:hoist) ? new_data[:hoist] : :undef,
+                                                     new_data.key?(:mentionable) ? new_data[:mentionable] : :undef,
                                                      new_data[:permissions] || @permissions.bits,
                                                      nil,
                                                      new_data.key?(:icon) ? new_data[:icon] : :undef,
