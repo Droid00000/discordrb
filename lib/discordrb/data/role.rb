@@ -220,6 +220,12 @@ module Discordrb
       update_colours(tertiary: colour)
     end
 
+    # Sets whether the role colour should be a holographic style.
+    # @param holographic [true, false] whether the role colour should be a holographic style.
+    def holographic=(holographic)
+      update_colours(holographic: holographic)
+    end
+
     # Upload a role icon for servers with the ROLE_ICONS feature.
     # @param file [File, nil] File like object that responds to #read, or nil.
     def icon=(file)
@@ -324,9 +330,9 @@ module Discordrb
     # @param primary [ColourRGB, Integer, nil] The new primary/base colour of this role, or nil to clear the primary colour.
     # @param secondary [ColourRGB, Integer, nil] The new secondary colour of this role, or nil to clear the secondary colour.
     # @param tertiary [ColourRGB, Integer,nil] The new tertiary colour of this role, or nil to clear the tertiary colour.
-    # @param holographic [true, false] Whether to apply a holographic style to the role colour, overriding any other arguments.
-    #   To remove this effect, manually update the colours. Using this argument is recommended over setting individual colour values.
-    def update_colours(primary: :undef, secondary: :undef, tertiary: :undef, holographic: false)
+    # @param holographic [true, false] Whether to apply or remove the holographic style to the role colour, overriding any other
+    #   arguments that were passed. Using this argument is recommended over passing individual colours.
+    def update_colours(primary: :undef, secondary: :undef, tertiary: :undef, holographic: :undef)
       colours = {
         primary_color: (primary == :undef ? @colour : primary)&.to_i,
         tertiary_color: (tertiary == :undef ? @tertiary_colour : tertiary)&.to_i,
@@ -338,6 +344,9 @@ module Discordrb
         tertiary_color: 16_761_760,
         secondary_color: 16_759_788
       }
+
+      # Only set the tertiary_color to `nil` if holographic is explicitly set to false.
+      colours[:tertiary_color] = nil if holographic.is_a?(FalseClass) && holographic?
 
       update_role_data(colours: holographic == true ? holographic_colours : colours)
     end
