@@ -455,11 +455,11 @@ class Discordrb::Webhooks::View
 
     # Add a file to this container.
     # @param id [Integer, nil] Integer ID of this file component.
-    # @param file [String, nil] An attachment://<filename> reference.
+    # @param url [String, nil] An attachment://<filename> reference.
     # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
     # @yieldparam builder [FileBuilder] The file object is yielded to allow for modification of attributes.
-    def file(id: nil, file: nil, spoiler: false)
-      builder = FileBuilder.new(file, spoiler, id)
+    def file(id: nil, url: nil, spoiler: false)
+      builder = FileBuilder.new(url, spoiler, id)
 
       yield builder if block_given?
 
@@ -574,11 +574,11 @@ class Discordrb::Webhooks::View
 
   # Add a file to the view.
   # @param id [Integer, nil] Integer ID of this file component.
-  # @param file [String, nil] An attachment://<filename> reference.
+  # @param url [String, nil] An attachment://<filename> reference.
   # @param spoiler [true, false] If this file should be spoilered. Defaults to false.
   # @yieldparam builder [FileBuilder] The file object is yielded to allow for modification of attributes.
-  def file(id: nil, file: nil, spoiler: false)
-    builder = FileBuilder.new(file, spoiler, id)
+  def file(id: nil, url: nil, spoiler: false)
+    builder = FileBuilder.new(url, spoiler, id)
 
     yield builder if block_given?
 
