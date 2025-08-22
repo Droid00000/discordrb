@@ -48,7 +48,7 @@ module Discordrb
       39 => :use_embedded_activities,     # 549755813888
       40 => :moderate_members,            # 1099511627776
       41 => :view_monetization_analytics, # 2199023255552
-      42 => :use_sounds,                  # 4398046511104
+      42 => :use_soundboard,              # 4398046511104
       43 => :create_server_expressions,   # 8796093022208
       44 => :create_scheduled_events,     # 17592186044416
       45 => :use_external_sounds,         # 35184372088832
