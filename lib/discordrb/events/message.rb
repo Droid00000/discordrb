@@ -136,6 +136,7 @@ module Discordrb::Events
     #   @see Channel#server
     delegate :server, to: :channel
 
+    # @!visibility private
     def initialize(message, bot)
       @bot = bot
       @message = message
