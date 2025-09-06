@@ -69,6 +69,7 @@ module Discordrb
       @members = {}
       @voice_states = {}
       @emoji = {}
+      @soundboard_sounds = {}
 
       process_channels(data['channels'])
       update_data(data)
@@ -453,6 +454,20 @@ module Discordrb
       @members[member.id] = member
     end
 
+    # Adds a soundboard sound to the cache
+    # @note For internal use only
+    # @!visibility private
+    def cache_soundboard_sound(sound)
+      @soundboard_sounds[sound.id] = sound
+    end
+
+    # Removes a soundboard sound from the cache
+    # @note For internal use only
+    # @!visibility private
+    def delete_soundboard_sound(sound)
+      @soundboard_sounds.delete(sound.resolve_id)
+    end
+
     # Updates a member's voice state
     # @note For internal use only
     # @!visibility private
@@ -822,6 +837,55 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
+    # Get a list of all of the soundboard sounds on the server.
+    # @param bypass_cache [true, false] Whether to explicitly
+    #   re-fetch all soundboard sounds via an HTTP request.
+    # @return [Array<SoundboardSound>] the soundboard sounds on this server.
+    def soundboard_sounds(bypass_cache: false)
+      process_soundboard_sounds(JSON.parse(API::Soundboard.list_soundboard_sounds(@bot.token, @id))['items']) if bypass_cache
+
+      @soundboard_sounds.values
+    end
+
+    # Get a single soundboard sound.
+    # @param id [Integer, String, SoundboardSound] The soundboard sound, or its ID to resolve.
+    # @param request [true, false] Whether to request the soundboard sound from Discord if it isn't cached.
+    # @return [SoundboardSound, nil] The soundboard sound for the given ID, or `nil` if it could't be found.
+    def soundboard_sound(id, request: true)
+      id = id.resolve_id
+      return @soundboard_sounds[id] if @soundboard_sounds[id]
+      return nil unless request
+
+      sound = SoundboardSound.new(JSON.parse(API::Soundboard.get_soundboard_sound(@bot.token, @id, id)), @bot, self)
+      @soundboard_sounds[sound.id] = sound
+    rescue StandardError
+      nil
+    end
+
+    # Create a soundboard sound on this server.
+    # @param name [String] The 2-32 character name of the soundboard sound to create.
+    # @param file [File, #read] An `.mp3` or `.ogg` file that responds to `#read`.
+    # @param volume [Float, Integer, nil] The volume between 0-1 of the soundboard sound to create.
+    # @param emoji [Emoji, Integer, String, nil] The emoji of the soundboard sound to create.
+    # @param reason [String, nil] The audit log reason shown for creating the soundboard sound.
+    # @return [SoundboardSound] the soundboard sound that was created.
+    def create_soundboard_sound(name:, file:, volume: nil, emoji: nil, reason: nil)
+      emoji_id = nil
+      emoji_name = nil
+      file = file.respond_to?(:read) ? Discordrb.encode64(file) : file
+
+      case emoji
+      when Integer, String
+        emoji.to_i.zero? ? (emoji_name = emoji) : (emoji_id = emoji)
+      when Emoji, Reaction
+        emoji.id ? (emoji_id = emoji.id) : (emoji_name = emoji.name)
+      end
+
+      response = API::Soundboard.create_soundboard_sound(@bot.token, @id, name, file, volume&.to_f, emoji_id, emoji_name, reason)
+      soundboard_sound = SoundboardSound.new(JSON.parse(response), @bot, self)
+      @soundboard_sounds[soundboard_sound.id] = soundboard_sound
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
@@ -884,6 +948,7 @@ module Discordrb
       process_presences(new_data['presences']) if new_data['presences']
       process_voice_states(new_data['voice_states']) if new_data['voice_states']
       process_active_threads(new_data['threads']) if new_data['threads']
+      process_soundboard_sounds(new_data['soundboard_sounds']) if new_data['soundboard_sounds']
     end
 
     # Adds a channel to this server's cache
@@ -908,6 +973,13 @@ module Discordrb
     def update_emoji_data(new_data)
       @emoji = {}
       process_emoji(new_data['emojis'])
+    end
+
+    # Updates the cached soundboard sounds with new sounds
+    # @note For internal use only
+    # @!visibility private
+    def update_soundboard_sounds(new_data)
+      process_soundboard_sounds(new_data['soundboard_sounds'])
     end
 
     # The inspect method is overwritten to give more useful output
@@ -1012,6 +1084,17 @@ module Discordrb
         thread = @bot.ensure_channel(element, self)
         @channels << thread
         @channels_by_id[thread.id] = thread
+      end
+    end
+
+    def process_soundboard_sounds(sounds)
+      @soundboard_sounds = {}
+
+      return unless sounds
+
+      sounds.each do |element|
+        element = SoundboardSound.new(element, @bot, self)
+        @soundboard_sounds[element.id] = element
       end
     end
   end

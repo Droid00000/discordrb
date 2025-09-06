@@ -20,6 +20,7 @@ require 'discordrb/events/webhooks'
 require 'discordrb/events/invites'
 require 'discordrb/events/interactions'
 require 'discordrb/events/threads'
+require 'discordrb/events/soundboard'
 
 require 'discordrb/api'
 require 'discordrb/api/channel'
@@ -27,6 +28,7 @@ require 'discordrb/api/server'
 require 'discordrb/api/invite'
 require 'discordrb/api/interaction'
 require 'discordrb/api/application'
+require 'discordrb/api/soundboard'
 
 require 'discordrb/errors'
 require 'discordrb/data'
@@ -1167,6 +1169,18 @@ module Discordrb
       server.update_emoji_data(data)
     end
 
+    # Internal handler for GUILD_SOUNDBOARD_SOUND_CREATE and GUILD_SOUNDBOARD_SOUND_UPDATE
+    def update_guild_soundboard_sound(data)
+      server = self.server(data['guild_id'].to_i)
+      sound = server&.soundboard_sound(data['id'].to_i, request: false)
+
+      if sound
+        sound.from_other(data)
+      else
+        sound&.cache_soundboard_sound(SoundboardSound.new(data, self, server))
+      end
+    end
+
     # Internal handler for MESSAGE_CREATE
     def create_message(data); end
 
@@ -1574,6 +1588,32 @@ module Discordrb
           event = ServerEmojiUpdateEvent.new(server, old_emoji_data[e], new_emoji_data[e], self)
           raise_event(event)
         end
+      when :GUILD_SOUNDBOARD_SOUND_CREATE
+        update_guild_soundboard_sound(data)
+
+        event = SoundboardSoundCreateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUND_UPDATE
+        update_guild_soundboard_sound(data)
+
+        event = SoundboardSoundUpdateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUND_DELETE
+        self.server(data['guild_id'].to_i)&.delete_soundboard_sound(data['sound_id'].to_i)
+
+        event = SoundboardSoundDeleteEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SOUNDBOARD_SOUNDS_UPDATE, :SOUNDBOARD_SOUNDS
+        self.server(data['guild_id'].to_i)&.update_soundboard_sounds(data)
+
+        if type == :GUILD_SOUNDBOARD_SOUNDS_UPDATE
+          event = SoundboardSoundsUpdateEvent.new(data, self)
+          raise_event(event)
+        end
+      when :VOICE_CHANNEL_EFFECT_SEND
+        event = VoiceChannelEffectSendEvent.new(data, self)
+
+        raise_event(event)
       when :APPLICATION_COMMAND_PERMISSIONS_UPDATE
         event = ApplicationCommandPermissionsUpdateEvent.new(data, self)
 

@@ -251,6 +251,11 @@ module Discordrb::API
     "#{cdn_url}/guild-tag-badges/#{server_id}/#{badge_id}.#{format}"
   end
 
+  # make a soundboard sound URL from a soundboard sound ID.
+  def soundboard_sound_url(soundboard_sound_id)
+    "#{cdn_url}/soundboard-sounds/#{soundboard_sound_id}"
+  end
+
   # Create an OAuth application
   def create_oauth_application(token, name, redirect_uris)
     request(

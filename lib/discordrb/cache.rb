@@ -23,6 +23,7 @@ module Discordrb
       @pm_channels = {}
       @thread_members = {}
       @server_previews = {}
+      @default_sounds = {}
     end
 
     # Returns or caches the available voice regions
@@ -146,6 +147,20 @@ module Discordrb
       @server_previews[id] = ServerPreview.new(response, self)
     rescue StandardError
       nil
+    end
+
+    # Get the default soundboard sounds that can be used by everyone.
+    # @return [Array<SoundboardSound>] the soundboard sounds everyone can use.
+    def default_soundboard_sounds
+      return @default_sounds.values unless @default_sounds.empty?
+
+      response = API::Soundboard.list_default_soundboard_sounds(token)
+
+      JSON.parse(response).each do |data|
+        @default_sounds[data['sound_id'].to_i] = SoundboardSound.new(data, self)
+      end
+
+      @default_sounds.values
     end
 
     # Ensures a given user object is cached and if not, cache it from the given data hash.

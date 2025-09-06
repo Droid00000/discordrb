@@ -186,7 +186,7 @@ module Discordrb::Voice
       @token = token
       @session = session
 
-      @endpoint = endpoint.split(':').first
+      @endpoint = endpoint
 
       @udp = VoiceUDP.new
     end
@@ -347,7 +347,7 @@ module Discordrb::Voice
     end
 
     def init_ws
-      host = "wss://#{@endpoint}:443/?v=#{VOICE_GATEWAY_VERSION}"
+      host = "wss://#{@endpoint}/?v=#{VOICE_GATEWAY_VERSION}"
       @bot.debug("Connecting VWS to host: #{host}")
 
       # Connect the WS
