@@ -613,7 +613,7 @@ module Discordrb::API::Channel
   # Get a list of users that have voted for a poll answer.
   # https://discord.com/developers/docs/resources/poll#get-answer-voters
   def get_poll_answer_voters(token, channel_id, message_id, answer_id, limit = 100, after = nil, before = nil)
-    query = URI.encode_www_form({ before: before, after: after, limit: limit }.compact)
+    query = URI.encode_www_form({ limit: limit, after: after, before: before }.compact)
 
     Discordrb::API.request(
       :channels_cid_polls_mid_answers_aid,
