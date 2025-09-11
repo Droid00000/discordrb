@@ -153,13 +153,7 @@ module Discordrb
 
       # @!visibility private
       def to_h
-        emoji = if @emoji&.id
-                  { id: @emoji.id } if @message.from_bot? || @bot.emoji(@emoji)
-                else
-                  { name: @emoji.name } unless @emoji.nil?
-                end
-
-        { poll_media: { text: @name, emoji: emoji }.compact }
+        { poll_media: { text: @name, emoji: @emoji&.to_h }.compact }
       end
 
       # @!visibility private
