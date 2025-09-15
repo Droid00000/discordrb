@@ -29,7 +29,7 @@ module Discordrb::Voice
   PLAIN_MODE = 'plain'
 
   # Encryption modes supported by Discord
-  ENCRYPTION_MODES = %w[xsalsa20_poly1305_lite xsalsa20_poly1305_suffix xsalsa20_poly1305].freeze
+  ENCRYPTION_MODES = %w[aead_aes256_gcm_rtpsize aead_xchacha20_poly1305_rtpsize].freeze
 
   # Represents a UDP connection to a voice server. This connection is used to send the actual audio data.
   class VoiceUDP
