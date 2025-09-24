@@ -954,6 +954,7 @@ module Discordrb
       message = { content: builder[:content], embeds: builder[:embeds], allowed_mentions: builder[:allowed_mentions], components: components&.to_a || view.to_a, sticker_ids: stickers&.map(&:resolve_id), flags: flags }
       response = JSON.parse(API::Channel.start_thread_in_forum_or_media_channel(@bot.token, @id, name, message.compact, attachments, rate_limit_per_user, auto_archive_duration, tags&.map(&:resolve_id), reason))
 
+      puts response.inspect
       response['message']['thread'] = response
       Message.new(response, @bot)
     end
