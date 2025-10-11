@@ -848,16 +848,17 @@ module Discordrb
     end
 
     # Get a single soundboard sound.
-    # @param id [Integer, String, SoundboardSound] The soundboard sound, or its ID to resolve.
+    # @param soundboard_sound_id [Integer, String, SoundboardSound] The soundboard sound ID to resolve.
     # @param request [true, false] Whether to request the soundboard sound from Discord if it isn't cached.
     # @return [SoundboardSound, nil] The soundboard sound for the given ID, or `nil` if it could't be found.
-    def soundboard_sound(id, request: true)
-      id = id.resolve_id
+    def soundboard_sound(soundboard_sound_id, request: true)
+      id = soundboard_sound_id.resolve_id
       return @soundboard_sounds[id] if @soundboard_sounds[id]
       return nil unless request
 
-      sound = SoundboardSound.new(JSON.parse(API::Soundboard.get_soundboard_sound(@bot.token, @id, id)), @bot, self)
-      @soundboard_sounds[sound.id] = sound
+      sound = JSON.parse(API::Soundboard.get_soundboard_sound(@bot.token, @id, id))
+      soundboard_sound = SoundboardSound.new(sound, @bot, self)
+      @soundboard_sounds[soundboard_sound.id] = soundboard_sound
     rescue StandardError
       nil
     end
@@ -870,19 +871,21 @@ module Discordrb
     # @param reason [String, nil] The audit log reason shown for creating the soundboard sound.
     # @return [SoundboardSound] the soundboard sound that was created.
     def create_soundboard_sound(name:, file:, volume: nil, emoji: nil, reason: nil)
-      emoji_id = nil
-      emoji_name = nil
-      file = file.respond_to?(:read) ? Discordrb.encode64(file) : file
+      options = {
+        name: name,
+        volume: volume&.to_f,
+        sound: file.respond_to?(:read) ? Discordrb.encode64(file) : file
+      }
 
       case emoji
       when Integer, String
-        emoji.to_i.zero? ? (emoji_name = emoji) : (emoji_id = emoji)
+        emoji.to_i.zero? ? options[:emoji_name] = emoji : options[:emoji_id] = emoji
       when Emoji, Reaction
-        emoji.id ? (emoji_id = emoji.id) : (emoji_name = emoji.name)
+        emoji.id ? options[:emoji_id] = emoji.id : options[:emoji_name] = emoji.name
       end
 
-      response = API::Soundboard.create_soundboard_sound(@bot.token, @id, name, file, volume&.to_f, emoji_id, emoji_name, reason)
-      soundboard_sound = SoundboardSound.new(JSON.parse(response), @bot, self)
+      sound = JSON.parse(API::Soundboard.create_soundboard_sound(@bot.token, @id, **options, reason:))
+      soundboard_sound = SoundboardSound.new(sound, @bot, self)
       @soundboard_sounds[soundboard_sound.id] = soundboard_sound
     end
 

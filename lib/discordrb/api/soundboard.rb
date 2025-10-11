@@ -56,7 +56,7 @@ module Discordrb::API::Soundboard
 
   # Create a custom soundboard sound in a server.
   # https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound
-  def create_soundboard_sound(token, server_id, name, sound, volume = :undef, emoji_id = :undef, emoji_name = :undef, reason = nil)
+  def create_soundboard_sound(token, server_id, name:, sound:, volume: :undef, emoji_id: :undef, emoji_name: :undef, reason: nil)
     Discordrb::API.request(
       :guilds_sid_soundboard_sounds,
       server_id,
@@ -71,7 +71,7 @@ module Discordrb::API::Soundboard
 
   # Update a custom soundboard sound in a server.
   # https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound
-  def update_soundboard_sound(token, server_id, sound_id, name = :undef, volume = :undef, emoji_id = :undef, emoji_name = :undef, reason = nil)
+  def update_soundboard_sound(token, server_id, sound_id, name: :undef, volume: :undef, emoji_id: :undef, emoji_name: :undef, reason: nil)
     Discordrb::API.request(
       :guilds_sid_soundboard_sounds_sid,
       server_id,
@@ -86,7 +86,7 @@ module Discordrb::API::Soundboard
 
   # Delete a custom soundboard sound in a server.
   # https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound
-  def delete_soundboard_sound(token, server_id, sound_id, reason = nil)
+  def delete_soundboard_sound(token, server_id, sound_id, reason: nil)
     Discordrb::API.request(
       :guilds_sid_soundboard_sounds_sid,
       server_id,

@@ -62,18 +62,17 @@ module Discordrb
     end
 
     # Get the CDN url of this soundboard sound.
+    # @param [String] The format of the soundboard sound's URL.
     # @return [String] the CDN url this soundboard sound can be accessed at.
-    def url
-      API.soundboard_sound_url(@id)
+    def url(format: 'mp3')
+      API.soundboard_sound_url(@id, format)
     end
 
     # Delete this soundboard sound. Use this with caution, as it cannot be undone.
     # @param reason [String, nil] the reason for deleting this soundboard sound.
     # @return [void]
     def delete(reason: nil)
-      raise 'You cannot delete a default soundboard sound' if @server.nil?
-
-      API::Soundboard.delete_soundboard_sound(@bot.token, @server.id, @id, reason)
+      API::Soundboard.delete_soundboard_sound(@bot.token, @server.id, @id, reason: reason)
       @server.delete_soundboard_sound(@id)
     end
 
@@ -102,14 +101,7 @@ module Discordrb
 
     # @!visibility private
     def update_data(new_data)
-      raise 'You cannot update a default soundboard sound.' if @server.nil?
-
-      from_other(JSON.parse(API::Soundboard.update_soundboard_sound(@bot.token,
-                                                                    @server.id, @id,
-                                                                    new_data[:name] || :undef,
-                                                                    new_data.key?(:volume) ? new_data[:volume] : :undef,
-                                                                    new_data.key?(:emoji_id) ? new_data[:emoji_id] : :undef,
-                                                                    new_data.key?(:emoji_name) ? new_data[:emoji_name] : :undef)))
+      from_other(JSON.parse(API::Soundboard.update_soundboard_sound(@bot.token, @server.resolve_id, @id, **new_data)))
     end
   end
 end

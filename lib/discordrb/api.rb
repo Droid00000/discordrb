@@ -252,8 +252,8 @@ module Discordrb::API
   end
 
   # make a soundboard sound URL from a soundboard sound ID.
-  def soundboard_sound_url(soundboard_sound_id)
-    "#{cdn_url}/soundboard-sounds/#{soundboard_sound_id}"
+  def soundboard_sound_url(soundboard_sound_id, format = 'mp3')
+    "#{cdn_url}/soundboard-sounds/#{soundboard_sound_id}.#{format}"
   end
 
   # Create an OAuth application
