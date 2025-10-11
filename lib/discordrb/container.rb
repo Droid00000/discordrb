@@ -681,6 +681,69 @@ module Discordrb
       register_event(ApplicationCommandPermissionsUpdateEvent, attributes, block)
     end
 
+    # This **event** is raised whenever a soundboard sound is created in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundCreateEvent] The event that was raised.
+    # @return [SoundboardSoundCreateEventHandler] The event handler that was registered.
+    # @note This event requires the `:server_emojis` intent to be received.
+    def sounboard_sound_create(attributes = {}, &block)
+      register_event(SoundboardSoundCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a soundboard sound is updated in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundUpdateEvent] The event that was raised.
+    # @return [SoundboardSoundUpdateEventHandler] The event handler that was registered.
+    # @note This event requires the `:server_emojis` intent to be received.
+    def sounboard_sound_update(attributes = {}, &block)
+      register_event(SoundboardSoundUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a soundboard sound is deleted in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundDeleteEvent] The event that was raised.
+    # @return [SoundboardSoundDeleteEventHandler] The event handler that was registered.
+    # @note This event requires the `:server_emojis` intent to be received.
+    def sounboard_sound_delete(attributes = {}, &block)
+      register_event(SoundboardSoundDeleteEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever multiple soundboard sounds are updated together in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundsUpdateEvent] The event that was raised.
+    # @return [SoundboardSoundsUpdateEventHandler] The event handler that was registered.
+    def soundboard_sounds_update(attributes = {}, &block)
+      register_event(SoundboardSoundsUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an effect is sent to a voice channel the bot is connected to.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Integer, Channel] :channel A channel to match against.
+    # @option attributes [String, Integer, Member, User] :user A user to match against.
+    # @option attributes [String, Integer] :animation_id An animation ID to match against.
+    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [Integer, Float] :sound_volume The volume of a soundboard sound to match against, between 0-1.
+    # @option attributes [Symbol, Integer] :animation_type An animation type to match against, `:premium`, `:standard`.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [VoiceChannelEffectSendEvent] The event that was raised.
+    # @return [VoiceChannelEffectSendEventHandler] The event handler that was registered.
+    # @note This event requires the `:server_voice_states` intent to be received.
+    def voice_channel_effect(attributes = {}, &block)
+      register_event(VoiceChannelEffectSendEvent, attributes, block)
+    end
+
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Symbol, Regexp] :type Matches the event type of the dispatch.

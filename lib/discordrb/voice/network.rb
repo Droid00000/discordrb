@@ -29,7 +29,7 @@ module Discordrb::Voice
   PLAIN_MODE = 'plain'
 
   # Encryption modes supported by Discord
-  ENCRYPTION_MODES = %w[xsalsa20_poly1305_lite xsalsa20_poly1305_suffix xsalsa20_poly1305].freeze
+  ENCRYPTION_MODES = %w[aead_aes256_gcm_rtpsize aead_xchacha20_poly1305_rtpsize].freeze
 
   # Represents a UDP connection to a voice server. This connection is used to send the actual audio data.
   class VoiceUDP
@@ -167,7 +167,7 @@ module Discordrb::Voice
   # circle around users on Discord, and obtaining UDP connection info.
   class VoiceWS
     # The version of the voice gateway that's supposed to be used.
-    VOICE_GATEWAY_VERSION = 4
+    VOICE_GATEWAY_VERSION = 8
 
     # @return [VoiceUDP] the UDP voice connection over which the actual audio data is sent.
     attr_reader :udp
@@ -186,7 +186,7 @@ module Discordrb::Voice
       @token = token
       @session = session
 
-      @endpoint = endpoint.split(':').first
+      @endpoint = endpoint
 
       @udp = VoiceUDP.new
     end
@@ -347,7 +347,7 @@ module Discordrb::Voice
     end
 
     def init_ws
-      host = "wss://#{@endpoint}:443/?v=#{VOICE_GATEWAY_VERSION}"
+      host = "wss://#{@endpoint}/?v=#{VOICE_GATEWAY_VERSION}"
       @bot.debug("Connecting VWS to host: #{host}")
 
       # Connect the WS
