@@ -18,7 +18,7 @@ module Discordrb
     end
   end
 
-  # A server on Discord
+  # An isolated collection of channels and member's on Discord.
   class Server
     include IDObject
     include ServerAttributes
@@ -53,13 +53,43 @@ module Discordrb
     # @return [Hash<Integer => VoiceState>] the hash (user ID => voice state) of voice states of members on this server
     attr_reader :voice_states
 
-    # The server's amount of Nitro boosters.
-    # @return [Integer] the amount of boosters, 0 if no one has boosted.
+    # @return [Integer] the server's amount of Nitro boosters, 0 if no one has boosted.
     attr_reader :booster_count
 
-    # The server's Nitro boost level.
-    # @return [Integer] the boost level, 0 if no level.
+    # @return [Integer] the server's Nitro boost level, 0 if no level.
     attr_reader :boost_level
+
+    # @return [String] the preferred locale of a server. Used in server discovery and notices from Discord.
+    attr_reader :locale
+
+    # @return [String, nil] the description of the server. Shown in server discovery and external embeds.
+    attr_reader :description
+
+    # @return [Integer] the maximum number of members that can join the server.
+    attr_reader :max_member_count
+
+    # @return [String, nil] the code of the server's custom vanity invite link.
+    attr_reader :vanity_invite_code
+
+    # @return [Integer, nil] the maximum number of members that can concurrently be online in this server.
+    #   Always set to `nil` except for the largest of servers.
+    attr_reader :max_presence_count
+
+    # @return [String, nil] the hexadecimal ID of the server's discovery splash screen.
+    attr_reader :discovery_splash_id
+
+    # @return [Integer] the flags that have been set on the system channel for the server.
+    attr_reader :system_channel_flags
+
+    # @return [Integer] the maximum number of members that can concurrently watch a stream in a video channel.
+    attr_reader :max_video_channel_members
+
+    # @return [Integer] the maximum number of members that can concurrently watch a stream in a stage channel.
+    attr_reader :max_stage_video_channel_members
+
+    # @return [true, false] whether or not the server has the boost progress bar enabled.
+    attr_reader :boost_progress_bar
+    alias_method :boost_progress_bar?, :boost_progress_bar
 
     # @!visibility private
     def initialize(data, bot)
@@ -353,7 +383,8 @@ module Discordrb
     def splash_id
       @splash_id ||= JSON.parse(API::Server.resolve(@bot.token, @id))['splash']
     end
-    alias splash_hash splash_id
+
+    alias_method :splash_hash, :splash_id
 
     # @return [String, nil] the splash image URL for the server's VIP invite page.
     #   `nil` if there is no splash image.
@@ -376,6 +407,13 @@ module Discordrb
       return unless banner_id
 
       API.banner_url(@id, @banner_id)
+    end
+
+    # Utility method to get a server preview's discovery splash URL.
+    # @param format [String] the URL will default to `webp`. You can otherwise specify one of `jpg` or `png` to override this.
+    # @return [String, nil] the URL to the server's discovery splash image, or `nil` if the server doesn't have a discovery splash image.
+    def discovery_splash_url(format = 'webp')
+      API.discovery_splash_url(@id, @discovery_splash_id, format) if @discovery_splash_id
     end
 
     # @return [String] a URL that a user can use to navigate to this server in the client
@@ -763,7 +801,7 @@ module Discordrb
       only_mentions: 1
     }.freeze
 
-    # @return [Symbol] the default message notifications settings of the server (:all = 'All messages', :mentions = 'Only @mentions').
+    # @return [Symbol] the default message notifications settings of the server (:all_messages = 'All messages', :only_mentions = 'Only @mentions').
     def default_message_notifications
       NOTIFICATION_LEVELS.key @default_message_notifications
     end
@@ -791,7 +829,7 @@ module Discordrb
       all_members: 2
     }.freeze
 
-    # @return [Symbol] the explicit content filter level of the server (:none = 'Don't scan any messages.', :exclude_roles = 'Scan messages for members without a role.', :all = 'Scan messages sent by all members.').
+    # @return [Symbol] the explicit content filter level of the server (:disabled = 'Don't scan any messages.', :members_without_roles = 'Scan messages for members without a role.', :all_members = 'Scan messages sent by all members.').
     def explicit_content_filter
       FILTER_LEVELS.key @explicit_content_filter
     end
@@ -806,6 +844,30 @@ module Discordrb
       update_server_data(explicit_content_filter: filter_level)
     end
 
+    # A map of possible multi-factor authentication levels to symbol names
+    MFA_LEVELS = {
+      none: 0,
+      elevated: 1
+    }.freeze
+
+    # @return [Symbol] the multi-factor authentication level of the server (:none = 'no MFA/2FA requirement for moderation actions', :elevated = 'MFA/2FA is required for moderation actions')
+    def mfa_level
+      MFA_LEVELS.key @mfa_level
+    end
+
+    # A map of possible NSFW levels to symbol names
+    NSFW_LEVELS = {
+      default: 0,
+      explicit: 1,
+      safe: 2,
+      age_restricted: 3
+    }.freeze
+
+    # @return [Symbol] the NSFW level of the server (:default = 'no NSFW level has been set', :explicit = 'the server may contain explicit content', :safe = 'the server does not contain NSFW content', :age_restricted = 'server membership is restricted to adults')
+    def nsfw_level
+      NSFW_LEVELS.key @nsfw_level
+    end
+
     # @return [true, false] whether this server has any emoji or not.
     def any_emoji?
       @emoji.any?
@@ -813,6 +875,16 @@ module Discordrb
 
     alias_method :has_emoji?, :any_emoji?
     alias_method :emoji?, :any_emoji?
+
+    # Create an invite link using the server's vanity code.
+    # @return [String, nil] The server's vanity invite URL, or `nil` if the server does not have a vanity invite code.
+    def vanity_invite_url
+      return unless @vanity_invite_code
+
+      "https://discord.gg/#{@vanity_invite_code}"
+    end
+
+    alias_method :vanity_invite_link, :vanity_invite_url
 
     # Requests a list of Webhooks on the server.
     # @return [Array<Webhook>] webhooks on the server.
@@ -848,9 +920,24 @@ module Discordrb
       @bot.channel(@afk_channel_id) if @afk_channel_id
     end
 
+    # @return [Channel, nil] the channel where community servers can display rules or guidelines, or `nil` if none is set.
+    def rules_channel
+      @bot.channel(@rules_channel_id) if @rules_channel_id
+    end
+
     # @return [Channel, nil] the system channel (used for automatic welcome messages) of a server, or `nil` if none is set.
     def system_channel
       @bot.channel(@system_channel_id) if @system_channel_id
+    end
+
+    # @return [Channel, nil] the channel where Community servers receive safety alerts from Discord, or `nil` if none is set.
+    def safety_alerts_channel
+      @bot.channel(@safety_alerts_channel_id) if @safety_alerts_channel_id
+    end
+
+    # @return [Channel, nil] the channel where Community servers receive public updates from Discord, or `nil` if none is set.
+    def public_updates_channel
+      @bot.channel(@public_updates_channel_id) if @public_updates_channel_id
     end
 
     # Updates the cached data with new data
@@ -858,33 +945,47 @@ module Discordrb
     # @!visibility private
     def update_data(new_data = nil)
       new_data ||= JSON.parse(API::Server.resolve(@bot.token, @id))
-      @name = new_data[:name] || new_data['name'] || @name
-      @region_id = new_data[:region] || new_data['region'] || @region_id
-      @icon_id = new_data[:icon] || new_data['icon'] || @icon_id
-      @afk_timeout = new_data[:afk_timeout] || new_data['afk_timeout'] || @afk_timeout
-
-      afk_channel_id = new_data[:afk_channel_id] || new_data['afk_channel_id'] || @afk_channel
-      @afk_channel_id = afk_channel_id&.resolve_id
-      widget_channel_id = new_data[:widget_channel_id] || new_data['widget_channel_id'] || @widget_channel
-      @widget_channel_id = widget_channel_id&.resolve_id
-      system_channel_id = new_data[:system_channel_id] || new_data['system_channel_id'] || @system_channel
-      @system_channel_id = system_channel_id&.resolve_id
-
-      @widget_enabled = new_data[:widget_enabled] || new_data['widget_enabled']
-      @splash = new_data[:splash_id] || new_data['splash_id'] || @splash_id
-
-      @verification_level = new_data[:verification_level] || new_data['verification_level'] || @verification_level
-      @explicit_content_filter = new_data[:explicit_content_filter] || new_data['explicit_content_filter'] || @explicit_content_filter
-      @default_message_notifications = new_data[:default_message_notifications] || new_data['default_message_notifications'] || @default_message_notifications
-
-      @large = new_data.key?('large') ? new_data['large'] : @large
-      @member_count = new_data['member_count'] || @member_count || 0
-      @splash_id = new_data['splash'] || @splash_id
-      @banner_id = new_data['banner'] || @banner_id
-      @features = new_data['features'] ? new_data['features'].map { |element| element.downcase.to_sym } : @features || []
-      @booster_count = new_data['premium_subscription_count'] || @booster_count || 0
-      @boost_level = new_data['premium_tier'] || @boost_level
+      @name = new_data['name']
       @owner_id = new_data['owner_id'].to_i
+      @locale = new_data['preferred_locale']
+      @icon_id = new_data['icon'] if new_data.key?('icon')
+      @region_id = new_data['region'] if new_data.key?('region')
+      @description = new_data['description'] if new_data.key?('description')
+
+      @splash_id = new_data['splash'] if new_data.key?('splash')
+      @discovery_splash_id = new_data['discovery_splash'] if new_data.key?('discovery_splash')
+
+      @afk_timeout = new_data['afk_timeout']
+      @system_channel_flags = new_data['system_channel_flags']
+      @widget_enabled = new_data['widget_enabled'] if new_data.key?('widget_enabled')
+
+      @afk_channel_id = new_data['afk_channel_id']&.to_i if new_data.key?('afk_channel_id')
+      @rules_channel_id = new_data['rules_channel_id']&.to_i if new_data.key?('rules_channel_id')
+      @widget_channel_id = new_data['widget_channel_id']&.to_i if new_data.key('widget_channel_id')
+      @system_channel_id = new_data['system_channel_id']&.to_i if new_data.key?('system_channel_id')
+      @safety_alerts_channel_id = new_data['safety_alerts_channel_id']&.to_i if new_data.key?('safety_alerts_channel_id')
+      @public_updates_channel_id = new_data['public_updates_channel_id']&.to_i if new_data.key?('public_updates_channel_id')
+
+      @mfa_level = new_data['mfa_level']
+      @nsfw_level = new_data['nsfw_level']
+      @verification_level = new_data['verification_level']
+      @explicit_content_filter = new_data['explicit_content_filter']
+      @default_message_notifications = new_data['default_message_notifications']
+
+      @max_member_count = new_data['max_members'] if new_data.key?('max_members')
+      @max_presence_count = new_data['max_presences'] if new_data.key?('max_presences')
+      @max_video_channel_members = new_data['max_video_channel_users'] if new_data['max_video_channel_users']
+      @max_stage_video_channel_members = new_data['max_stage_video_channel_users'] if new_data.key?('max_stage_video_channel_users')
+
+      @large = new_data['large'] || @large || false
+      @member_count = new_data['member_count'] || @member_count || 0
+      @booster_count = new_data['premium_subscription_count'] || @booster_count || 0
+
+      @banner_id = new_data['banner'] if new_data.key?('banner')
+      @vanity_invite_code = new_data['vanity_url_code'] if new_data.key?('vanity_url_code')
+      @features = new_data['features']&.map { |feature| feature.downcase.to_sym } || []
+      @boost_level = new_data['premium_tier']
+      @boost_progress_bar = new_data['premium_progress_bar_enabled']
 
       process_channels(new_data['channels']) if new_data['channels']
       process_roles(new_data['roles']) if new_data['roles']
