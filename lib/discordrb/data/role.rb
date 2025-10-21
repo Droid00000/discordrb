@@ -306,19 +306,71 @@ module Discordrb
     #   the role will be moved above the @everyone role.
     # @return [Integer] the new position of this role
     def sort_above(other = nil)
-      other = @server.role(other.resolve_id) if other
-      roles = @server.roles.sort_by(&:position)
-      roles.delete_at(@position)
-
-      index = other ? roles.index { |role| role.id == other.id } + 1 : 1
-      roles.insert(index, self)
-
-      updated_roles = roles.map.with_index { |role, position| { id: role.id, position: position } }
-      @server.update_role_positions(updated_roles)
-      index
+      if other
+        move(above: other)
+      else
+        move(bottom: true)
+      end
     end
 
     alias_method :move_above, :sort_above
+
+    # Move the position of this role in the roles list.
+    # @example This will move the role 2 places above the `@everyone` role.
+    #   role.move(bottom: true, offset: 2)
+    # @example This will move the role above the `@muted` role.
+    #   role.move(above: 257017090932867072)
+    # @example This will move the role 3 spots below the `No Images` role.
+    #   roles.move(below: 254077236989132800, offset: -3)
+    # @param bottom [true, false, nil] Whether to move the roles to the bottom of the role list.
+    # @param top [true, false, nil] Whether to move this role to the highest possible position.
+    # @param above [Integer, String, Role, nil] The role that this role should be moved above.
+    # @param below [Integer, String, Role, nil] The role that this role should be moved below.
+    # @param offset [Integer, nil] The number of roles to offset the new position by. A positive number will
+    #   move the role above, and a negative number will move the role below. This parameter is relative and
+    #   calculated after the `bottom`, `top`, `above`, and `below` parameters.
+    # @param reason [String, nil] The audit log reason to show for moving the role.
+    # @return [Integer] the new position of the role.
+    def move(bottom: nil, top: nil, above: nil, below: nil, offset: 0, reason: nil)
+      # rubocop:disable Style/IfUnlessModifier
+      if [bottom, top, above, below].count(&:itself) > 1
+        raise ArgumentError, "'bottom', 'top', 'above', 'below' are mutually exclusive"
+      end
+
+      unless (above || below) && (role = @server.role(above || below))
+        raise ArgumentError, "The 'above' or 'below' options cannot be 'nil'"
+      end
+
+      if (role&.resolve_id == @server.resolve_id) || (@id == role&.resolve_id)
+        raise ArgumentError, 'The target role that was provded is not valid'
+      end
+
+      # rubocop:enable Style/IfUnlessModifier
+      roles = @server.roles.sort_by { |role| [role.position, role.resolve_id] }
+
+      index = if bottom
+                1
+              elsif above
+                roles.rindex(target)
+              elsif below
+                roles.rindex(target) - 1
+              elsif top
+                roles.rindex(@server.bot.sort_roles.last) - 1
+              else
+                roles.rindex(self)
+              end
+
+      roles.reject! { |role| role.resolve_id == @id }
+
+      roles.insert([index + (offset || 0), 1].max, self)
+
+      roles = roles.map.with_index do |role, new_position|
+        { id: role.resolve_id, position: new_position }
+      end
+
+      @server.update_role_positions(roles, reason: reason)
+      @position
+    end
 
     # Deletes this role. This cannot be undone without recreating the role!
     # @param reason [String] the reason for this role's deletion
