@@ -65,6 +65,9 @@ module Discordrb
     # @return [String, nil] the description of the server. Shown in server discovery and external embeds.
     attr_reader :description
 
+    # @return [Integer, nil] the ID of the application that created the server, if it was created by a bot.
+    attr_reader :application_id
+
     # @return [Integer] the maximum number of members that can join the server.
     attr_reader :max_member_count
 
@@ -98,6 +101,8 @@ module Discordrb
       @members = {}
       @voice_states = {}
       @emoji = {}
+      @channels_by_id = {}
+      @channels = []
 
       update_data(data)
 
@@ -749,9 +754,9 @@ module Discordrb
     # @param icon [String, #read] The new icon, in base64-encoded JPG format.
     def icon=(icon)
       if icon.respond_to?(:read)
-        update_server_data(icon_id: Discordrb.encode64(icon))
+        update_server_data(icon: Discordrb.encode64(icon))
       else
-        update_server_data(icon_id: icon)
+        update_server_data(icon: icon)
       end
     end
 
@@ -765,6 +770,12 @@ module Discordrb
     # @param system_channel [Channel, String, Integer, nil] The new system channel, or `nil` should it be disabled.
     def system_channel=(system_channel)
       update_server_data(system_channel_id: system_channel.resolve_id)
+    end
+
+    # Sets the server's system channel's flags.
+    # @param flags [Integer] The new flags to set for the server's system channel, combined as a bitfield.
+    def system_channel_flags=(flags)
+      update_server_data(system_channel_flags: flags)
     end
 
     # Sets the amount of time after which a user gets moved into the AFK channel.
@@ -817,9 +828,9 @@ module Discordrb
     alias_method :notification_level=, :default_message_notifications=
 
     # Sets the server splash
-    # @param splash_hash [String] The splash hash
+    # @param splash_hash [String, File, nil] The new splash for the server.
     def splash=(splash_hash)
-      update_server_data(splash: splash_hash)
+      update_server_data(splash: splash_hash.respond_to?(:read) ? Discordrb.encode64(splash_hash) : splash_hash)
     end
 
     # A map of possible content filter levels to symbol names
@@ -900,6 +911,60 @@ module Discordrb
       invites.map { |invite| Invite.new(invite, @bot) }
     end
 
+    # Sets the description of the server.
+    # @param description [String, nil] The new description of the server, or `nil` to remove it.
+    def description=(description)
+      update_server_data(description: description)
+    end
+
+    # Sets the preferred locale of the server.
+    # @param locale [String, nil] The new preferred locale of the server, or `nil` to remove it.
+    def locale=(locale)
+      update_server_data(preferred_locale: locale)
+    end
+
+    # Sets the enabled features of the server.
+    # @param features [Array<String, Symbol>] The new enabled features to set for the server.
+    def features=(features)
+      update_server_data(features: features.map(&:upcase))
+    end
+
+    # Sets whether to show the server's boost progress bar.
+    # @param enabled [true, false] Whether or not the server's boost progress bar should be enabled.
+    def boost_progress_bar=(enabled)
+      update_server_data(premium_progress_bar_enabled: enabled)
+    end
+
+    # Sets the rules channel of the server.
+    # @param channel [String, Integer, Channel, nil] The new rules channel of the server, or `nil` to remove it.
+    def rules_channel=(channel)
+      update_server_data(rules_channel_id: channel&.resolve_id)
+    end
+
+    # Sets the safety alerts channel of the server.
+    # @param channel [String, Integer, Channel, nil] The new safety alerts channel of the server, or `nil` to remove it.
+    def safety_alerts_channel=(channel)
+      update_server_data(safety_alerts_channel_id: channel&.resolve_id)
+    end
+
+    # Sets the public updates channel of the server.
+    # @param channel [String, Integer, Channel, nil] The new public updates channel of the server, or `nil` to remove it.
+    def public_updates_channel=(channel)
+      update_server_data(public_updates_channel_id: channel&.resolve_id)
+    end
+
+    # Sets the custom banner image of the server.
+    # @param image [File, #read, String, nil] The new 16:9 banner image or GIF for the server, or `nil` to remove the it.
+    def banner=(image)
+      update_server_data(banner: image.respond_to?(:read) ? Discordrb.encode64(image) : image)
+    end
+
+    # Sets the discovery splash image of the server.
+    # @param image [File, #read, String, nil] The new 16:9 disocovery splash image for the server, or `nil` to remove the it.
+    def discovery_splash=(image)
+      update_server_data(discovery_splash: image.respond_to?(:read) ? Discordrb.encode64(image) : image)
+    end
+
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
@@ -946,25 +1011,24 @@ module Discordrb
     def update_data(new_data = nil)
       new_data ||= JSON.parse(API::Server.resolve(@bot.token, @id))
       @name = new_data['name']
+      @icon_id = new_data['icon']
+      @splash_id = new_data['splash']
+      @discovery_splash_id = new_data['discovery_splash']
       @owner_id = new_data['owner_id'].to_i
-      @locale = new_data['preferred_locale']
-      @icon_id = new_data['icon'] if new_data.key?('icon')
       @region_id = new_data['region'] if new_data.key?('region')
-      @description = new_data['description'] if new_data.key?('description')
-
-      @splash_id = new_data['splash'] if new_data.key?('splash')
-      @discovery_splash_id = new_data['discovery_splash'] if new_data.key?('discovery_splash')
 
       @afk_timeout = new_data['afk_timeout']
-      @system_channel_flags = new_data['system_channel_flags']
-      @widget_enabled = new_data['widget_enabled'] if new_data.key?('widget_enabled')
+      @afk_channel_id = new_data['afk_channel_id']&.to_i
 
-      @afk_channel_id = new_data['afk_channel_id']&.to_i if new_data.key?('afk_channel_id')
-      @rules_channel_id = new_data['rules_channel_id']&.to_i if new_data.key?('rules_channel_id')
-      @widget_channel_id = new_data['widget_channel_id']&.to_i if new_data.key('widget_channel_id')
-      @system_channel_id = new_data['system_channel_id']&.to_i if new_data.key?('system_channel_id')
-      @safety_alerts_channel_id = new_data['safety_alerts_channel_id']&.to_i if new_data.key?('safety_alerts_channel_id')
-      @public_updates_channel_id = new_data['public_updates_channel_id']&.to_i if new_data.key?('public_updates_channel_id')
+      @widget_enabled = new_data['widget_enabled'] if new_data.key?('widget_enabled')
+      @widget_channel_id = new_data['widget_channel_id'] if new_data.key?('widget_channel_id')
+
+      @system_channel_flags = new_data['system_channel_flags']
+      @system_channel_id = new_data['system_channel_id']&.to_i
+
+      @rules_channel_id = new_data['rules_channel_id']&.to_i
+      @public_updates_channel_id = new_data['public_updates_channel_id']&.to_i
+      @safety_alerts_channel_id = new_data['safety_alerts_channel_id']&.to_i
 
       @mfa_level = new_data['mfa_level']
       @nsfw_level = new_data['nsfw_level']
@@ -972,19 +1036,22 @@ module Discordrb
       @explicit_content_filter = new_data['explicit_content_filter']
       @default_message_notifications = new_data['default_message_notifications']
 
-      @max_member_count = new_data['max_members'] if new_data.key?('max_members')
+      @application_id = new_data['application_id']&.to_i
+      @features = new_data['features'].map { |feature| feature.downcase.to_sym }
       @max_presence_count = new_data['max_presences'] if new_data.key?('max_presences')
-      @max_video_channel_members = new_data['max_video_channel_users'] if new_data['max_video_channel_users']
-      @max_stage_video_channel_members = new_data['max_stage_video_channel_users'] if new_data.key?('max_stage_video_channel_users')
+      @max_member_count = new_data['max_members'] if new_data.key?('max_members')
+      @large = new_data.key?('large') ? new_data['large'] : (@large || false)
+      @member_count = new_data['member_count'] || new_data['approximate_member_count'] || @member_count || 0
 
-      @large = new_data['large'] || @large || false
-      @member_count = new_data['member_count'] || @member_count || 0
-      @booster_count = new_data['premium_subscription_count'] || @booster_count || 0
-
-      @banner_id = new_data['banner'] if new_data.key?('banner')
-      @vanity_invite_code = new_data['vanity_url_code'] if new_data.key?('vanity_url_code')
-      @features = new_data['features']&.map { |feature| feature.downcase.to_sym } || []
+      @vanity_url_code = new_data['vanity_url_code']
+      @description = new_data['description']
+      @banner_id = new_data['banner']
       @boost_level = new_data['premium_tier']
+      @booster_count = new_data['premium_subscription_count'] || @booster_count || 0
+      @locale = new_data['preferred_locale']
+
+      @max_video_channel_members = new_data['max_video_channel_users'] || @max_video_channel_members
+      @max_stage_video_channel_members = new_data['max_stage_video_channel_users'] || @max_stage_video_channel_members
       @boost_progress_bar = new_data['premium_progress_bar_enabled']
 
       process_channels(new_data['channels']) if new_data['channels']
@@ -1027,19 +1094,9 @@ module Discordrb
 
     private
 
+    # @!visibility private
     def update_server_data(new_data)
-      response = JSON.parse(API::Server.update(@bot.token, @id,
-                                               new_data[:name] || @name,
-                                               new_data[:region] || @region_id,
-                                               new_data[:icon_id] || @icon_id,
-                                               new_data[:afk_channel_id] || @afk_channel_id,
-                                               new_data[:afk_timeout] || @afk_timeout,
-                                               new_data[:splash] || @splash,
-                                               new_data[:default_message_notifications] || @default_message_notifications,
-                                               new_data[:verification_level] || @verification_level,
-                                               new_data[:explicit_content_filter] || @explicit_content_filter,
-                                               new_data[:system_channel_id] || @system_channel_id))
-      update_data(response)
+      update_data(JSON.parse(API::Server.update_guild(@bot.token, @id, **new_data)))
     end
 
     def process_roles(roles)
