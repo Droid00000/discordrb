@@ -419,13 +419,14 @@ module Discordrb
 
     private
 
+    # @!visibility private
     def update_role_data(new_data)
       update_data(JSON.parse(API::Server.update_role(@bot.token, @server.id, @id,
-                                                     new_data[:name] || @name,
+                                                     new_data.key?(:name) ? new_data[:name] : :undef,
                                                      :undef,
                                                      new_data.key?(:hoist) ? new_data[:hoist] : :undef,
                                                      new_data.key?(:mentionable) ? new_data[:mentionable] : :undef,
-                                                     new_data[:permissions] || @permissions.bits,
+                                                     new_data.key?(:permissions) new_data[:permissions] : :undef,
                                                      new_data[:reason],
                                                      new_data.key?(:icon) ? new_data[:icon] : :undef,
                                                      new_data.key?(:unicode_emoji) ? new_data[:unicode_emoji] : :undef,
