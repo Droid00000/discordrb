@@ -165,6 +165,8 @@ module Discordrb
       @unicode_emoji = other.unicode_emoji
       @secondary_colour = other.secondary_colour
       @tertiary_colour = other.tertiary_colour
+      @mentionable = other.mentionable?
+      @tags = other.tags
     end
 
     # Updates the data cache from a hash containing data
@@ -179,8 +181,10 @@ module Discordrb
       @mentionable = new_data['mentionable']
       @flags = new_data['flags']
       colours = new_data['colors']
+      @managed = new_data['managed']
       @permissions.bits = new_data['permissions'].to_i
       @colour = ColourRGB.new(colours['primary_color'])
+      @tags = Tags.new(new_data['tags']) if new_data['tags']
       @secondary_color = ColourRGB.new(colours['secondary_color']) if colours['secondary_color']
       @tertiary_colour = ColourRGB.new(colours['tertiary_color']) if colours['tertiary_color']
     end
@@ -206,7 +210,7 @@ module Discordrb
     # Sets the primary role colour to something new.
     # @param colour [ColourRGB, Integer, nil] The new colour.
     def colour=(colour)
-      update_colors(primary: colour)
+      update_colours(primary: colour)
     end
 
     # Sets the secondary role colour to something new.
@@ -315,6 +319,13 @@ module Discordrb
 
     alias_method :move_above, :sort_above
 
+    # Deletes this role. This cannot be undone without recreating the role!
+    # @param reason [String] the reason for this role's deletion
+    def delete(reason = nil)
+      API::Server.delete_role(@bot.token, @server.id, @id, reason)
+      @server.delete_role(@id)
+    end
+
     # Move the position of this role in the roles list.
     # @example This will move the role 2 places above the `@everyone` role.
     #   role.move(bottom: true, offset: 2)
@@ -334,33 +345,34 @@ module Discordrb
     def move(bottom: nil, top: nil, above: nil, below: nil, offset: 0, reason: nil)
       # rubocop:disable Style/IfUnlessModifier
       if [bottom, top, above, below].count(&:itself) > 1
-        raise ArgumentError, "'bottom', 'top', 'above', 'below' are mutually exclusive"
+        raise ArgumentError, "'bottom', 'top', 'above', and 'below' are mutually exclusive"
       end
 
-      unless (above || below) && (role = @server.role(above || below))
-        raise ArgumentError, "The 'above' or 'below' options cannot be 'nil'"
+      if (above || below) && !(target = @server.role(above || below))
+        raise ArgumentError, "The provided 'above' or 'below' options are not valid'"
       end
 
-      if (role&.resolve_id == @server.resolve_id) || (@id == role&.resolve_id)
+      if (below && target&.id == @server.id) || (@id == target&.id)
         raise ArgumentError, 'The target role that was provded is not valid'
       end
 
       # rubocop:enable Style/IfUnlessModifier
-      roles = @server.roles.sort_by { |role| [role.position, role.resolve_id] }
+      roles = @server.roles.uniq.sort_by { |role| [role.position, role.id] }
+
+      # Make sure we remove the current role.
+      myself = roles.rindex(self).tap { |index| roles.delete_at(index) }
 
       index = if bottom
                 1
-              elsif above
-                roles.rindex(target)
               elsif below
-                roles.rindex(target) - 1
+                roles.rindex(target)
+              elsif above
+                roles.rindex(target) + 1
               elsif top
-                roles.rindex(@server.bot.sort_roles.last) - 1
+                roles.rindex(@server.bot.sort_roles.last)
               else
-                roles.rindex(self)
+                myself
               end
-
-      roles.reject! { |role| role.resolve_id == @id }
 
       roles.insert([index + (offset || 0), 1].max, self)
 
@@ -372,20 +384,14 @@ module Discordrb
       @position
     end
 
-    # Deletes this role. This cannot be undone without recreating the role!
-    # @param reason [String] the reason for this role's deletion
-    def delete(reason = nil)
-      API::Server.delete_role(@bot.token, @server.id, @id, reason)
-      @server.delete_role(@id)
-    end
-
     # A rich interface designed to make working with role colours simple.
     # @param primary [ColourRGB, Integer, nil] The new primary/base colour of this role, or nil to clear the primary colour.
     # @param secondary [ColourRGB, Integer, nil] The new secondary colour of this role, or nil to clear the secondary colour.
     # @param tertiary [ColourRGB, Integer,nil] The new tertiary colour of this role, or nil to clear the tertiary colour.
     # @param holographic [true, false] Whether to apply or remove the holographic style to the role colour, overriding any other
     #   arguments that were passed. Using this argument is recommended over passing individual colours.
-    def update_colours(primary: :undef, secondary: :undef, tertiary: :undef, holographic: :undef)
+    # @param reason [String, nil] The audit log reason to show for updating the role's colours.
+    def update_colours(primary: :undef, secondary: :undef, tertiary: :undef, holographic: :undef, reason: nil)
       colours = {
         primary_color: (primary == :undef ? @colour : primary)&.to_i,
         tertiary_color: (tertiary == :undef ? @tertiary_colour : tertiary)&.to_i,
@@ -401,7 +407,7 @@ module Discordrb
       # Only set the tertiary_color to `nil` if holographic is explicitly set to false.
       colours[:tertiary_color] = nil if holographic.is_a?(FalseClass) && holographic?
 
-      update_role_data(colours: holographic == true ? holographic_colours : colours)
+      update_role_data(colours: holographic == true ? holographic_colours : colours, reason: reason)
     end
 
     alias_method :update_colors, :update_colours
@@ -420,7 +426,7 @@ module Discordrb
                                                      new_data.key?(:hoist) ? new_data[:hoist] : :undef,
                                                      new_data.key?(:mentionable) ? new_data[:mentionable] : :undef,
                                                      new_data[:permissions] || @permissions.bits,
-                                                     nil,
+                                                     new_data[:reason],
                                                      new_data.key?(:icon) ? new_data[:icon] : :undef,
                                                      new_data.key?(:unicode_emoji) ? new_data[:unicode_emoji] : :undef,
                                                      new_data.key?(:colours) ? new_data[:colours] : :undef)))
