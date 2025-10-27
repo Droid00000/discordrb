@@ -190,7 +190,7 @@ module Discordrb
     end
 
     # Sets the role name to something new
-    # @param name [String] The name that should be set
+    # @param name [String, nil] The name that should be set.
     def name=(name)
       update_role_data(name: name)
     end
@@ -297,7 +297,7 @@ module Discordrb
     # https://discord.com/developers/docs/topics/permissions.
     # @example Remove all permissions from a role
     #   role.packed = 0
-    # @param packed [Integer] A bitfield with the desired permissions value.
+    # @param packed [Integer, nil] A bitfield with the desired permissions value.
     # @param update_perms [true, false] Whether the internal data should also be updated. This should always be true
     #   when calling externally.
     def packed=(packed, update_perms = true)
