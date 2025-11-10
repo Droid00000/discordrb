@@ -320,5 +320,18 @@ module Discordrb
     def inspect
       "<User username=#{@username} id=#{@id} discriminator=#{@discriminator}>"
     end
+
+    # @!visibility private
+    def update_data(new_data)
+      @username = new_data['username']
+      @global_name = new_data['global_name']
+      @discriminator = new_data['discriminator']
+      @avatar_id = new_data['avatar']
+      @public_flags = new_data['public_flags'] || 0
+      @banner_id = new_data['banner'] || @banner_id
+      @collectibles = Collectibles.new(new_data['collectibles'] || {}, @bot)
+      @primary_server = process_primary_server(new_data['primary_guild'] || {})
+      @avatar_decoration = process_avatar_decoration(new_data['avatar_decoration_data'])
+    end
   end
 end
