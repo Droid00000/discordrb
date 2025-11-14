@@ -120,11 +120,11 @@ describe Discordrb::Message do
     before do
       # Return the appropriate number of users based on after_id
       allow(Discordrb::API::Channel).to receive(:get_reactions)
-        .with(any_args, nil, anything) # ..., after_id, limit
+        .with(anything, anything, anything, anything, nil, nil, anything, anything)
         .and_return([user_data].to_json)
 
       allow(Discordrb::API::Channel).to receive(:get_reactions)
-        .with(any_args, user_data['id'].to_i, anything)
+        .with(any_args, user_data['id'].to_i, anything, nil, nil, anything, anything)
         .and_return([].to_json)
 
       allow(bot).to receive(:ensure_user)
@@ -134,7 +134,7 @@ describe Discordrb::Message do
 
     it 'calls the API method' do
       expect(Discordrb::API::Channel).to receive(:get_reactions)
-        .with(any_args, '\u{1F44D}', nil, nil, 27)
+        .with(any_args, '\u{1F44D}', nil, nil, 27, 0)
 
       message.reacted_with('\u{1F44D}', limit: 27)
     end
@@ -149,7 +149,7 @@ describe Discordrb::Message do
       allow(emoji).to receive(:to_reaction).and_return('123')
 
       expect(Discordrb::API::Channel).to receive(:get_reactions)
-        .with(any_args, '123', nil, nil, anything)
+        .with(any_args, '123', nil, nil, anything, 0)
 
       message.reacted_with(emoji)
     end
@@ -158,7 +158,7 @@ describe Discordrb::Message do
       allow(reaction).to receive(:to_s).and_return('123')
 
       expect(Discordrb::API::Channel).to receive(:get_reactions)
-        .with(any_args, '123', nil, nil, anything)
+        .with(any_args, '123', nil, nil, anything, 0)
 
       message.reacted_with(reaction)
     end
