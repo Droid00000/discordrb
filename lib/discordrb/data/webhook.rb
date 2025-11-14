@@ -31,6 +31,7 @@ module Discordrb
     # @return [Member, User, nil] the user object of the owner or nil if the webhook was requested using the token.
     attr_reader :owner
 
+    # @!visibility private
     def initialize(data, bot)
       @bot = bot
 
@@ -84,9 +85,9 @@ module Discordrb
     def update(data)
       # Only pass a value for avatar if the key is defined as sending nil will delete the
       data[:avatar] = avatarise(data[:avatar]) if data.key?(:avatar)
-      data[:channel_id] = data[:channel].resolve_id
+      data[:channel_id] = data[:channel]&.resolve_id
       data.delete(:channel)
-      update_webhook(data)
+      update_webhook(**data)
     end
 
     # Deletes the webhook.
@@ -192,7 +193,7 @@ module Discordrb
     # Utility function to get a webhook's avatar URL.
     # @return [String] the URL to the avatar image
     def avatar_url
-      return API::User.default_avatar unless @avatar
+      return API::User.default_avatar(@id) unless @avatar
 
       API::User.avatar_url(@id, @avatar)
     end
@@ -211,11 +212,7 @@ module Discordrb
     private
 
     def avatarise(avatar)
-      if avatar.respond_to? :read
-        "data:image/jpg;base64,#{Base64.strict_encode64(avatar.read)}"
-      else
-        avatar
-      end
+      avatar.respond_to?(:read) ? Discordrb.encode64(avatar) : avatar
     end
 
     def update_internal(data)

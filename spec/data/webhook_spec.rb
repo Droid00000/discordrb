@@ -24,7 +24,7 @@ describe Discordrb::Webhook do
   fixture_property :edited_webhook_name, :update_name_data, ['name']
 
   fixture :update_avatar_data, %i[webhook update_avatar]
-  fixture_property :edited_webhook_avatar, :update_channel_data, ['avatar']
+  fixture_property :edited_webhook_avatar, :update_avatar_data, ['avatar']
 
   fixture :update_channel_data, %i[webhook update_channel]
   fixture_property :edited_webhook_channel_id, :update_channel_data, ['channel_id']
@@ -166,8 +166,8 @@ describe Discordrb::Webhook do
   describe '#avatarise' do
     context 'avatar responds to read' do
       it 'returns encoded' do
-        avatar = double('avatar', read: 'text')
-        expect(webhook.send(:avatarise, avatar)).to eq "data:image/jpg;base64,#{Base64.strict_encode64('text')}"
+        avatar = double('avatar', read: 'text', path: '/foo')
+        expect(webhook.send(:avatarise, avatar)).to eq 'data:image/jpeg;base64,dGV4dA=='
       end
     end
 
