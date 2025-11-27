@@ -28,7 +28,6 @@ require 'discordrb/api/server'
 require 'discordrb/api/invite'
 require 'discordrb/api/interaction'
 require 'discordrb/api/application'
-require 'discordrb/api/soundboard'
 
 require 'discordrb/errors'
 require 'discordrb/data'
@@ -1650,7 +1649,7 @@ module Discordrb
         event = SoundboardSoundDeleteEvent.new(data, self)
         raise_event(event)
       when :GUILD_SOUNDBOARD_SOUNDS_UPDATE, :SOUNDBOARD_SOUNDS
-        self.server(data['guild_id'].to_i)&.update_soundboard_sounds(data)
+        self.server(data['guild_id'].to_i)&.__send__(:process_soundboard_sounds, data['soundboard_sounds'])
 
         return if type == :SOUNDBOARD_SOUNDS
 

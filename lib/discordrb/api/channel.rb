@@ -437,6 +437,20 @@ module Discordrb::API::Channel
     )
   end
 
+  # Play a soundboard sound in a voice channel.
+  # https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound
+  def send_soundboard_sound(token, sound_id, channel_id, source_guild_id = nil)
+    Discordrb::API.request(
+      :channels_cid_send_soundboard_sound,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/send-soundboard-sound",
+      { sound_id: sound_id, source_guild_id: source_guild_id }.compact.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
   # Create a webhook
   # https://discord.com/developers/docs/resources/webhook#create-webhook
   def create_webhook(token, channel_id, name, avatar = nil, reason = nil)

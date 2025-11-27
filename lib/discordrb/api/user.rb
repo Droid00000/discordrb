@@ -119,16 +119,15 @@ module Discordrb::API::User
     )
   end
 
-  # Change user status setting
-  def change_status_setting(token, status)
+  # Get a list of the default soundboard sounds that can be used by anyone.
+  # https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds
+  def list_default_soundboard_sounds(token)
     Discordrb::API.request(
-      :users_me_settings,
+      :soundboard_default_sounds,
       nil,
-      :patch,
-      "#{Discordrb::API.api_base}/users/@me/settings",
-      { status: status }.to_json,
-      Authorization: token,
-      content_type: :json
+      :get,
+      "#{Discordrb::API.api_base}/soundboard-default-sounds",
+      Authorization: token
     )
   end
 

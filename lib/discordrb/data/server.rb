@@ -848,7 +848,7 @@ module Discordrb
     #   re-fetch all soundboard sounds via an HTTP request.
     # @return [Array<SoundboardSound>] the soundboard sounds on this server.
     def soundboard_sounds(bypass_cache: false)
-      process_soundboard_sounds(JSON.parse(API::Soundboard.list_soundboard_sounds(@bot.token, @id))['items']) if bypass_cache
+      process_soundboard_sounds(JSON.parse(API::Server.list_soundboard_sounds(@bot.token, @id))['items']) if bypass_cache
 
       @soundboard_sounds.values
     end
@@ -862,7 +862,7 @@ module Discordrb
       return @soundboard_sounds[id] if @soundboard_sounds[id]
       return nil unless request
 
-      sound = JSON.parse(API::Soundboard.get_soundboard_sound(@bot.token, @id, id))
+      sound = JSON.parse(API::Server.get_soundboard_sound(@bot.token, @id, id))
       soundboard_sound = SoundboardSound.new(sound, @bot, self)
       @soundboard_sounds[soundboard_sound.id] = soundboard_sound
     rescue StandardError
@@ -890,7 +890,7 @@ module Discordrb
         emoji.id ? options[:emoji_id] = emoji.id : options[:emoji_name] = emoji.name
       end
 
-      sound = JSON.parse(API::Soundboard.create_soundboard_sound(@bot.token, @id, **options, reason:))
+      sound = JSON.parse(API::Server.create_soundboard_sound(@bot.token, @id, **options, reason:))
       soundboard_sound = SoundboardSound.new(sound, @bot, self)
       @soundboard_sounds[soundboard_sound.id] = soundboard_sound
     end
@@ -985,13 +985,6 @@ module Discordrb
     def update_emoji_data(new_data)
       @emoji = {}
       process_emoji(new_data['emojis'])
-    end
-
-    # Updates the cached soundboard sounds with new sounds
-    # @note For internal use only
-    # @!visibility private
-    def update_soundboard_sounds(new_data)
-      process_soundboard_sounds(new_data['soundboard_sounds'])
     end
 
     # The inspect method is overwritten to give more useful output

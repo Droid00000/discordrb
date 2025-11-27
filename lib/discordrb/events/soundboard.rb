@@ -52,7 +52,7 @@ module Discordrb::Events
   # Raised when an effect is sent to a voice channel.
   class VoiceChannelEffectSendEvent < Event
     # @!visibility private
-    attr_reader :user_id, :sound_id
+    attr_reader :user_id, :sound_id, :server_id, :channel_id
 
     # @return [Emoji, nil] the emoji that was sent.
     attr_reader :emoji
@@ -77,12 +77,12 @@ module Discordrb::Events
       @bot = bot
       @user_id = data['user_id'].to_i
       @sound_id = data['sound_id']&.to_i
+      @server_id = data['guild_id'].to_i
       @animation_id = data['animation_id']
+      @channel_id = data['channel_id'].to_i
       @animation_type = data['animation_type']
       @sound_volume = data['sound_volume']&.to_f
-      @server = bot.server(data['guild_id'].to_i)
-      @channel = bot.channel(data['channel_id'].to_i)
-      @emoji = Discordrb::Emoji.new(data['emoji'], bot) if data['emoji']
+      @emoji = Discordrb::Emoji.new(data['emoji'], @bot) if data['emoji']
     end
 
     # Whether the animation type of this effect is `:premium`.
@@ -95,6 +95,18 @@ module Discordrb::Events
     # @return [true, false]
     def standard_animation?
       @animation_type == 1
+    end
+
+    # Get the server this voice channel effect was sent in.
+    # @return [Server] the server this effect was sent in.
+    def server
+      @bot.server(@server_id)
+    end
+
+    # Get the channel this voice channel effect was sent in.
+    # @return [Channel] the channel this effect was sent in.
+    def channel
+      @bot.channel(@channel_id)
     end
 
     # Get the member that sent this voice channel effect.
@@ -130,7 +142,7 @@ module Discordrb::Events
           a.resolve_id == e.resolve_id
         end,
 
-        matches_all(@attributes[:soundboard_sound], event.soundboard_sound) do |a, e|
+        matches_all(@attributes[:id], event.soundboard_sound) do |a, e|
           a.resolve_id == e.resolve_id
         end
       ].reduce(true, &:&)
@@ -148,7 +160,7 @@ module Discordrb::Events
           a.resolve_id == e.resolve_id
         end,
 
-        matches_all(@attributes[:soundboard_sound], event.id) do |a, e|
+        matches_all(@attributes[:id], event.id) do |a, e|
           a.resolve_id == e.resolve_id
         end
       ].reduce(true, &:&)
@@ -184,11 +196,11 @@ module Discordrb::Events
           a.resolve_id == e.resolve_id
         end,
 
-        matches_all(@attributes[:server], event.server) do |a, e|
+        matches_all(@attributes[:server], event.server_id) do |a, e|
           a.resolve_id == e.resolve_id
         end,
 
-        matches_all(@attributes[:channel], event.channel) do |a, e|
+        matches_all(@attributes[:channel], event.channel_id) do |a, e|
           a.resolve_id == e.resolve_id
         end,
 

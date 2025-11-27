@@ -41,7 +41,7 @@ module Discordrb
       @name = data['name']
       @server = server
       @id = data['id']&.to_i
-      @animated = data['animated']
+      @animated = data['animated'] || false
       @managed = data['managed']
       @available = data['available']
       @requires_colons = data['require_colons']

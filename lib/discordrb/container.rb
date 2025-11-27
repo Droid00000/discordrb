@@ -683,7 +683,7 @@ module Discordrb
 
     # This **event** is raised whenever a soundboard sound is created in a server.
     # @param attributes [Hash] The event's attributes.
-    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, SoundboardSound] :id A soundboard sound to match against.
     # @option attributes [String, Integer, Server] :server A server to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [SoundboardSoundCreateEvent] The event that was raised.
@@ -695,7 +695,7 @@ module Discordrb
 
     # This **event** is raised whenever a soundboard sound is updated in a server.
     # @param attributes [Hash] The event's attributes.
-    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, SoundboardSound] :id A soundboard sound to match against.
     # @option attributes [String, Integer, Server] :server A server to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [SoundboardSoundUpdateEvent] The event that was raised.
@@ -707,7 +707,7 @@ module Discordrb
 
     # This **event** is raised whenever a soundboard sound is deleted in a server.
     # @param attributes [Hash] The event's attributes.
-    # @option attributes [String, Integer, SoundboardSound] :soundboard_sound A soundboard sound to match against.
+    # @option attributes [String, Integer, SoundboardSound] :id A soundboard sound to match against.
     # @option attributes [String, Integer, Server] :server A server to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [SoundboardSoundDeleteEvent] The event that was raised.
