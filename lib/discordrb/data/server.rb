@@ -844,9 +844,11 @@ module Discordrb
     # Processes a GUILD_MEMBERS_CHUNK packet, specifically the members field
     # @note For internal use only
     # @!visibility private
-    def process_chunk(members, chunk_index, chunk_count)
+    def process_chunk(members, chunk_index, chunk_count, not_found)
       process_members(members)
       LOGGER.debug("Processed chunk #{chunk_index + 1}/#{chunk_count} server #{@id} - index #{chunk_index} - length #{members.length}")
+
+      not_found&.each { |id| @members.delete(id.resolve_id }
 
       return if chunk_index + 1 < chunk_count
 
