@@ -354,6 +354,18 @@ module Discordrb::API
       content_type: :json
     )
   end
+
+  # Get a list of the soundboard sounds everyone can use.
+  # https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds
+  def list_default_soundboard_sounds(token)
+    Discordrb::API.request(
+      :soundboard_default_sounds,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/soundboard-default-sounds",
+      Authorization: token
+    )
+  end
 end
 
 Discordrb::API.reset_mutexes

@@ -14,6 +14,7 @@ require 'discordrb/events/await'
 require 'discordrb/events/bans'
 require 'discordrb/events/reactions'
 require 'discordrb/events/interactions'
+require 'discordrb/events/soundboard'
 
 require 'discordrb/await'
 
@@ -694,6 +695,57 @@ module Discordrb
     # @return [ApplicationCommandPermissionsUpdateEventHandler] The event handler that was registered.
     def application_command_permissions_update(attributes = {}, &block)
       register_event(ApplicationCommandPermissionsUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an soundboard sound is created in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Sound] :id A soundboard sound to match against.
+    # @option attributes [String, Regexp] :name A name to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Integer, User, Member, Recipient] :creator A creator to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundCreateEvent] The event that was raised.
+    # @return [SoundboardSoundCreateEventHandler] The event handler that was registered.
+    def soundboard_sound_create(attributes = {}, &block)
+      register_event(SoundboardSoundCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an soundboard sound is updated in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Sound] :id A soundboard sound to match against.
+    # @option attributes [String, Regexp] :name A name to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Integer, User, Member, Recipient] :creator A creator to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundUpdateEvent] The event that was raised.
+    # @return [SoundboardSoundUpdateEventHandler] The event handler that was registered.
+    def soundboard_sound_update(attributes = {}, &block)
+      register_event(SoundboardSoundUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an soundboard sound is deleted in a server.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Sound] :id A soundboard sound to match against.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SoundboardSoundDeleteEvent] The event that was raised.
+    # @return [SoundboardSoundDeleteEventHandler] The event handler that was registered.
+    def soundboard_sound_delete(attributes = {}, &block)
+      register_event(SoundboardSoundDeleteEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an effect such is played in a voice channel the bot is connected to.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Server] :server A server to match against.
+    # @option attributes [String, Integer, Channel] :channel A channel to match against.
+    # @option attributes [Integer, Symbol] :animation_type An animation type to match against.
+    # @option attributes [Integer, String, Member] :member A member to match against (you can also pass `:user`).
+    # @option attributes [String, Integer, Sound] :soundboard_sound A soundboard sound to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [VoiceChannelEffectEvent] The event that was raised.
+    # @return [VoiceChannelEffectEventEventHandler] The event handler that was registered.
+    def voice_channel_effect(attributes = {}, &block)
+      register_event(VoiceChannelEffectEvent, attributes, block)
     end
 
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.
