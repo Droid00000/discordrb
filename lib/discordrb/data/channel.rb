@@ -864,12 +864,58 @@ module Discordrb
     # @param unique [true, false] If true, Discord will always send a unique invite instead of possibly re-using a similar one
     # @param reason [String] The reason the for the creation of this invite.
     # @return [Invite] the created invite.
+    # @deprecated Please migrate to using {#create_invite}.
     def make_invite(max_age = 0, max_uses = 0, temporary = false, unique = false, reason = nil)
-      response = API::Channel.create_invite(@bot.token, @id, max_age, max_uses, temporary, unique, reason)
-      Invite.new(JSON.parse(response), @bot)
+      create_invite(max_age:, max_uses:, temporary:, unique:, reason:)
     end
 
     alias_method :invite, :make_invite
+
+    # Create an invite for the channel.
+    # @param max_age [Integer] The duration of the invite in seconds, or `nil` for no duration.
+    # @param max_uses [Integer] The number of times the invite can be used, or `nil` for no limit.
+    # @param temporary [true, false] Whether or not the invite should only grant temporary membership.
+    # @param unique [true, false] Whether or not the Discord API should attempt to make a unique invite code.
+    # @param stream_user [User, Integer, String, nil] The user whose stream to display on the invite cover.
+    # @param embedded_application [Application, Integer, String, nil] The embdedded application to open the invite for.
+    # @param target_users [#read, File, Array<User, Integer, String>, nil] The users who are allowed to accept the invite.
+    # @param roles [Array<Role, Integer, String>, nil] The roles that should be assigned to a member who accepts the invite.
+    # @param reason [String, nil] The reason to show in the audit log for creating the invite.
+    # @return [Invite, nil] The invite that was created. This may be `nil` if the server has manually disabled invites.
+    # @note When passing a file to the `users:` parameter, you must provide a single-column CSV file containg a list of
+    #   user IDs (snowflakes) serialized as either a string or an integer.
+    def create_invite(
+      max_age: :undef, max_uses: :undef, temporary: :undef, unique: :undef, stream_user: :undef,
+      embedded_application: :undef, target_users: :undef, roles: :undef, reason: nil
+    )
+      data = {
+        max_age: max_age || 0,
+        max_uses: max_uses || 0,
+        temporary: temporary,
+        unique: unique,
+        target_user_id: stream_user == :undef ? stream_user : stream_user.resolve_id,
+        target_application_id: embedded_application == :undef ? embedded_application : embedded_application&.resolve_id,
+        role_ids: roles == :undef ? roles : Array(roles).map(&:resolve_id),
+        target_users_file: target_users,
+        reason: reason
+      }
+
+      data[:target_type] = if stream_user && stream_user != :undef
+                             1
+                           elsif embedded_application && embedded_application != :undef
+                             2
+                           else
+                             :undef
+                           end
+
+      if target_users.respond_to?(:map)
+        string = StringIO.new(target_users.map(&:resolve_id).join(",\n"), 'rb')
+        data[:target_users_file] = string.tap { |io| io.define_singleton_method(:path) { "#{SecureRandom.hex(6)}.csv" } }
+      end
+
+      response = API::Channel.create_invite!(@bot.token, @id, **data)
+      response.empty? ? nil : Invite.new(JSON.parse(response), @bot)
+    end
 
     # Starts typing, which displays the typing indicator on the client for five seconds.
     # If you want to keep typing you'll have to resend this every five seconds. (An abstraction
