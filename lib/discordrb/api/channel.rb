@@ -289,6 +289,7 @@ module Discordrb::API::Channel
     body = { max_age:, max_uses:, temporary:, unique:, target_type:, target_user_id:, target_application_id:, role_ids:, target_users_file: }.reject { |_, value| value == :undef }
     headers = { 'X-Audit-Log-Reason': reason, Authorization: token }
     headers[:content_type] = :json unless target_users_file != :undef
+    puts(body.inspect)
 
     Discordrb::API.request(
       :channels_cid_invites,
