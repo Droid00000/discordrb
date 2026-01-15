@@ -878,7 +878,7 @@ module Discordrb
     # @param unique [true, false] Whether or not the Discord API should attempt to make a unique invite code.
     # @param stream_user [User, Integer, String, nil] The user whose stream to display on the invite cover.
     # @param embedded_application [Application, Integer, String, nil] The embdedded application to open the invite for.
-    # @param users [#read, File, Array<User, Integer, String>, nil] The users who are allowed to accept the invite.
+    # @param target_users [#read, File, Array<User, Integer, String>, nil] The users who are allowed to accept the invite.
     # @param roles [Array<Role, Integer, String>, nil] The roles that should be assigned to a member who accepts the invite.
     # @param reason [String, nil] The reason to show in the audit log for creating the invite.
     # @return [Invite, nil] The invite that was created. This may be `nil` if the server has manually disabled invites.
@@ -886,7 +886,7 @@ module Discordrb
     #   user IDs (snowflakes) serialized as either a string or an integer.
     def create_invite(
       max_age: :undef, max_uses: :undef, temporary: :undef, unique: :undef, stream_user: :undef,
-      embedded_application: :undef, users: :undef, roles: :undef, reason: nil
+      embedded_application: :undef, target_users: :undef, roles: :undef, reason: nil
     )
       data = {
         max_age: max_age || 0,
