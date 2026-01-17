@@ -218,7 +218,7 @@ module Discordrb
         users.tap { |stream| stream.define_singleton_method(:path) { 'users.csv' } }
       end
 
-      API::Invite.update_target_users(@bot.token, @code, users)
+      API::Invite.update_target_users(@bot.token, @code, target_users_file: users)
     end
 
     # The inspect method is overwritten to give more useful output
