@@ -848,7 +848,7 @@ module Discordrb
       process_members(members)
       LOGGER.debug("Processed chunk #{chunk_index + 1}/#{chunk_count} server #{@id} - index #{chunk_index} - length #{members.length}")
 
-      not_found&.each { |id| @members.delete(id.resolve_id }
+      not_found&.each { |id| @members.delete(id.resolve_id) }
 
       return if chunk_index + 1 < chunk_count
 
