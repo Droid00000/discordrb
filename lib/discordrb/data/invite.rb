@@ -215,7 +215,7 @@ module Discordrb
     def target_users=(users)
       if users.is_a?(Array)
         users = StringIO.new(users.map(&:resolve_id).join(",\n"), 'rb')
-        users.tap { |io| io.define_singleton_method(:path) { "#{SecureRandom.hex(6)}.csv" } }
+        users.tap { |io| io.define_singleton_method(:path) { SecureRandom.hex(5) } }
       end
 
       API::Invite.update_target_users(@bot.token, @code, users)
