@@ -177,7 +177,7 @@ module Discordrb
       @flags = data['flags'] || 0
       @stream_user = bot.ensure_user(data['target_user']) if data['target_user']
       @embedded_application = Application.new(data['target_application'], @bot) if data['target_application']
-      role_ids = data['role_ids']&.filter_map { |id| @server.role(id) }
+      role_ids = data['role_ids']&.filter_map { |id| @server.role(id.to_i) }
       @roles = role_ids || (data['roles'] || []).map do |role|
         @server.is_a?(Server) ? @server.role(role['id']) : Role.new(role, @bot)
       end
