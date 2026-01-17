@@ -79,11 +79,6 @@ module Discordrb
       API.splash_url(@id, @splash_id, format) if @splash_id
     end
 
-    # @return [Symbol] the NSFW level of the server (:default = 'no NSFW level has been set', :explicit = 'the server may contain explicit content', :safe = 'the server does not contain NSFW content', :age_restricted = 'server membership is restricted to adults')
-    def nsfw_level
-      Discordrb::Server::NSFW_LEVELS.key(@nsfw_level)
-    end
-
     # @return [Symbol] the verification level of the server (:none = none, :low = 'Must have a verified email on their Discord account', :medium = 'Has to be registered with Discord for at least 5 minutes', :high = 'Has to be a member of this server for at least 10 minutes', :very_high = 'Must have a verified phone on their Discord account').
     def verification_level
       Discordrb::Server::VERIFICATION_LEVELS.key(@verification_level)
@@ -199,8 +194,8 @@ module Discordrb
     # Get the IDs of the users who are allowed to use the invite.
     # @return [Array<Integer>] The IDs of the target users for the invite.
     def target_users
-      data = API::Invite.get_target_users(@bot.token, @code).body.split(",\n")
-      data.empty? ? data : data.map! { |user_id| Integer(user_id) }
+      users = API::Invite.get_target_users(@bot.token, @code)
+      users.body.split(",\n").map! { |user_id| Integer(user_id) }
     end
 
     # Get the state of the worker used to process the target users upload batch.
@@ -214,7 +209,7 @@ module Discordrb
     # @param targets [#read, File, Array<User, Integer>, nil] The new target users of the invite.
     def target_users=(users)
       if users.is_a?(Array)
-        users = StringIO.new("Users\n#{users.map(&:resolve_id).join("\n")}", 'rb')
+        users = StringIO.new("Users\n#{users.map(&:resolve_id).join(",\n")}", 'rb')
         users.tap { |stream| stream.define_singleton_method(:path) { 'users.csv' } }
       end
 
