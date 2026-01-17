@@ -889,12 +889,12 @@ module Discordrb
       embedded_application: :undef, users: :undef, roles: :undef, reason: nil
     )
       target_type = if stream_user && stream_user != :undef
-                             1
-                           elsif embedded_application && embedded_application != :undef
-                             2
-                           else
-                             :undef
-                           end
+                      1
+                    elsif embedded_application && embedded_application != :undef
+                      2
+                    else
+                      :undef
+                    end
 
       if users.respond_to?(:map)
         users = StringIO.new("Users\n#{users.map(&:resolve_id).join("\n")}", 'rb')
@@ -910,6 +910,7 @@ module Discordrb
         target_application_id: embedded_application == :undef ? embedded_application : embedded_application&.resolve_id,
         role_ids: roles == :undef ? roles : Array(roles).map(&:resolve_id),
         target_users_file: users,
+        target_type: target_type,
         flags: flags || 0,
         reason: reason
       }

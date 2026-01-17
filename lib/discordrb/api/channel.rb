@@ -291,10 +291,10 @@ module Discordrb::API::Channel
     headers[:content_type] = :json unless target_users_file != :undef
 
     body = if target_users_file == :undef
-    body.to_json
-    else
-      { payload_json: body.to_json, target_users_file: }
-    end
+             body.to_json
+           else
+             { payload_json: body.to_json, target_users_file: }
+           end
 
     Discordrb::API.request(
       :channels_cid_invites,
