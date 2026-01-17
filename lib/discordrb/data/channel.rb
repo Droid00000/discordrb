@@ -909,8 +909,8 @@ module Discordrb
                            end
 
       if target_users.respond_to?(:map)
-        string = StringIO.new(target_users.map(&:resolve_id).join(",\n"), 'rb')
-        data[:target_users_file] = string.tap { |io| io.define_singleton_method(:path) { SecureRandom.hex(5) } }
+        string = StringIO.new("Users\n#{target_users.map(&:resolve_id).join("\n")}", 'rb')
+        data[:target_users_file] = string.tap { |io| io.define_singleton_method(:path) { 'users.csv' } }
       end
 
       response = API::Channel.create_invite!(@bot.token, @id, **data)

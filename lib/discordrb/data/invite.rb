@@ -214,8 +214,8 @@ module Discordrb
     # @param targets [#read, File, Array<User, Integer>, nil] The new target users of the invite.
     def target_users=(users)
       if users.is_a?(Array)
-        users = StringIO.new(users.map(&:resolve_id).join(",\n"), 'rb')
-        users.tap { |io| io.define_singleton_method(:path) { SecureRandom.hex(5) } }
+        users = StringIO.new("Users\n#{users.map(&:resolve_id).join("\n")}", 'rb')
+        users.tap { |stream| stream.define_singleton_method(:path) { 'users.csv' } }
       end
 
       API::Invite.update_target_users(@bot.token, @code, users)

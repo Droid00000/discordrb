@@ -290,12 +290,18 @@ module Discordrb::API::Channel
     headers = { 'X-Audit-Log-Reason': reason, Authorization: token }
     headers[:content_type] = :json unless target_users_file != :undef
 
+    body = if target_users_file == :undef
+    body.to_json
+    else
+      { payload_json: body.to_json, target_users_file: }
+    end
+
     Discordrb::API.request(
       :channels_cid_invites,
       channel_id,
       :post,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/invites",
-      target_users_file == :undef ? body.to_json : body,
+      body,
       headers
     )
   end
