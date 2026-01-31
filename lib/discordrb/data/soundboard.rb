@@ -53,7 +53,7 @@ module Discordrb
     # Set the emoji of the soundboard sound to something new.
     # @param emoji [String, Emoji, Integer, nil] The new emoji of the soundboard sound.
     def emoji=(emoji)
-      update_soundboard_sound(Emoji.to_h(emoji))
+      update_soundboard_sound(Emoji.build_emoji_hash(emoji))
     end
 
     # Set the volume of the soundboard sound to something new.

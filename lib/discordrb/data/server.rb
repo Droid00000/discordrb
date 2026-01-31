@@ -702,9 +702,9 @@ module Discordrb
     def create_soundboard_sound(name:, file:, volume: nil, emoji: nil, reason: nil)
       options = {
         name: name,
-        **Emoji.to_h(emoji),
         volume: volume&.to_f,
-        sound: Discordrb.encode64(file)
+        sound: Discordrb.encode64(file),
+        **Emoji.build_emoji_hash(emoji)
       }
 
       response = API::Server.create_soundboard_sound(@bot.token, @id, **options, reason:)

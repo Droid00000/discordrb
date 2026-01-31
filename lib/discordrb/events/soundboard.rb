@@ -3,10 +3,10 @@
 module Discordrb::Events
   # Generic superclass for soundboard sound events.
   class SoundboardSoundEvent < Event
-    # @return [Server] the server of the soundboard sound.
+    # @return [Server] the server associated with the event.
     attr_reader :server
 
-    # @return [Sound] the soundboard sound that was actioned.
+    # @return [Sound] the soundboard sound associated with the event.
     attr_reader :soundboard_sound
 
     # @!visibility private
@@ -25,10 +25,10 @@ module Discordrb::Events
 
   # Raised whenever a soundboard sound is deleted.
   class SoundboardSoundDeleteEvent < Event
-    # @return [Server] the server of the deleted soundboard sound.
+    # @return [Server] the server associated with the event.
     attr_reader :server
 
-    # @return [Integer] the ID of the soundboard sound that was deleted.
+    # @return [Integer] the ID of the soundboard sound associated with the event.
     attr_reader :soundboard_sound_id
 
     # @!visibility private
@@ -71,13 +71,13 @@ module Discordrb::Events
     end
   end
 
-  # Event handler for the GUILD_SOUNDBOARD_SOUND_CREATE event.
+  # Event handler for GUILD_SOUNDBOARD_SOUND_CREATE events.
   class SoundboardSoundCreateEventHandler < SoundboardSoundEventHandler; end
 
-  # Event handler for the GUILD_SOUNDBOARD_SOUND_UPDATE event.
+  # Event handler for GUILD_SOUNDBOARD_SOUND_UPDATE events.
   class SoundboardSoundUpdateEventHandler < SoundboardSoundEventHandler; end
 
-  # Event handler for the GUILD_SOUNDBOARD_SOUND_DELETE event.
+  # Event handler for GUILD_SOUNDBOARD_SOUND_DELETE events.
   class SoundboardSoundDeleteEventHandler < EventHandler
     # @!visibility private
     def matches?(event)
@@ -96,10 +96,13 @@ module Discordrb::Events
     end
   end
 
-  # Sent whenever someone plays a voice channel effect.
+  # Raised whenever a voice channel effect is sent.
   class VoiceChannelEffectEvent < Event
     # @return [Emoji, nil] the emoji of the effect.
     attr_reader :emoji
+
+    # @return [Server] the server the effect was sent in.
+    attr_reader :server
 
     # @return [Channel] the channel the effect was sent in.
     attr_reader :channel
@@ -107,10 +110,10 @@ module Discordrb::Events
     # @return [Integer] the ID of the user who sent the effect.
     attr_reader :user_id
 
-    # @return [Intger, nil] The animation ID of the effect that was sent.
+    # @return [Intger, nil] The animation ID of the sent effect.
     attr_reader :animation_id
 
-    # @return [Integer, nil] the animation type of the effect that was sent.
+    # @return [Integer, nil] the animation type of the sent effect.
     attr_reader :animation_type
 
     # @return [Integer, nil] the ID of the soundboard sound, if applicable.
@@ -118,20 +121,6 @@ module Discordrb::Events
 
     # @return [Float, nil] the volume of the soundboard sound, if applicable.
     attr_reader :soundboard_sound_volume
-
-    # @!attribute [r] server
-    #   @return [Server] the ID of the server the effect was sent in.
-    #   @see Channel#server
-    # @!attribute [r] bitrate
-    #   @return [Integer] the bitrate of the channel the effect was sent in.
-    #   @see Channel#bitrate
-    # @!attribute [r] user_limit
-    #   @return [Integer] the user limit of the channel the effect was sent in.
-    #   @see Channel#user_limit
-    # @!attribute [r] voice_region
-    #   @return [String] the voice region of the channel the effect was sent in.
-    #   @see Channel#voice_region
-    delegate :server, :bitrate, :user_limit, :voice_region, to: :channel
 
     # @!visibility private
     def initialize(data, bot)
@@ -143,6 +132,7 @@ module Discordrb::Events
       @soundboard_sound_volume = data['sound_volume']&.to_f
 
       @channel = @bot.channel(data['channel_id']&.to_i)
+      @server = @channel.server
       @emoji = Discordrb::Emoji.new(data['emoji'], @bot) if data['emoji']
     end
 
@@ -158,38 +148,36 @@ module Discordrb::Events
         # we can determine if the sound is a default soundboard sound or not.
         @bot.default_soundboard_sound(@soundboard_sound_id)
       else
-        sounds = @bot.servers.values.flat_map(&:soundboard_sounds)
-
-        sounds.find { |sound| sound.resolve_id == @soundboard_sound_id }
+        @bot.servers.each_value do |server|
+          sound = server.soundboard_sound(@soundboard_sound_id, request: false)
+          return sound if sound
+        end
       end
     end
 
     # Check if the animation was the standard animation.
     # @return [true, false] Whether or not the animation type is for a standard user.
-    def basic?
+    def basic_animation?
       @animation_type == 1
     end
 
     # Check if the animation was a fun animation sent by a nitro subscriber.
     # @return [true, false] Whether or not the animation type is for a premium subscriber.
-    def nitro?
+    def premium_animation?
       @animation_type.zero?
     end
 
-    alias_method :premium?, :nitro?
-
     # Get the member that sent the voice channel effect.
     # @return [User, Member] The member or user that sent the voice channel effect.
-    #   This will almost always be a server member, but there are some edge-cases where it
-    #   can be a user. E.g. one of the homies played a soundboard sound they shouldn't have and got banned.
+    #   Should always be a server member, but it may be possible for it to be a user.
     def member
-      @member ||= (server.member(@user_id) || @bot.user(@user_id))
+      @member ||= (@server&.member(@user_id) || @bot.user(@user_id))
     end
 
     alias_method :user, :member
   end
 
-  # Event handler for the VOICE_CHANNEL_EFFECT_SEND event
+  # Event handler for VOICE_CHANNEL_EFFECT_SEND events.
   class VoiceChannelEffectEventHandler < EventHandler
     # @!visibility private
     def matches?(event)
@@ -203,15 +191,6 @@ module Discordrb::Events
 
         matches_all(@attributes[:channel], event.channel) do |a, e|
           a&.resolve_id == e&.resolve_id
-        end,
-
-        matches_all(@attributes[:animation_type], event.animation_type) do |a, e|
-          case a
-          when :nitro, :premium, 0
-            e&.zero?
-          when :basic, 1
-            e == 1
-          end
         end,
 
         matches_all(@attributes[:member] || @attributes[:user], event.user_id) do |a, e|
