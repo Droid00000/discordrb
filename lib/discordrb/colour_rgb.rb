@@ -25,7 +25,7 @@ module Discordrb
     # @example Initialize a with a hexadecimal string
     #   ColourRGB.new('7289da') #=> ColourRGB
     def initialize(combined)
-      @combined = combined.is_a?(String) ? combined.to_i(16) : combined
+      @combined = combined.is_a?(String) ? combined.delete_prefix('#').to_i(16) : combined
       @red = (@combined >> 16) & 0xFF
       @green = (@combined >> 8) & 0xFF
       @blue = @combined & 0xFF
@@ -35,7 +35,17 @@ module Discordrb
     def hex
       @combined.to_s(16)
     end
+
     alias_method :hexadecimal, :hex
+
+    # Check if two ColourRGB objects are equal to each other.
+    # @param other [ColourRGB, Object] The other object to compare against.
+    # @return [true, false] Whether or not the two objects are equal to each other.
+    def ==(other)
+      other.is_a?(ColourRGB) ? other.to_i == to_i : false
+    end
+
+    alias_method :eql?, :==
   end
 
   # Alias for the class {ColourRGB}
