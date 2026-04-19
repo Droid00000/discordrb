@@ -169,6 +169,7 @@ module Discordrb
 
       @application_commands = {}
       @request_members_rl = {}
+      @application_command_data = []
     end
 
     # The list of users the bot shares a server with.
@@ -801,49 +802,64 @@ module Discordrb
       end
     end
 
-    # Get all application commands.
-    # @param server_id [String, Integer, nil] The ID of the server to get the commands from. Global if `nil`.
-    # @return [Array<ApplicationCommand>]
+    # Get a list of application commands that the bot has registered.
+    # @param server_id [Server, String, Integer, nil] The ID of a specific server to get application commands for, or `nil`.
+    # @return [Array<ApplicationCommand>] The application commands for a specific server, or the global application commands.
     def get_application_commands(server_id: nil)
-      resp = if server_id
-               API::Application.get_guild_commands(@token, profile.id, server_id)
-             else
-               API::Application.get_global_commands(@token, profile.id)
-             end
+      response = if server_id
+                   API::Application.get_guild_commands(@token, profile.id, server_id.resolve_id)
+                 else
+                   API::Application.get_global_commands(@token, profile.id)
+                 end
 
-      JSON.parse(resp).map do |command_data|
-        ApplicationCommand.new(command_data, self, server_id)
-      end
+      JSON.parse(response).map { |command| ApplicationCommand.new(command, self) }
     end
 
-    # Get an application command by ID.
-    # @param command_id [String, Integer]
-    # @param server_id [String, Integer, nil] The ID of the server to get the command from. Global if `nil`.
+    # Get a specific application command by its ID.
+    # @param command_id [String, Integer, ApplicationCommand] The ID of the application command to fetch.
+    # @param server_id [String, Integer, Server, nil] The ID of the specific server the application command is registered to, or `nil`.
+    # @return [ApplicationCommand] The application command for the given command ID.
     def get_application_command(command_id, server_id: nil)
-      resp = if server_id
-               API::Application.get_guild_command(@token, profile.id, server_id, command_id)
-             else
-               API::Application.get_global_command(@token, profile.id, command_id)
-             end
-      ApplicationCommand.new(JSON.parse(resp), self, server_id)
+      response = if (server_id = server_id&.resolve_id)
+                   API::Application.get_guild_command(@token, profile.id, server_id, command_id.resolve_id)
+                 else
+                   API::Application.get_global_command(@token, profile.id, command_id.resolve_id)
+                 end
+
+      ApplicationCommand.new(JSON.parse(response), self)
     end
 
-    # @yieldparam [OptionBuilder]
-    # @yieldparam [PermissionBuilder]
-    # @example
-    #   bot.register_application_command(:reddit, 'Reddit Commands') do |cmd|
-    #     cmd.subcommand_group(:subreddit, 'Subreddit Commands') do |group|
+    # Create a new application command or replace an existing one.
+    # @example Create an application command for browsing Reddit, e.g. `/reddit subreddit hot`, `/reddit subreddit new`.
+    #
+    #   bot.register_application_command(:reddit, 'Reddit Commands') do |command|
+    #     command.subcommand_group(:subreddit, 'Subreddit Commands') do |group|
     #       group.subcommand(:hot, "What's trending") do |sub|
     #         sub.string(:subreddit, 'Subreddit to search')
     #       end
+    #
     #       group.subcommand(:new, "What's new") do |sub|
     #         sub.string(:since, 'How long ago', choices: ['this hour', 'today', 'this week', 'this month', 'this year', 'all time'])
     #         sub.string(:subreddit, 'Subreddit to search')
     #       end
     #     end
     #   end
-    def register_application_command(name, description, server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, nsfw: false, integration_types: nil)
-      type = ApplicationCommand::TYPES[type] || type
+    # @param name [String] The name of the application command to create; between 1-32 characters.
+    # @param description [String, nil] The description of the application command to create; between 1-100 characters. Required for `:chat_input` commands.
+    # @param server_id [Integer, String, Server, nil] The ID of the server to register the application command to, or `nil` to globally register the command.
+    # @param type [Symbol, Integer, nil] The type of the application command to create. Possible values include: `:chat_input`, `:user`, and `:message`.
+    # @param default_member_permissions [Array<Symbol>, Integer, String, nil] The permissions to lock the application command to by default when used within a server.
+    # @param contexts [Array<Symbol, Integer>, nil] An array of types indictating where the application command can be invoked from. Possible values include: `:server`, `:bot_dm`, `:private_channel`.
+    # @param nsfw [true, false] Whether or not the application command should be marked as age-restricted. Setting this to `true` means the command will only be usable in nsfw channels.
+    # @param integration_types [Array<Symbol, Integer>, nil] An array of types indicating where the application command is available. Possible values include: `:server`, and `:user`.
+    # @param name_localizations [Hash<String => String>, nil] A hash containing the locale identifiers as keys mapped to the localized name of the application command as values.
+    # @param description_localizations [Hash<String => String>, nil] A hash containing the locale identifiers as keys mapped to the localized description of the application command as values.
+    # @param sync [true, false] Whether or not to instantly make the DAPI aware of the application command. You should set this to `false` and use {#sync_application_commands} if registering many commands at once.
+    # @yieldparam builder [OptionBuilder] A builder that allows you to easily add subcommands, subcommand groups, options, and parameters to the application command.
+    # @yieldparam permission_builder [PermissionBuilder] A builder that allows you to set permission overwrites for the application command. Usage of this is discouraged, as it only exists for backwards compatibility.
+    # @return [ApplicationCommand, nil] If the `sync:` parameter was set to `true`, the method will return a value of `nil`. Otherwise, the upserted application command will be returned instead.
+    def register_application_command(name, description = '', server_id: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, nsfw: false, integration_types: nil, sync: true)
+      type = ApplicationCommand::TYPES[type] || type || ApplicationCommand::TYPES[:chat_input]
 
       contexts = contexts&.map { |context| Interaction::CONTEXTS[context] || context }
       integration_types = integration_types&.map { |type| Interaction::INTEGRATION_TYPES[type] || type }
@@ -853,27 +869,62 @@ module Discordrb
       permission_builder = Interactions::PermissionBuilder.new
       yield(builder, permission_builder) if block_given?
 
-      resp = if server_id
-               API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw)
-             else
-               API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw, integration_types)
-             end
-      cmd = ApplicationCommand.new(JSON.parse(resp), self, server_id)
+      unless sync
+        raise ArgumentError, "You cannot set an individual 'server_id' when the `sync` parameter is set to true" if server_id
+        raise ArgumentError, "You cannot set permission overwrites when the 'sync' parameter is set to true" if permission_builder.to_a.any?
+
+        @application_command_data << {
+          name: name.to_s,
+          description: description,
+          options: builder.to_a,
+          default_permission: default_permission,
+          type: type,
+          default_member_permissions: default_member_permissions&.to_s,
+          contexts: contexts,
+          nsfw: nsfw,
+          integration_types: integration_types,
+          name_localizations: defined?(name_localizations),
+          description_localizations: defined?(description_localizations)
+        }
+
+        return nil
+      end
+
+      raise ArgumentError, "The 'description' argument is required for :chat_input commands" if type == ApplicationCommand::TYPES[:chat_input] && (description == '' || !description)
+
+      response = if (server_id = server_id&.resolve_id)
+                   API::Application.create_guild_command(@token, profile.id, server_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw)
+                 else
+                   API::Application.create_global_command(@token, profile.id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw, integration_types)
+                 end
+
+      command = ApplicationCommand.new(JSON.parse(response), self)
 
       if permission_builder.to_a.any?
         raise ArgumentError, 'Permissions can only be set for guild commands' unless server_id
 
-        edit_application_command_permissions(cmd.id, server_id, permission_builder.to_a)
+        edit_application_command_permissions(command.id, server_id, permission_builder.to_a)
       end
 
-      cmd
+      command
     end
 
-    # @yieldparam [OptionBuilder]
-    # @yieldparam [PermissionBuilder]
-    def edit_application_command(command_id, server_id: nil, name: nil, description: nil, default_permission: nil, type: :chat_input, default_member_permissions: nil, contexts: nil, nsfw: nil, integration_types: nil)
-      type = ApplicationCommand::TYPES[type] || type
-
+    # Update an existing application command.
+    # @param command_id [Integer, String, ApplicationCommand] The ID of the application command to update.
+    # @param server_id [Integer, String, Server, nil] The ID of the server the application command is registered to, or `nil` if the command is globally registered.
+    # @param name [String, nil] The new name of the application command; between 1-32 characters.
+    # @param description [String, nil] The description of the application command; between 1-100 characters. Required for `:chat_input` commands.
+    # @param default_member_permissions [Array<Symbol>, Integer, String, nil] The permissions to lock the application command to by default when used within a server.
+    # @param contexts [Array<Symbol, Integer>, nil] An array of types indictating where the application command can be invoked from. Possible values include: `:server`, `:bot_dm`, `:private_channel`.
+    # @param nsfw [true, false] Whether or not the application command should be marked as age-restricted. Setting this to `true` means the command will only be usable in nsfw channels.
+    # @param integration_types [Array<Symbol, Integer>, nil] An array of types indicating where the application command is available. Possible values include: `:server`, and `:user`.
+    # @param name_localizations [Hash<String => String>, nil] A hash containing the locale identifiers as keys mapped to the localized name of the application command as values.
+    # @param description_localizations [Hash<String => String>, nil] A hash containing the locale identifiers as keys mapped to the localized description of the application command as values.
+    # @yieldparam builder [OptionBuilder] A builder that allows you to easily add subcommands, subcommand groups, options, and parameters to the application command.
+    # @yieldparam permission_builder [PermissionBuilder] A builder that allows you to set permission overwrites for the application command. Usage of this is discouraged, as it only exists for backwards compatibility.
+    # @note Any parameters and arguments you provide will completely replace the old value. E.g. using the yielded builders will completely overwrite the previous definitions created by the builders.
+    # @return [ApplicationCommand] The updated application command.
+    def edit_application_command(command_id, server_id: nil, name: nil, description: nil, default_permission: nil, default_member_permissions: nil, contexts: nil, nsfw: nil, integration_types: nil)
       contexts = contexts&.map { |context| Interaction::CONTEXTS[context] || context }
       integration_types = integration_types&.map { |type| Interaction::INTEGRATION_TYPES[type] || type }
       default_member_permissions = Permissions.bits(default_member_permissions) if default_member_permissions.is_a?(Array)
@@ -883,46 +934,89 @@ module Discordrb
 
       yield(builder, permission_builder) if block_given?
 
-      resp = if server_id
-               API::Application.edit_guild_command(@token, profile.id, server_id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw)
-             else
-               API::Application.edit_global_command(@token, profile.id, command_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw, integration_types)
-             end
-      cmd = ApplicationCommand.new(JSON.parse(resp), self, server_id)
+      response = if (server_id = server_id&.resolve_id)
+                   API::Application.edit_guild_command(@token, profile.id, server_id, command_id.resolve_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw)
+                 else
+                   API::Application.edit_global_command(@token, profile.id, command_id.resolve_id, name, description, builder.to_a, default_permission, type, default_member_permissions&.to_s, contexts, nsfw, integration_types)
+                 end
+
+      command = ApplicationCommand.new(JSON.parse(response), self)
 
       if permission_builder.to_a.any?
         raise ArgumentError, 'Permissions can only be set for guild commands' unless server_id
 
-        edit_application_command_permissions(cmd.id, server_id, permission_builder.to_a)
+        edit_application_command_permissions(command.id, server_id, permission_builder.to_a)
       end
 
-      cmd
+      command
     end
 
     # Remove an application command from the commands registered with discord.
-    # @param command_id [String, Integer] The ID of the command to remove.
-    # @param server_id [String, Integer] The ID of the server to delete this command from, global if `nil`.
+    # @param command_id [String, Integer, ApplicationCommand] The ID of the application command to delete.
+    # @param server_id [String, Integer, Server, nil] The ID of the specific server the application command is registered to, or `nil`.
+    # @return [nil]
     def delete_application_command(command_id, server_id: nil)
-      if server_id
-        API::Application.delete_guild_command(@token, profile.id, server_id, command_id)
+      if (server_id = server_id&.resolve_id)
+        API::Application.delete_guild_command(@token, profile.id, server_id, command_id.resolve_id)
       else
-        API::Application.delete_global_command(@token, profile.id, command_id)
+        API::Application.delete_global_command(@token, profile.id, command_id.resolve_id)
       end
+
+      nil
     end
 
-    # @param command_id [Integer, String]
-    # @param server_id [Integer, String]
-    # @param permissions [Array<Hash>] An array of objects formatted as `{ id: ENTITY_ID, type: 1 or 2, permission: true or false }`
+    # Modify the permission overwrites for an application command.
+    # @param command_id [Integer, String, ApplicationCommand] The ID of the application command to edit permissions for.
+    # @param server_id [Integer, String, Server] The ID of the server to edit application command permissions for.
+    # @param permissions [Array<Hash>] An array of objects formatted as `{ id: ENTITY_ID, type: 1 or 2, permission: true or false }`.
     # @param bearer_token [String] A valid bearer token that has permission to manage the server and its roles.
+    # @yieldparam permission_builder [PermissionBuilder] A builder that allows you to set permission overwrites for the application command.
+    # @return [Array<ApplicationCommand::Permission>] The permissions for the application command in the given server.
     def edit_application_command_permissions(command_id, server_id, permissions = [], bearer_token = nil)
-      builder = Interactions::PermissionBuilder.new
-      yield builder if block_given?
-
       raise ArgumentError, 'This method requires a valid bearer token to be provided' unless bearer_token
+
+      yield((builder = Interactions::PermissionBuilder.new)) if block_given?
 
       permissions += builder.to_a
       bearer_token = "Bearer #{bearer_token.delete_prefix('Bearer ')}"
-      API::Application.edit_guild_command_permissions(bearer_token, profile.id, server_id, command_id, permissions)
+      response = JSON.parse(API::Application.edit_guild_command_permissions(bearer_token, profile.id, server_id.resolve_id, command_id.resolve_id, permissions))
+      response['permissions'].map { |permission| ApplicationCommand::Permission.new(permission, response, @bot) }
+    end
+
+    # Sync the currently queued application commands to Discord.
+    # @param merge [true, false] Whether or not all of the pre-existing application commands should be
+    #   preserved. If two application commands have the same name, the old command will be overwriten.
+    # @param server [Integer, String, Server, nil] The specific server to sync the application commands to.
+    # @return [Array<ApplicationCommand>] The application commands that are registed to the server, or all of
+    #   the application commands that have been globally registered.
+    def sync_application_commands(merge: true, server: nil)
+      server = server&.resolve_id
+
+      existing_commands = if merge && server
+                            JSON.parse(API::Application.get_guild_commands(@token, profile.id, server))
+                          elsif merge && !server
+                            JSON.parse(API::Application.get_global_commands(@token, profile.id))
+                          end
+
+      new_commands = merge ? existing_commands : @application_command_data
+
+      if merge
+        new_commands.reject! do |existing_command|
+          now = @application_command_data.find { |data| existing_command['name'] == data[:name] }
+
+          now ? now[:id] = existing_command['id'] : false
+        end
+
+        new_commands.push(*@application_command_data.dup.tap { @application_command_data.clear })
+      end
+
+      new_commands = if server
+                       API::Application.bulk_overwrite_guild_commands(@token, profile.id, server, new_commands)
+                     else
+                       API::Application.bulk_overwrite_global_commands(@token, profile.id, new_commands)
+                     end
+
+      JSON.parse(new_commands).collect { |command| ApplicationCommand.new(command, self) }
     end
 
     # Get the permissions for all of the application commands in a specific server.

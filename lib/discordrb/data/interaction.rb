@@ -411,6 +411,8 @@ module Discordrb
 
   # An ApplicationCommand for slash commands.
   class ApplicationCommand
+    include IDObject
+
     # Command types. `chat_input` is a command that appears in the text input field. `user` and `message` types appear as context menus
     # for the respective resource.
     TYPES = {
@@ -419,50 +421,61 @@ module Discordrb
       message: 3
     }.freeze
 
-    # @return [Integer]
+    # @return [Integer] the ID of the application the command is registered to.
     attr_reader :application_id
 
-    # @return [Integer, nil]
+    # @return [Integer, nil] the ID of the specific server the command is registered to.
     attr_reader :server_id
 
-    # @return [String]
+    # @return [String] the name of the application command.
     attr_reader :name
 
-    # @return [String]
+    # @return [Integer] the type of the application command.
+    # @see TYPES
+    attr_reader :type
+
+    # @return [String] the description of the application command. Always an empty string for `:user` and `:message` commands.
     attr_reader :description
 
-    # @return [true, false]
+    # @return [true, false] whether or not the application command is enabled by default in servers.
     attr_reader :default_permission
 
-    # @return [Hash]
+    # @return [Hash] the options of the application command.
     attr_reader :options
 
-    # @return [Integer]
-    attr_reader :id
-
-    # @return [true, false]
+    # @return [true, false] whether or not the application command is marked as age-restricted.
     attr_reader :nsfw
+    alias_method :nsfw?, :nsfw
 
-    # @return [Array<Integer>]
+    # @return [Array<Integer>] the contexts the application command can be invoked from.
     attr_reader :contexts
 
-    # @return [Array<Integer>]
+    # @return [Array<Integer>] the types where the application command is available from.
     attr_reader :integration_types
 
+    # @return [Permissions, nil] the default permissions required to invoke the application command.
+    attr_reader :default_member_permissions
+
+    # @return [Integer] auto-incrementing snowflake identifier updated during substantial record changes.
+    attr_reader :version
+
     # @!visibility private
-    def initialize(data, bot, server_id = nil)
+    def initialize(data, bot)
       @bot = bot
       @id = data['id'].to_i
       @application_id = data['application_id'].to_i
-      @server_id = server_id&.to_i
+      @server_id = data['guild_id']&.to_i
 
       @name = data['name']
+      @type = data['type']
+      @version = data['version']
       @description = data['description']
       @default_permission = data['default_permission']
       @options = data['options']
       @nsfw = data['nsfw'] || false
       @contexts = data['contexts'] || []
       @integration_types = data['integration_types'] || []
+      @default_member_permissions = Permissions.new(data['default_member_permissions']) if data['default_member_permissions']
     end
 
     # @param subcommand [String, nil] The subcommand to mention.
@@ -482,18 +495,12 @@ module Discordrb
 
     alias_method :to_s, :mention
 
-    # @param name [String] The name to use for this command.
-    # @param description [String] The description of this command.
-    # @param default_permission [true, false] Whether this command is available with default permissions.
-    # @param nsfw [true, false] Whether this command should be marked as age-restricted.
-    # @yieldparam (see Bot#edit_application_command)
-    # @return (see Bot#edit_application_command)
-    def edit(name: nil, description: nil, default_permission: nil, nsfw: nil, &block)
-      @bot.edit_application_command(@id, server_id: @server_id, name: name, description: description, default_permission: default_permission, nsfw: nsfw, &block)
+    # @see Bot#edit_application_command
+    def edit(**kwargs, &block)
+      @bot.edit_application_command(@id, **kwargs, server_id: @server_id, &block)
     end
 
-    # Delete this application command.
-    # @return (see Bot#delete_application_command)
+    # @see Bot#delete_application_command
     def delete
       @bot.delete_application_command(@id, server_id: @server_id)
     end
