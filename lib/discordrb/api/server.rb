@@ -657,6 +657,20 @@ module Discordrb::API::Server
     )
   end
 
+  # Filter the members that are in the guild via complex criteria.
+  # https://docs.discord.food/resources/guild#search-guild-members
+  def query_members(token, guild_id, limit: :undef, sort: :undef, or_query: :undef, and_query: :undef, before: :undef, after: :undef)
+    Discordrb::API.request(
+      :guilds_gid_search_members,
+      guild_id,
+      :post,
+      "#{Discordrb::API.api_base}/guilds/#{guild_id}/members-search",
+      { limit:, sort:, or_query:, and_query:, before:, after: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
   # Make an member avatar URL from the server, user and avatar IDs
   def avatar_url(server_id, user_id, avatar_id, format = nil)
     format ||= if avatar_id.start_with?('a_')

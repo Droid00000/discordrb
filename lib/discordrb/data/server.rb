@@ -846,6 +846,72 @@ module Discordrb
       response.map { |mem| Member.new(mem, self, @bot) }
     end
 
+    # Filter the members that are in the server using complex criteria.
+    # @example Search for members who joined in the past two weeks and have all of the given roles.
+    #   server.members_search do
+    #     filter_using(and_query) do |member|
+    #       member.joined_at >= (Time.now - (86_400 * 14))
+    #     end
+    #
+    #     filter_using(and_query) do |member|
+    #       member.roles.has?(175643578071121920, 229358154608017408)
+    #     end
+    #   end
+    # @example Search for members who joined via one of two ways and are quarantined due to their name.
+    #   server.members_search do
+    #     filter_using(and_query) do |member|
+    #       member.join_type.any?(:discovery, :vanity_url)
+    #     end
+    #
+    #     filter_using(and_query) do |member|
+    #       member.automod_quarantined_username? == true
+    #     end
+    #   end
+    # @param sort_by [String, Symbol, Integer] The sorting algorithm to sort members by.
+    # @param limit [Integer, nil] The max amount of members to fetch, or `nil` to get all of them.
+    # @param after [Integer, String, Member, User, nil] Get members that come after this specific one.
+    # @param before [Integer, String, Member, User, nil] Get members that come before this specific one.
+    # @note The `before:` and  `after:` parameters must point to existing members that are in the server.
+    # @return [SearchedMembers] The members that matched the search query.
+    def members_search(sort_by: :new_guild_members, limit: 100, before: nil, after: nil, &block)
+      params = {
+        sort: MemberSearch::Base.sort_by(sort_by),
+        limit: limit && limit <= 1000 ? limit : 1000,
+        after: after ? MemberSearch::Base.cursor(after, self) : after,
+        before: before ? MemberSearch::Base.cursor(before, self) : before
+      }.compact
+
+      builder = MemberSearch::Base.new
+
+      params.merge!(builder.tap { builder.instance_exec(&block) }.to_h)
+
+      # Store the total amount of members who match the search query here.
+      total = nil
+
+      # This is a special variable which we can use to save network requests.
+      early = nil
+
+      get_members = lambda do |query|
+        data = JSON.parse(API::Server.query_members(@bot.token, @id, **params, **query.compact))
+        total ||= data['total_result_count']
+        early = (total == data['page_result_count']) if early.nil?
+
+        data['members'].collect { |supplemental| Member.new(supplemental['member'], self, @bot) }
+      end
+
+      paginator = Paginator.new(limit, :down) do |last_page|
+        if early || (last_page && (last_page.count < 1000))
+          []
+        elsif params[:sort] == 2 || params[:sort] == 4 # rubocop:disable Style/MultipleComparison
+          get_members.call(after: MemberSearch::Base.cursor(last_page&.last, self))
+        else
+          get_members.call(before: MemberSearch::Base.cursor(last_page&.last, self))
+        end
+      end
+
+      SearchedMembers.new(paginator.to_a, total, @bot)
+    end
+
     # Retrieve banned users from this server.
     # @param limit [Integer] Number of users to return (up to maximum 1000, default 1000).
     # @param before_id [Integer] Consider only users before given user id.
@@ -1609,6 +1675,35 @@ module Discordrb
     # @!visibility private
     def inspect
       "<SearchedMessages messages=[#{'...' if @messages.any?}] total_results=#{@total_results}>"
+    end
+  end
+
+  # A set of members collected from a search query.
+  class SearchedMembers
+    include Enumerable
+
+    # @return [Array<Member>] the members that matched the search query.
+    attr_reader :members
+
+    # @return [Integer] the total number of members that matched the search query.
+    attr_reader :total_results
+
+    # @!visibility private
+    def initialize(members, total, bot)
+      @bot = bot
+      @members = members
+      @total_results = total
+    end
+
+    # Iterate over each member that matched the search query.
+    # @return [Array<Member>, Enumerable] The array that was iterated over.
+    def each(...)
+      @members.each(...)
+    end
+
+    # @!visibility private
+    def inspect
+      "<SearchedMembers members=[#{'...' if @members.any?}] total_results=#{@total_results}>"
     end
   end
 end
