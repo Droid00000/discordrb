@@ -1105,15 +1105,118 @@ module Discordrb
       @bot.thread_members[@id].collect { |id| @server_id ? @bot.member(@server_id, id) : @bot.user(id) }
     end
 
-    # Add a member to the thread
-    # @param member [Member, Integer, String] The member, or ID of the member, to add to this thread.
+    # Add a member to the thread.
+    # @param member [Member, Integer, String] The member, or ID of the member, to add to the thread.
     def add_member(member)
       @bot.add_thread_member(@id, member)
     end
 
+    # Remove a member from the thread.
     # @param member [Member, Integer, String] The member, or ID of the member, to remove from a thread.
     def remove_member(member)
       @bot.remove_thread_member(@id, member)
+    end
+
+    # Search the threads that have been created in the channel.
+    # @param name [String, #to_s, nil] Get threads with matching names.
+    # @param after [Time, #resolve_id, nil] Get threads created after this timestamp.
+    # @param before [Time, #resolve_id, nil] Get threads created before this timestamp.
+    # @param limit [Integer, nil] The maximum number of threads to return, or `nil` to fetch all of the threads that match the search query.
+    # @param offset [Integer, nil] The number of threads between 0-9975 to offset the search query by.
+    # @param slop [Integer, nil] The amount of variation allowed between the placement of words when matching against thread names; between 0-100.
+    # @param tags [Array<#resolve_id>, #resolve_id, nil] Get threads that have these tags applied.
+    # @param tag_matching [Symbol, String, nil] Whether `:all` of the tags provided must be matched, or if only `:some` of them need to be matched.
+    # @param archived [true, false, nil] Whether to restrict the search query to only active or archived threads. A value of `nil` will return both types.
+    # @param sort_order [Symbol, string, nil] Whether to order the returned threads in `:ascending`, or `:descending` order.
+    # @param sort_by [Symbol, String, nil] Sort the returned threads by `:creation_time`, `:activity`, `:relevance`, or `:archive_time`.
+    # @return [SearchedThreads] The results of the search query.
+    def search_threads(
+      name: nil, limit: 25, offset: nil, slop: nil, tags: nil, tag_matching: :all,
+      archived: nil, sort_by: :creation_time, sort_order: :descending, before: nil,
+      after: nil
+    )
+      tag_matching = case tag_matching&.to_sym
+                     when nil, :match_all, :all
+                       :match_all
+                     when :some, :match_some
+                       :match_some
+                     else
+                       raise ArgumentError, "Invalid value for the 'tag_matching' parameter"
+                     end
+
+      sort_order = case sort_order&.to_sym
+                   when nil, :desc, :descending, :newest_first
+                     :desc
+                   when :asc, :ascending, :oldest_first
+                     :asc
+                   else
+                     raise ArgumentError, "Invalid value for the 'sort_order' parameter"
+                   end
+
+      sort_by = case sort_by&.to_sym
+                when nil, :timestamp, :creation_time
+                  :creation_time
+                when :last_message_time, :activity
+                  :last_message_time
+                when :relevance, :match_score
+                  :relevance
+                when :archive_time
+                  :archive_time
+                else
+                  raise ArgumentError, "Invalid value for the 'sort_by' parameter"
+                end
+
+      options = {
+        name: name&.to_s,
+        limit: limit && limit <= 25 ? limit : 25,
+        offset: offset || 0,
+        slop: slop,
+        tag: tags ? Array(tags).map(&:resolve_id) : tags,
+        tag_setting: tag_matching,
+        archived: archived,
+        sort_by: sort_by,
+        sort_order: sort_order,
+        min_id: after.is_a?(Time) ? IDObject.synthesise(after) : after&.resolve_id,
+        max_id: before.is_a?(Time) ? IDObject.synthesise(before) : before&.resolve_id
+      }.compact
+
+      # Only store the total thread count from the first request.
+      total = nil
+
+      # Use this to stop making requests when there's nothing left.
+      has_more_data = nil
+
+      get_threads = lambda do |query|
+        data = JSON.parse(API::Channel.search_threads(@bot.token, @id, **options, **query.compact))
+        total ||= data['total_results']
+        has_more_data = data['has_more']
+
+        data['members']&.each do |member|
+          thread = data['threads'].find { |item| item['id'] == member['id'] }
+
+          (thread['member'] = member) if thread
+        end
+
+        data['threads'].collect { |thread| @bot.ensure_channel(thread) }
+      end
+
+      paginator = Paginator.new(limit, :down) do |page|
+        if has_more_data == false
+          []
+        elsif sort_by != :creation_time
+          if (count = (paginator.amount_fetched + options[:offset])) > 9975
+            []
+          else
+            get_threads.call(offset: count)
+          end
+        elsif sort_order == :desc
+          get_threads.call(max_id: page&.last&.id, offset: page ? 0 : nil)
+        else
+          get_threads.call(min_id: page&.last&.id, offset: page ? 0 : nil)
+        end
+      end
+
+      SearchedThreads.new(paginator.to_a, total, @bot)
     end
 
     # @!endgroup

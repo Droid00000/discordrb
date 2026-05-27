@@ -1611,4 +1611,40 @@ module Discordrb
       "<SearchedMessages messages=[#{'...' if @messages.any?}] total_results=#{@total_results}>"
     end
   end
+
+  # A set of threads collected from a search query.
+  class SearchedThreads
+    include Enumerable
+
+    # @return [Array<Channel>] the threads that matched the search query.
+    attr_reader :threads
+
+    # @return [Integer] the total number of threads that matched the search query.
+    attr_reader :total_results
+
+    # @!visibility private
+    def initialize(threads, total, bot)
+      @bot = bot
+      @threads = threads
+      @total_results = total
+    end
+
+    # Get a single thread that matched the search query by its index.
+    # @param index [Integer] The index of the thread to get from the array.
+    # @return [Channel] the thread that was found at the specified index.
+    def [](index)
+      @threads[index]
+    end
+
+    # Iterate over each thread that matched the search query.
+    # @return [Array<Channel>, Enumerable] The array that was iterated over.
+    def each(...)
+      @threads.each(...)
+    end
+
+    # @!visibility private
+    def inspect
+      "<SearchedMessages threads=[#{'...' if @threads.any?}] total_results=#{@total_results}>"
+    end
+  end
 end

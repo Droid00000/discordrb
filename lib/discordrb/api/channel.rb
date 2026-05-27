@@ -691,4 +691,18 @@ module Discordrb::API::Channel
       Authorization: token
     )
   end
+
+  # Search the threads that have been sent in a channel.
+  # https://discord.com/developers/docs/resources/channel#search-threads
+  def search_threads(token, channel_id, limit: 25, name: nil, slop: nil, tag: nil, tag_setting: nil, archived: nil, offset: nil, min_id: nil, max_id: nil, sort_order: nil, sort_by: nil)
+    query = URI.encode_www_form({ limit:, name:, slop:, tag:, tag_setting:, archived:, offset:, min_id:, max_id:, sort_order:, sort_by: }.compact)
+
+    Discordrb::API.request(
+      :channels_cid_threads_search,
+      channel_id,
+      :get,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/threads/search?#{query}",
+      Authorization: token
+    )
+  end
 end
