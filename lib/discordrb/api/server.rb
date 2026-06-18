@@ -507,6 +507,63 @@ module Discordrb::API::Server
     )
   end
 
+  # Get the discovery requirements for a server.
+  def get_discovery_requirements(token, server_id)
+    Discordrb::API.request(
+      :guilds_gid_discovery_requirements,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/discovery-requirements",
+      Authorization: token
+    )
+  end
+
+  # Get the discovery metadata for a server.
+  def get_discovery_metadata(token, server_id)
+    Discordrb::API.request(
+      :guilds_gid_discovery_metadata,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/discovery-metadata",
+      Authorization: token
+    )
+  end
+
+  # Update the discovery metadata for a server.
+  def update_discovery_metadata(token, server_id, primary_category_id: :undef, keywords: :undef, emoji_discoverability_enabled: :undef, is_published: :undef, reasons_to_join: :undef, social_links: :undef, about: :undef)
+    Discordrb::API.request(
+      :guilds_gid_discovery_metadata,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/discovery-metadata",
+      { primary_category_id:, keywords:, emoji_discoverability_enabled:, is_published:, reasons_to_join:, social_links:, about: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
+  # Add a discovery subcategory to a server.
+  def add_discovery_subcategory(token, server_id, category_id)
+    Discordrb::API.request(
+      :guilds_gid_discovery_categories_cid,
+      server_id,
+      :put,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/discovery-categories/#{category_id}",
+      Authorization: token
+    )
+  end
+
+  # Remove a discovery subcategory from a server.
+  def remove_discovery_subcategory(token, server_id, category_id)
+    Discordrb::API.request(
+      :guilds_gid_discovery_categories_cid,
+      server_id,
+      :delete,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/discovery-categories/#{category_id}",
+      Authorization: token
+    )
+  end
+
   # Update integration from server
   # https://discord.com/developers/docs/resources/guild#modify-guild-integration
   def update_integration(token, server_id, integration_id, expire_behavior, expire_grace_period, enable_emoticons)

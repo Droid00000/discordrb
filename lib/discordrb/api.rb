@@ -347,6 +347,28 @@ module Discordrb::API
       content_type: :json
     )
   end
+
+  # Validate a discovery search term
+  def validate_discovery_search_term(token, term)
+    request(
+      :discovery_valid_term,
+      nil,
+      :get,
+      "#{api_base}/discovery/valid-term?term=#{term}",
+      Authorization: token
+    )
+  end
+
+  # Get the categories for discovery
+  def list_discovery_categories(token, locale: nil)
+    request(
+      :discovery_categories,
+      nil,
+      :get,
+      "#{api_base}/discovery/categories#{"?locale=#{locale}" if locale}",
+      Authorization: token
+    )
+  end
 end
 
 Discordrb::API.reset_mutexes

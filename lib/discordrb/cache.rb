@@ -23,6 +23,7 @@ module Discordrb
       @pm_channels = {}
       @thread_members = {}
       @server_previews = {}
+      @discovery_categories = {}
     end
 
     # Returns or caches the available voice regions
@@ -146,6 +147,28 @@ module Discordrb
       @server_previews[id] = ServerPreview.new(response, self)
     rescue StandardError
       nil
+    end
+
+    # Get the available discovery categories.
+    # @param locale [String, Symbol, nil] The locale to return categories in. Defaults to "en-US".
+    # @return [Array<Discovery::Category>] The discovery categories that were retrieved.
+    def discovery_categories(locale: nil)
+      (locale ||= 'en-US').to_s
+      cached = @discovery_categories[locale]
+      return cached if cached
+
+      response = JSON.parse(API.list_discovery_categories(token, locale: locale))
+      list = response.map { |item| Discovery::Category.new(item, self) }
+      @discovery_categories[locale] = list.tap { list.sort_by!(&:id) }
+    end
+
+    # Get a specific discovery category by its ID.
+    # @param id [Integer, String, Category] The ID of the specific category to retrieve.
+    # @param locale [String, Symbol, nil] The locale to get the category in. Defaults to "en-US".
+    # @return [Discovery::Category, nil] The category that was found, or `nil`.
+    def discovery_category(id, locale: nil)
+      id = id.resolve_id
+      discovery_categories(locale: locale).bsearch { |category| id <=> category.id }
     end
 
     # Ensures a given user object is cached and if not, cache it from the given data hash.

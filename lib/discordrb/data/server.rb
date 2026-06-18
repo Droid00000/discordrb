@@ -1241,6 +1241,18 @@ module Discordrb
       @bot.channel(@public_updates_channel_id) if @public_updates_channel_id
     end
 
+    # @!visibility private
+    def discovery_metadata
+      response = API::Server.get_discovery_metadata(@bot.token, @id)
+      Discovery::Metadata.new(JSON.parse(response), self, @bot)
+    end
+
+    # @!visibility private
+    def discovery_requirements
+      response = API::Server.get_discovery_requirements(@bot.token, @id)
+      Discovery::Requirements.new(JSON.parse(response), self, @bot)
+    end
+
     # Modify the properties of the server.
     # @param name [String] The new 2-32 character name of the server.
     # @param verification_level [Symbol, Integer, nil] The new verification level of the server.
