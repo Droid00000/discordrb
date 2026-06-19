@@ -730,6 +730,20 @@ module Discordrb::API::Server
     )
   end
 
+  # Get the number of subscribers for a scheduled event in the server.
+  # https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-user-counts
+  def get_scheduled_event_user_counts(token, server_id, scheduled_event_id, exception_ids: nil)
+    query = URI.encode_www_form({ guild_scheduled_event_exception_ids: exception_ids }.compact)
+
+    Discordrb::API.request(
+      :guilds_sid_scheduled_events_seid_users_counts,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}/users/counts?#{query}",
+      Authorization: token
+    )
+  end
+
   # Create a scheduled event in the server.
   # https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event
   def create_scheduled_event(token, server_id, name:, privacy_level:, scheduled_start_time:, entity_type:, channel_id: nil, entity_metadata: nil, scheduled_end_time: nil, description: nil, image: nil, recurrence_rule: nil, reason: nil)
@@ -770,6 +784,63 @@ module Discordrb::API::Server
       "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}",
       Authorization: token,
       'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Create an exception for a scheduled event.
+  # https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-exception
+  def create_scheduled_event_exception(token, server_id, scheduled_event_id, original_scheduled_start_time:, scheduled_start_time: :undef, scheduled_end_time: :undef, is_canceled: :undef, reason: nil)
+    Discordrb::API.request(
+      :guilds_sid_scheduled_events_seid_exceptions,
+      server_id,
+      :post,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}/exceptions",
+      { original_scheduled_start_time:, scheduled_start_time:, scheduled_end_time:, is_canceled: }.reject { |_, value| value == :undef }.to_json,
+      Authorization: token,
+      content_type: :json,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Update an exception for a scheduled event.
+  # https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-exception
+  def update_scheduled_event_exception(token, server_id, scheduled_event_id, exception_id, scheduled_start_time: :undef, scheduled_end_time: :undef, is_canceled: :undef, reason: nil)
+    Discordrb::API.request(
+      :guilds_sid_scheduled_events_seid_exceptions_eid,
+      server_id,
+      :patch,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}/exceptions/#{exception_id}",
+      { scheduled_start_time:, scheduled_end_time:, is_canceled: }.reject { |_, value| value == :undef }.to_json,
+      Authorization: token,
+      content_type: :json,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Delete an exception for a scheduled event.
+  # https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event-exception
+  def delete_scheduled_event_exception(token, server_id, scheduled_event_id, exception_id, reason: nil)
+    Discordrb::API.request(
+      :guilds_sid_scheduled_events_seid_exceptions_eid,
+      server_id,
+      :delete,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}/exceptions/#{exception_id}",
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Get a list of subscribers for a specific scheduled event exception.
+  # https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-exception-users
+  def get_scheduled_event_exception_users(token, server_id, scheduled_event_id, exception_id, limit: 100, with_member: false, before: nil, after: nil)
+    query = URI.encode_www_form({ limit:, with_member:, before:, after: }.compact)
+
+    Discordrb::API.request(
+      :guilds_sid_scheduled_events_seid_eid_users,
+      server_id,
+      :get,
+      "#{Discordrb::API.api_base}/guilds/#{server_id}/scheduled-events/#{scheduled_event_id}/#{exception_id}/users?#{query}",
+      Authorization: token
     )
   end
 end

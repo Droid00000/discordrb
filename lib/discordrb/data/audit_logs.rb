@@ -73,7 +73,10 @@ module Discordrb
       166 => :onboarding_create,
       167 => :onboarding_update,
       190 => :home_settings_create,
-      191 => :home_settings_update
+      191 => :home_settings_update,
+      200 => :scheduled_event_exception_create,
+      201 => :scheduled_event_exception_update,
+      202 => :scheduled_event_exception_delete
     }.freeze
 
     # @!visibility private
@@ -83,7 +86,7 @@ module Discordrb
       stage_instance_create sticker_create scheduled_event_create thread_create
       soundboard_sound_create auto_moderation_rule_create onboarding_prompt_create
       onboarding_create home_settings_create creator_monetization_request_created
-      message_pin auto_moderation_flag_to_channel
+      message_pin auto_moderation_flag_to_channel scheduled_event_exception_create
     ].freeze
 
     # @!visibility private
@@ -94,6 +97,7 @@ module Discordrb
       stage_instance_delete sticker_delete scheduled_event_delete
       thread_delete soundboard_sound_delete auto_moderation_rule_delete
       onboarding_prompt_delete message_unpin auto_moderation_block_message
+      scheduled_event_exception_delete
     ].freeze
 
     # @!visibility private
@@ -105,13 +109,17 @@ module Discordrb
       soundboard_sound_update auto_moderation_rule_update onboarding_prompt_update
       onboarding_update home_settings_update creator_monetization_terms_accepted
       auto_moderation_user_communication_disabled auto_moderation_quarantine_user
+      scheduled_event_exception_update
     ].freeze
 
-    # @return [Hash<String => User>] the users included in the audit logs.
+    # @return [Hash<Integer => User>] the users included in the audit logs.
     attr_reader :users
 
-    # @return [Hash<String => Webhook>] the webhooks included in the audit logs.
+    # @return [Hash<Integer => Webhook>] the webhooks included in the audit logs.
     attr_reader :webhooks
+
+    # @return [Hash<Integer => ScheduledEvent>] the scheduled events included in the audit logs.
+    attr_reader :scheduled_events
 
     # @return [Array<Entry>] the entries listed in the audit logs.
     attr_reader :entries
@@ -122,10 +130,12 @@ module Discordrb
       @server = server
       @users = {}
       @webhooks = {}
+      @scheduled_events = {}
       @entries = data['audit_log_entries'].map { |entry| Entry.new(self, @server, @bot, entry) }
 
       process_users(data['users'])
       process_webhooks(data['webhooks'])
+      process_scheduled_events(data['guild_scheduled_events'])
     end
 
     # An entry in a server's audit logs.
@@ -175,6 +185,9 @@ module Discordrb
       # @return [Symbol, nil] the type of the permission overwrite.
       attr_reader :overwrite_type
 
+      # @return [Integer, nil] the ID of the scheduled event exception that was targeted.
+      attr_reader :scheduled_event_exception_id
+
       # @return [String, nil] the reason for this action occurring.
       attr_reader :reason
 
@@ -215,6 +228,7 @@ module Discordrb
         @overwrite_role_name = options['role_name']
         @overwrite_id = options['id']&.to_i
         @overwrite_type = Overwrite::TYPES.key(options['type']) if options['type']
+        @scheduled_event_exception_id = options['event_exception_id']&.to_i
       end
 
       # @return [Server, Channel, Member, User, Role, Invite, Webhook, Emoji, nil] the target being performed on.
@@ -253,6 +267,7 @@ module Discordrb
         when :webhook then @server.webhooks.find { |webhook| webhook.id == id } || @logs&.webhook(id)
         when :emoji then @server.emoji[id]
         when :integration then @server.integrations.find { |integration| integration.id == id }
+        when :scheduled_event then @server.scheduled_event(id, request: false) || @logs&.scheduled_event(id)
         end
       end
 
@@ -373,6 +388,13 @@ module Discordrb
       @webhooks[id.resolve_id]
     end
 
+    # Gets a scheduled event in the audit logs data based on scheduled event ID
+    # @note This only uses data given by the audit logs request
+    # @param id [String, Integer] The scheduled event ID to look for
+    def scheduled_event(id)
+      @scheduled_events[id.resolve_id]
+    end
+
     # Process user objects given by the request
     # @note For internal use only
     # @!visibility private
@@ -390,6 +412,16 @@ module Discordrb
       webhooks.each do |element|
         webhook = Webhook.new(element, @bot)
         @webhooks[webhook.id] = webhook
+      end
+    end
+
+    # Process scheduled event objects given by the request
+    # @note For internal use only
+    # @!visibility private
+    def process_scheduled_events(events)
+      events.each do |element|
+        event = ScheduledEvent.new(element, @server, @bot)
+        @scheduled_events[event.id] = event
       end
     end
 
@@ -418,6 +450,7 @@ module Discordrb
       when 163..165 then :onboarding_prompt
       when 166..167 then :onboarding
       when 190..191 then :home_settings
+      when 200..202 then :scheduled_event_exception
 
       else :unknown
       end

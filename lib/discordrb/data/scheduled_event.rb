@@ -64,6 +64,25 @@ module Discordrb
       update_data(data)
     end
 
+    # Get the exceptions for the scheduled event's recurrence rule.
+    # @return [Array<Exception>] The exceptions to the recurrence rule.
+    def exceptions
+      @exceptions.values
+    end
+
+    # Get an exception for the scheduled event's recurrence rule by ID.
+    # @param id [#resolve_id, Time, nil] The ID of the exception to get.
+    # @return [Exception, nil] The exception for the given ID, or `nil`.
+    def exception(id)
+      id = if id.is_a?(Time)
+             IDObject.synthesise(id)
+           else
+             id&.resolve_id
+           end
+
+      @exceptions[id]
+    end
+
     # Get the server that the scheduled event originates from.
     # @return [Server] The server that the scheduled event originates from.
     def server
@@ -110,6 +129,8 @@ module Discordrb
       end
     end
 
+    alias_method :cancelled?, :canceled?
+
     # @!method stage?
     #   @return [true, false] whether the scheduled event will take place in a stage channel.
     # @!method voice?
@@ -126,7 +147,7 @@ module Discordrb
     # @param reason [String, nil] The reason for starting the event.
     # @return [nil]
     def start(reason: nil)
-      raise 'cannot start this event' unless scheduled?
+      raise 'Cannot start this event' unless scheduled?
 
       modify(status: STATUSES[:active], reason: reason)
     end
@@ -135,7 +156,7 @@ module Discordrb
     # @param reason [String, nil] The reason for cancelling the event.
     # @return [nil]
     def cancel(reason: nil)
-      raise 'cannot cancel this event' unless scheduled?
+      raise 'Cannot cancel this event' unless scheduled?
 
       modify(status: STATUSES[:canceled], reason: reason)
     end
@@ -144,7 +165,7 @@ module Discordrb
     # @param reason [String, nil] The reason for ending the event.
     # @return [nil]
     def end(reason: nil)
-      raise 'cannot end this event' unless active?
+      raise 'Cannot end this event' unless active?
 
       modify(status: STATUSES[:completed], reason: reason)
     end
@@ -156,17 +177,17 @@ module Discordrb
     # @param start_time [Time] The new start time of the scheduled event.
     # @param end_time [Time] The new end time of the scheduled event.
     # @param description [String, nil] The new 1-100 character description of the scheduled event.
-    # @param entity_type [Integer, Symbol] The new entity type of the scheduled event.
     # @param status [Integer, Symbol] The new status of the scheduled event.
     # @param cover [File, #read] The new cover image of the scheduled event.
+    # @param entity_type [Integer, Symbol] The new entity type of the scheduled event.
     # @param recurrence_rule [#to_h, nil] The new recurrence rule of the scheduled event.
-    # @param reason [String, nil] The audit log reason for updating the scheduled event.
+    # @param reason [String, nil] The audit log reason for modifying the scheduled event.
     # @yieldparam builder [RecurrenceRule::Builder] An optional reccurence rule builder.
     # @return [nil]
     def modify(
-      name: :undef, channel: :undef, location: :undef, start_time: :undef, end_time: :undef,
-      description: :undef, entity_type: :undef, status: :undef, cover: :undef,
-      recurrence_rule: :undef, reason: nil
+      name: :undef, channel: :undef, location: :undef, start_time: :undef,
+      end_time: :undef, description: :undef, status: :undef, cover: :undef,
+      entity_type: :undef, recurrence_rule: :undef, reason: nil
     )
       data = {
         name: name,
@@ -175,7 +196,7 @@ module Discordrb
         scheduled_end_time: end_time == :undef ? end_time : end_time&.iso8601,
         scheduled_start_time: start_time == :undef ? start_time : start_time&.iso8601,
         description: description,
-        entity_type: entity_type == :undef ? entity_type : ENTITY_TYPES[type] || type,
+        entity_type: entity_type == :undef ? entity_type : ENTITY_TYPES[entity_type] || entity_type,
         status: status == :undef ? status : STATUSES[status] || status,
         image: cover.respond_to?(:read) ? Discordrb.encode64(cover) : cover,
         recurrence_rule: recurrence_rule == :undef ? recurrence_rule : recurrence_rule&.to_h,
@@ -188,7 +209,7 @@ module Discordrb
         raise 'A `frequency` must be provided' unless builder.frequency?
         raise 'A `start_time` must be provided' unless builder.start_time?
 
-        builder[:recurrence_rule] = builder.to_h
+        data[:recurrence_rule] = builder.to_h
       end
 
       update_data(JSON.parse(API::Server.update_scheduled_event(@bot.token, @server_id, @id, **data)))
@@ -205,9 +226,12 @@ module Discordrb
     end
 
     # Get the total amount of users who are subscribed to the scheduled event.
-    # @return [Integer] The total amount of users who are currently subscribed to the scheduled event.
-    def user_count
-      @user_count ||= JSON.parse(API::Server.get_scheduled_event(@bot.token, @server_id, @id, with_user_count: true))['user_count']
+    # @param request [true, false] Whether to request the user count from Discord if it isn't cached.
+    # @return [Integer, nil] The total amount of users who are currently subscribed to the scheduled event.
+    def user_count(request: true)
+      return @user_count if (@user_count && @bot.gateway.intents.anybits?(INTENTS[:server_scheduled_events])) || (request == false)
+
+      @user_count = JSON.parse(API::Server.get_scheduled_event_user_counts(@bot.token, @server_id, @id))['guild_scheduled_event_count']
     end
 
     alias_method :subscriber_count, :user_count
@@ -215,12 +239,21 @@ module Discordrb
     # Get the users who are subscribed to the scheduled event.
     # @param limit [Integer, nil] The limit (`nil` for no limit) of how many subscribers to return.
     # @param member [true, false] Whether to return subscribers as server members, when applicable.
-    # @return [Array<User, Member>] the users or members that have subscribed to the scheduled event.
-    def users(limit: 100, member: false)
+    # @param recurrence [Time, #resolve_id, nil] The specific reccurence to retrieve subscribers for.
+    # @return [Array<User, Member>] The users or members that have subscribed to the scheduled event.
+    def users(limit: 100, recurrence: nil, member: false)
       get_users = proc do |fetch_limit, after = nil|
-        response = JSON.parse(API::Server.get_scheduled_event_users(@bot.token, @server_id, @id, limit: fetch_limit, with_member: member, after: after))
-        response.map { |data| data['member'] ? Member.new(data['member'], server, @bot).tap { |member| server&.cache_member(member) } : User.new(data['user'], @bot) }
+        response = if recurrence
+                     API::Server.get_scheduled_event_exception_users(@bot.token, @server_id, @id, recurrence, limit: fetch_limit, with_member: member, after: after)
+                   else
+                     API::Server.get_scheduled_event_users(@bot.token, @server_id, @id, limit: fetch_limit, with_member: member, after: after)
+                   end
+
+        JSON.parse(response).map { |data| data['member'] ? Member.new(data['member'], server, @bot).tap { |member| server&.cache_member(member) } : User.new(data['user'], @bot) }
       end
+
+      # Convert the specific recurrence to a snowflake.
+      recurrence = recurrence.is_a?(Time) ? IDObject.synthesise(recurrence) : recurrence&.resolve_id
 
       # Can be done without pagination.
       return get_users.call(limit) if limit && limit <= 100
@@ -238,6 +271,43 @@ module Discordrb
 
     alias_method :subscribers, :users
 
+    # Cancel or re-schedule a specific recurrence for the scheduled event's recurrence rule.
+    # @param original_start_time [Time] The original start time of the scheduled event recurrence.
+    # @param cancelled [true, false, nil] Whether the scheduled event should be skipped on the recurrence.
+    # @param end_time [Time, nil] The new modified time at when the scheduled event recurrence should end.
+    # @param start_time [Time, nil] The new modified time at when the scheduled event recurrence should start.
+    # @param reason [String, nil] The reason to show in the audit log for creating the scheduled event exception.
+    # @note If an exception with the same original start time already exists, this will overwrite the existing one.
+    # @return [Exception] The scheduled event exception that was created.
+    def create_exception(
+      original_start_time:, start_time: nil, end_time: nil, cancelled: nil,
+      canceled: nil, reason: nil
+    )
+      data = {
+        reason: reason,
+        is_canceled: cancelled || canceled || :undef,
+        scheduled_end_time: end_time ? end_time&.iso8601 : :undef,
+        original_scheduled_start_time: original_start_time.iso8601,
+        scheduled_start_time: start_time ? start_time&.iso8601 : :undef
+      }
+
+      response = API::Server.create_scheduled_event_exception(@bot.token, @server_id, @id, **data)
+      Exception.new(JSON.parse(response), self, @bot).tap { |exception| cache_exception(exception) }
+    end
+
+    # Get a mapping of recurrence IDs to the amount of users who are subscribed to the recurrence.
+    # @param ids [Array<#resolve_id, Time>] The IDs of the recurrences to retrieve counts for; between 1-10.
+    # @return [Hash<Integer => Integer>] A hash mapping recurrence IDs to their respective subscriber counts.
+    def recurrence_user_counts(ids)
+      ids = [*ids].map { |value| value.is_a?(Time) ? IDObject.synthesise(value) : value&.resolve_id }
+      raise ArgumentError, "The 'ids' parameter must have 1-10 elements" unless ids.length.between?(1, 10)
+
+      response = API::Server.get_scheduled_event_user_counts(@bot.token, @server_id, @id, exception_ids: ids)
+      JSON.parse(response)['guild_scheduled_event_exception_counts'].tap { |hash| hash.transform_keys!(&:to_i) }
+    end
+
+    alias_method :recurrence_subscriber_counts, :recurrence_user_counts
+
     # @!visibility private
     def increment_user_count
       @user_count += 1 if @user_count
@@ -246,6 +316,16 @@ module Discordrb
     # @!visibility private
     def deincrement_user_count
       @user_count -= 1 if @user_count
+    end
+
+    # @!visibility private
+    def cache_exception(exception)
+      @exceptions[exception.id] = exception
+    end
+
+    # @!visibility private
+    def delete_exception(exception)
+      @exceptions.delete(exception.resolve_id)
     end
 
     # @!visibility private
@@ -266,6 +346,9 @@ module Discordrb
       @location = new_data['entity_metadata'] ? new_data['entity_metadata']['location'] : nil
       @end_time = new_data['scheduled_end_time'] ? Time.iso8601(new_data['scheduled_end_time']) : nil
       @recurrence_rule = new_data['recurrence_rule'] ? RecurrenceRule.new(new_data['recurrence_rule'], @bot) : nil
+      @exceptions = (new_data['guild_scheduled_event_exceptions'] || []).to_h do |scheduled_event_exception|
+        [scheduled_event_exception['event_exception_id'].to_i, Exception.new(scheduled_event_exception, self, @bot)]
+      end
     end
 
     # Represents how frequently a scheduled event will repeat.
@@ -323,7 +406,7 @@ module Discordrb
       # @return [Integer] The spacing between the events, defined by the frequency.
       attr_reader :interval
 
-      # @return [Integer] how often the reccurence interval will occur, e.g. yearly, monthly.
+      # @return [Integer] how often the reccurence interval will occur, e.g. yearly, monthly, etc.
       attr_reader :frequency
 
       # @return [Array<Integer>] the specific days within the year (1-364) to recur on.
@@ -350,6 +433,49 @@ module Discordrb
         @by_month_day = data['by_month_day'] || []
       end
 
+      # @!method yearly?
+      #   @return [true, false] whether the event repeat on a yearly basis.
+      # @!method monthly?
+      #   @return [true, false] whether the event repeat on a monthly basis.
+      # @!method weekly?
+      #   @return [true, false] whether the event repeat on a weekly basis.
+      # @!method daily?
+      #   @return [true, false] whether the event repeat on a daily basis.
+      FREQUENCIES.each do |name, value|
+        define_method("#{name}?") do
+          @frequency == value
+        end
+      end
+
+      # Convert the recurrence rule into an RFC-5545 string.
+      # @param start_time [true, false] Whether to include the `DTSTART` value in the string.
+      # @return [String] An RFC-5545 compliant string that can represent the recurrence rule.
+      def to_s(start_time: false)
+        parts = []
+        parts << "FREQ=#{FREQUENCIES.key(@frequency).upcase}"
+        parts << "COUNT=#{@count}" if @count
+        parts << "INTERVAL=#{@interval}" if @interval
+        parts << "BYMONTH=#{@by_month.join(',')}" if @by_month.any?
+        parts << "BYYEARDAY=#{@by_year_day.join(',')}" if @by_year_day.any?
+        parts << "BYMONTHDAY=#{@by_month_day.join(',')}" if @by_month_day.any?
+        parts << "UNTIL=#{@end_time.utc.strftime('%Y%m%dT%H%M%SZ')}" if @end_time
+
+        if @by_n_weekday.any? || @by_weekday.any?
+          list = @by_n_weekday.map { |n| "+#{n.week}#{WEEKDAYS.key(n.day)[..1].upcase}" }
+          @by_weekday.each { |weekday| list << WEEKDAYS.key(weekday)[..1].upcase }
+          parts << "BYDAY=#{list.join(',')}"
+        end
+
+        return "RRULE:#{parts.join(';')}" unless start_time
+
+        "DTSTART:#{@start_time.utc.strftime('%Y%m%dT%H%M%SZ')}\nRRULE:#{parts.join(';')}"
+      end
+
+      # @!visibility private
+      def inspect
+        "<RecurrenceRule interval=#{@interval} frequency=#{@frequency}>"
+      end
+
       # @!visibility private
       def to_h
         {
@@ -364,20 +490,6 @@ module Discordrb
           by_month_day: @by_month_day.any? ? @by_month_day : nil,
           by_n_weekday: @by_n_weekday.any? ? @by_n_weekday.map(&:to_h) : nil
         }
-      end
-
-      # @!method yearly?
-      #   @return [true, false] whether the event repeat on a yearly basis.
-      # @!method monthly?
-      #   @return [true, false] whether the event repeat on a monthly basis.
-      # @!method weekly?
-      #   @return [true, false] whether the event repeat on a weekly basis.
-      # @!method daily?
-      #   @return [true, false] whether the event repeat on a daily basis.
-      FREQUENCIES.each do |name, value|
-        define_method("#{name}?") do
-          @frequency == value
-        end
       end
 
       # The specific day within a specific week to recur on.
@@ -438,13 +550,6 @@ module Discordrb
         #   @return [void]
         attr_writer :start_time
 
-        # @!visibility private
-        def initialize
-          @interval = nil
-          @frequency = nil
-          @start_time = nil
-        end
-
         # Set the the specific days within the month to recur on.
         # @param monthly_days [Array<Integer>] The speific days within
         #   the month to recur on.
@@ -471,26 +576,23 @@ module Discordrb
 
         # Set the specific days for a specific week to recur on.
         # @param week [Integer] The week of the month (1-5) to recur on.
-        # @param day [Integer, Symbol] The specific day of the week to recur on, e.g. `:april`.
+        # @param day [Integer, Symbol] The specific day to recur on, e.g. `:friday`.
         # @return [void]
         def by_n_weekday(week:, day:)
           (@by_n_weekday ||= []) << { n: week, day: WEEKDAYS[day] || day }
         end
 
         # @!visibility private
-        # @return [true, false]
         def interval?
           !@interval.nil?
         end
 
         # @!visibility private
-        # @return [true, false]
         def frequency?
           !@frequency.nil?
         end
 
         # @!visibility private
-        # @return [true, false]
         def start_time?
           !@start_time.nil?
         end
@@ -507,6 +609,103 @@ module Discordrb
             frequency: FREQUENCIES[@frequency] || @frequency
           }
         end
+      end
+    end
+
+    # A skipped or re-scheduled recurrence for a recurring scheduled event.
+    class Exception
+      include IDObject
+
+      # @return [Time, nil] the new modified end time of the scheduled event recurrence.
+      attr_reader :end_time
+
+      # @return [true, false] if the scheduled event should be skipped on the recurrence.
+      attr_reader :cancelled
+
+      # @return [Time, nil] the new modified start time of the scheduled event recurrence.
+      attr_reader :start_time
+
+      alias_method :recurrence_id, :id
+      alias_method :canceled?, :cancelled
+      alias_method :cancelled?, :cancelled
+      alias_method :original_start_time, :creation_time
+
+      # @!visibility private
+      def initialize(data, event, bot)
+        @bot = bot
+        @event = event
+        @id = data['event_exception_id'].to_i
+        update_data(data)
+      end
+
+      # Edit the properties of the scheduled event exception.
+      # @param cancelled [true, false] Whether the scheduled event should be skipped on the recurrence.
+      # @param end_time [Time, nil] The new modified time at when the scheduled event recurrence should end.
+      # @param start_time [Time, nil] The new modified time at when the scheduled event recurrence should start.
+      # @param reason [String, nil] The reason to show in the audit log for modifying the scheduled event exception.
+      # @return [nil]
+      def modify(cancelled: :undef, canceled: :undef, start_time: :undef, end_time: :undef, reason: nil)
+        data = {
+          reason: reason,
+          is_canceled: cancelled == :undef ? canceled : cancelled,
+          scheduled_end_time: (end_time == :undef ? @end_time : end_time)&.iso8601,
+          scheduled_start_time: (start_time == :undef ? @start_time : start_time)&.iso8601
+        }
+
+        (data[:is_canceled] = @cancelled) if data[:is_canceled] == :undef
+
+        update_data(JSON.parse(API::Server.update_scheduled_event_exception(@bot.token, @event.server.id, @event.id, @id, **data)))
+        nil
+      end
+
+      # Delete the scheduled event exception.
+      # @param reason [String, nil] The reason to show in the audit log for deleting the scheduled event exception.
+      # @return [nil]
+      def delete(reason: nil)
+        API::Server.delete_scheduled_event_exception(@bot.token, @event.server.id, @event.id, @id, reason: reason)
+        @event.delete_exception(@id)
+        nil
+      end
+
+      # Get the total amount of users who are specifically subscribed to the scheduled event exception.
+      # @return [Integer] The total amount of users who are currently subscribed to the scheduled event exception.
+      def user_count
+        @event.recurrence_user_counts(@id)[@id] || 0
+      end
+
+      alias_method :subscriber_count, :user_count
+
+      # Get the users who are specifically subscribed to the scheduled event exception.
+      # @param limit [Integer, nil] The limit (`nil` for no limit) of how many subscribers to return.
+      # @param member [true, false] Whether to return subscribers as server members, when applicable.
+      # @return [Array<User, Member>] The users or members that have subscribed to the scheduled event exception.
+      def users(limit: 100, member: false)
+        @event.users(limit:, member:, recurrence: @id)
+      end
+
+      alias_method :subscribers, :users
+
+      # @!visibility private
+      def to_h
+        {
+          event_id: @event.id,
+          event_exception_id: @id,
+          is_canceled: @cancelled,
+          scheduled_end_time: @end_time&.utc&.iso8601,
+          scheduled_start_time: @start_time&.utc&.iso8601
+        }
+      end
+
+      # @!visibility private
+      def inspect
+        "<Exception id=#{@id} original_start_time=\"#{original_start_time.utc.iso8601}\">"
+      end
+
+      # @!visibility private
+      def update_data(new_data)
+        @cancelled = new_data['is_canceled']
+        @end_time = new_data['scheduled_end_time'] ? Time.parse(new_data['scheduled_end_time']) : nil
+        @start_time = new_data['scheduled_start_time'] ? Time.parse(new_data['scheduled_start_time']) : nil
       end
     end
   end

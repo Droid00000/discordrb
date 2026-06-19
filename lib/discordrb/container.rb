@@ -742,7 +742,7 @@ module Discordrb
       register_event(PollVoteRemoveEvent, attributes, block)
     end
 
-    # This **event** is raised when a scheduled event is created.
+    # This **event** is raised whenever a scheduled event is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Integer] :server Matches the scheduled event's server.
     # @option attributes [String, Integer, ScheduledEvent] :id Matches the scheduled event.
@@ -758,7 +758,7 @@ module Discordrb
       register_event(ScheduledEventCreateEvent, attributes, block)
     end
 
-    # This **event** is raised when a scheduled event is updated.
+    # This **event** is raised whenever a scheduled event is updated.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Integer, Server] :server Matches the scheduled event's server.
     # @option attributes [String, Integer, ScheduledEvent] :id Matches the scheduled event.
@@ -774,7 +774,7 @@ module Discordrb
       register_event(ScheduledEventUpdateEvent, attributes, block)
     end
 
-    # This **event** is raised when a scheduled event is deleted.
+    # This **event** is raised whenever a scheduled event is deleted.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Integer, Server] :server Matches the scheduled event's server.
     # @option attributes [String, Integer, ScheduledEvent] :id Matches the scheduled event.
@@ -790,11 +790,12 @@ module Discordrb
       register_event(ScheduledEventDeleteEvent, attributes, block)
     end
 
-    # This **event** is raised when a user is added to a scheduled event.
+    # This **event** is raised whenever a user is added to a scheduled event.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Integer, Server] :server Matches the scheduled event's server.
     # @option attributes [String, Integer, ScheduledEvent] :scheduled_event Matches the scheduled event.
     # @option attributes [String, Integer, User, Member] :user Matches the user that was added.
+    # @option attributes [String, Integer, Time, ScheduledEvent::Exception] :recurrence Matches the specific recurrence.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [ScheduledEventUserAddEvent] The event that was raised.
     # @return [ScheduledEventUserAddEventHandler] the event handler that was registered.
@@ -802,16 +803,59 @@ module Discordrb
       register_event(ScheduledEventUserAddEvent, attributes, block)
     end
 
-    # This **event** is raised when a user is removed from a scheduled event.
+    # This **event** is raised whenever a user is removed from a scheduled event.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Integer, Server] :server Matches the scheduled event's server.
     # @option attributes [String, Integer, ScheduledEvent] :scheduled_event Matches the scheduled event.
     # @option attributes [String, Integer, User, Member] :user Matches the user that was removed.
+    # @option attributes [String, Integer, Time, ScheduledEvent::Exception] :recurrence Matches the specific recurrence.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [ScheduledEventUserRemoveEvent] The event that was raised.
     # @return [ScheduledEventUserRemoveEventHandler] the event handler that was registered.
     def scheduled_event_user_remove(attributes = {}, &block)
       register_event(ScheduledEventUserRemoveEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a scheduled event exception is created.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer] :server Matches the exception's server.
+    # @option attributes [String, Integer, Time, ScheduledEvent::Exception] :id Matches the exception (also its original start time).
+    # @option attributes [String, Integer, ScheduledEvent] :scheduled_event Matches the scheduled event.
+    # @option attributes [Time] :end_time Matches the re-scheduled end time of the exception.
+    # @option attributes [Time] :start_time Matches the re-scheduled start time of the exception.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [ScheduledEventExceptionCreateEvent] The event that was raised.
+    # @return [ScheduledEventExceptionCreateEventHandler] the event handler that was registered.
+    def scheduled_event_exception_create(attributes = {}, &block)
+      register_event(ScheduledEventExceptionCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a scheduled event exception is updated.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer] :server Matches the exception's server.
+    # @option attributes [String, Integer, Time, ScheduledEvent::Exception] :id Matches the exception (also its original start time).
+    # @option attributes [String, Integer, ScheduledEvent] :scheduled_event Matches the scheduled event.
+    # @option attributes [Time] :end_time Matches the re-scheduled end time of the exception.
+    # @option attributes [Time] :start_time Matches the re-scheduled start time of the exception.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [ScheduledEventExceptionUpdateEvent] The event that was raised.
+    # @return [ScheduledEventExceptionUpdateEventHandler] the event handler that was registered.
+    def scheduled_event_exception_update(attributes = {}, &block)
+      register_event(ScheduledEventExceptionUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a scheduled event exception is deleted.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer] :server Matches the exception's server.
+    # @option attributes [String, Integer, Time, ScheduledEvent::Exception] :id Matches the exception (also its original start time).
+    # @option attributes [String, Integer, ScheduledEvent] :scheduled_event Matches the scheduled event.
+    # @option attributes [Time] :end_time Matches the re-scheduled end time of the exception.
+    # @option attributes [Time] :start_time Matches the re-scheduled start time of the exception.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [ScheduledEventExceptionDeleteEvent] The event that was raised.
+    # @return [SScheduledEventExceptionDeleteEventHandler] the event handler that was registered.
+    def scheduled_event_exception_delete(attributes = {}, &block)
+      register_event(ScheduledEventExceptionDeleteEvent, attributes, block)
     end
 
     # This **event** is raised whenever an integration is added to a server.

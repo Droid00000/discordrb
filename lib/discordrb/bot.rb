@@ -1226,6 +1226,18 @@ module Discordrb
       end
     end
 
+    # Internal handler for GUILD_SCHEDULED_EVENT_EXCEPTION_CREATE and GUILD_SCHEDULED_EVENT_EXCEPTION_UPDATE
+    def update_guild_scheduled_event_exception(data)
+      server = @servers[data['guild_id'].to_i]
+      event = server&.scheduled_event(data['event_id'], request: false)
+
+      if (exception = event&.exception(data['event_exception_id']))
+        exception&.update_data(data)
+      else
+        event&.cache_exception(ScheduledEvent::Exception.new(data, event, self))
+      end
+    end
+
     # Internal handler for MESSAGE_CREATE
     def create_message(data); end
 
@@ -1788,6 +1800,22 @@ module Discordrb
         server&.scheduled_event(data['guild_scheduled_event_id'], request: false)&.deincrement_user_count
 
         event = ScheduledEventUserRemoveEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SCHEDULED_EVENT_EXCEPTION_CREATE
+        update_guild_scheduled_event_exception(data)
+
+        event = ScheduledEventExceptionCreateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SCHEDULED_EVENT_EXCEPTION_UPDATE
+        update_guild_scheduled_event_exception(data)
+
+        event = ScheduledEventExceptionUpdateEvent.new(data, self)
+        raise_event(event)
+      when :GUILD_SCHEDULED_EVENT_EXCEPTION_DELETE
+        server = @servers[data['guild_id'].to_i]
+        server&.scheduled_event(data['event_id'], request: false)&.delete_exception(data['event_execption_id'].to_i)
+
+        event = ScheduledEventExceptionDeleteEvent.new(data, self)
         raise_event(event)
       else
         # another event that we don't support yet
