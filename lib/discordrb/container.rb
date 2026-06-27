@@ -17,6 +17,8 @@ require 'discordrb/events/interactions'
 require 'discordrb/events/integrations'
 require 'discordrb/events/scheduled_events'
 require 'discordrb/events/polls'
+require 'discordrb/events/entitlements'
+require 'discordrb/events/subscriptions'
 
 require 'discordrb/await'
 
@@ -848,6 +850,108 @@ module Discordrb
     # @return [IntegrationDeleteEventHandler] The event handler that was registered.
     def integration_delete(attributes = {}, &block)
       register_event(IntegrationDeleteEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a subscription for a premium application is created.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Subscription] :id A subscription to match against.
+    # @option attributes [Symbol, String, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :current_period_end The end time of the current period to match against.
+    # @option attributes [Time] :current_period_start The start time of the current period to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @option attributes [Time] :canceled_at A cancellation time to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionCreateEvent] The event that was raised.
+    # @return [SubscriptionCreateEventHandler] The event handler that was registered.
+    def subscription_create(attributes = {}, &block)
+      register_event(SubscriptionCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a subscription for a premium application is updated.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Subscription] :id A subscription to match against.
+    # @option attributes [Symbol, String, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :current_period_end The end time of the current period to match against.
+    # @option attributes [Time] :current_period_start The start time of the current period to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @option attributes [Time] :canceled_at A cancellation time to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionUpdateEvent] The event that was raised.
+    # @return [SubscriptionUpdateEventHandler] The event handler that was registered.
+    def subscription_update(attributes = {}, &block)
+      register_event(SubscriptionUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever a subscription for a premium application is deleted.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Subscription] :id A subscription to match against.
+    # @option attributes [Symbol, String, Integer] :status A subscription status to match against.
+    # @option attributes [Time] :current_period_end The end time of the current period to match against.
+    # @option attributes [Time] :current_period_start The start time of the current period to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @option attributes [Time] :canceled_at A cancellation time to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [SubscriptionDeleteEvent] The event that was raised.
+    # @return [SubscriptionDeleteEventHandler] The event handler that was registered.
+    def subscription_delete(attributes = {}, &block)
+      register_event(SubscriptionDeleteEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an entitlement is created.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attributes [Symbol, String, Integer] :type An enetitlement type to match against.
+    # @option attributes [true, false] :ended Matches whether the entitlement has expired.
+    # @option attributes [true, false] :deleted Matches whether the entitlement has been deleted.
+    # @option attributes [true, false] :consumed Matches whether the entitlement has been consumed.
+    # @option attributes [Time] :end_time Matches the end time of the entitlement.
+    # @option attributes [Time] :start_time Matches the start time of the entitlement.
+    # @option attributes [Integer, String] :sku Matches the SKU that owns the entitlement.
+    # @option attributes [Server, Integer, String] :server A server to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementCreateEvent] The event that was raised.
+    # @return [EntitlementCreateEventHandler] The event handler that was registered.
+    def entitlement_create(attributes = {}, &block)
+      register_event(EntitlementCreateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an entitlement is updated.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attributes [Symbol, String, Integer] :type An enetitlement type to match against.
+    # @option attributes [true, false] :ended Matches whether the entitlement has expired.
+    # @option attributes [true, false] :deleted Matches whether the entitlement has been deleted.
+    # @option attributes [true, false] :consumed Matches whether the entitlement has been consumed.
+    # @option attributes [Time] :end_time Matches the end time of the entitlement.
+    # @option attributes [Time] :start_time Matches the start time of the entitlement.
+    # @option attributes [Integer, String] :sku Matches the SKU that owns the entitlement.
+    # @option attributes [Server, Integer, String] :server A server to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementUpdateEvent] The event that was raised.
+    # @return [EntitlementUpdateEventHandler] The event handler that was registered.
+    def entitlement_update(attributes = {}, &block)
+      register_event(EntitlementUpdateEvent, attributes, block)
+    end
+
+    # This **event** is raised whenever an entitlement is deleted.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Integer, Entitlement] :id An entitlement to match against.
+    # @option attributes [Symbol, String, Integer] :type An enetitlement type to match against.
+    # @option attributes [true, false] :ended Matches whether the entitlement has expired.
+    # @option attributes [true, false] :deleted Matches whether the entitlement has been deleted.
+    # @option attributes [true, false] :consumed Matches whether the entitlement has been consumed.
+    # @option attributes [Time] :end_time Matches the end time of the entitlement.
+    # @option attributes [Time] :start_time Matches the start time of the entitlement.
+    # @option attributes [Integer, String] :sku Matches the SKU that owns the entitlement.
+    # @option attributes [Server, Integer, String] :server A server to match against.
+    # @option attributes [User, Member, Integer, String] :user A user to match against.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [EntitlementDeleteEvent] The event that was raised.
+    # @return [EntitlementDeleteEventHandler] The event handler that was registered.
+    def entitlement_delete(attributes = {}, &block)
+      register_event(EntitlementDeleteEvent, attributes, block)
     end
 
     # This **event** is raised for every dispatch received over the gateway, whether supported by discordrb or not.

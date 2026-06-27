@@ -23,6 +23,8 @@ require 'discordrb/events/threads'
 require 'discordrb/events/integrations'
 require 'discordrb/events/scheduled_events'
 require 'discordrb/events/polls'
+require 'discordrb/events/entitlements'
+require 'discordrb/events/subscriptions'
 
 require 'discordrb/api'
 require 'discordrb/api/channel'
@@ -973,6 +975,101 @@ module Discordrb
       API::Application.delete_application_emoji(@token, profile.id, emoji_id.resolve_id)
     end
 
+    # Fetches all of the SKUs for the for the current bot.
+    # @return [Array<SKU>] All of the SKUs for the current bot.
+    def skus
+      response = API::Application.list_skus(@token, profile.id)
+      JSON.parse(response).collect { |sku| SKU.new(sku, self) }
+    end
+
+    # Get a single SKU by its ID.
+    # @param id [Integer, String, SKU] The ID of the SKU to get.
+    # @return [SKU, nil] The SKU identified by its ID, or `nil`.
+    def sku(id)
+      id = id.resolve_id
+      skus.find { |sku| sku.id == id }
+    end
+
+    # Get a single entitlement by its ID.
+    # @param id [Integer, String] The ID of the entitlement to resolve.
+    # @return [Entitlement, nil] The entitlement that was retrieved, or `nil` if not found.
+    def entitlement(id)
+      data = API::Application.get_entitlement(@bot.token, @bot.profile.id, id.resolve_id)
+      Entitlement.new(JSON.parse(data), self)
+    rescue Discordrb::Errors::UnknownEntitlement
+      nil
+    end
+
+    # Get the entitlements for the application.
+    # @param limit [Integer, nil] The maximum number of entitlements to fetch, or `nil`
+    #   to get all of the entitlements.
+    # @param server [Server, Integer, String, nil] The server to get entitlements for.
+    # @param user [User, Member, Integer, String, nil] The user to get entitlements for.
+    # @param skus [Array, Integer, String, SKU, nil] The SKUs to check the entitlements for.
+    # @param after [Time, #resolve_id, nil] Get entitlements that come after this snowflake.
+    # @param before [Time, #resolve_id, nil] Get entitlements that come before this snowflake.
+    # @param exclude_ended [true, false, nil] Whether entitlements that have ended should be omitted.
+    # @param exclude_deleted [true, false, nil] Whether entitlements that have been deleted should be omitted.
+    # @raise [ArgumentError] If `before:` and `after:` are provided in conjunction.
+    # @return [Array<Entitlement>] The entitlements that matched the provided arguments.
+    def entitlements(
+      limit: 100, user: nil, server: nil, skus: nil, before: nil, after: nil,
+      exclude_ended: false, exclude_deleted: true
+    )
+      raise ArgumentError, "'before' and 'after' are mutually exclusive" if before && after
+
+      rest = {
+        limit: limit && limit <= 100 ? limit : 100,
+        user_id: user&.resolve_id,
+        sku_ids: skus ? Array(skus).map(&:resolve_id).join(',') : skus,
+        after: after.is_a?(Time) ? IDObject.synthesise(after) : after&.resolve_id,
+        before: before.is_a?(Time) ? IDObject.synthesise(before) : before&.resolve_id,
+        server_id: server&.resolve_id,
+        exclude_ended: exclude_ended,
+        exclude_deleted: exclude_deleted
+      }.compact
+
+      get_entitlements = lambda do |query|
+        data = API::Application.list_entitlements(@bot.token, @bot.profile.id, **rest, **query.compact)
+        JSON.parse(data).collect { |entitlement_data| Entitlement.new(entitlement_data, self) }
+      end
+
+      # Can be done without pagination.
+      return get_entitlements.call({}) if limit && limit <= 100
+
+      paginator = Paginator.new(limit, :down) do |last_page|
+        if last_page && last_page.count < 100
+          []
+        elsif after
+          get_entitlements.call(after: last_page&.last&.id)
+        else
+          get_entitlements.call(before: last_page&.last&.id)
+        end
+      end
+
+      paginator.to_a
+    end
+
+    # Create a test entitlement to a given SKU for a server or user.
+    # @param sku [SKU, Integer, String, nil] The SKU to grant the entitlement to.
+    # @param user [User, Integer, String, nil] The user to grant the entitlement to.
+    # @param server [Server, Integer, String, nil] The server to grant the entitlement to.
+    # @return [Entitlement] The test-mode entitlement that was created.
+    def create_test_entitlement(sku:, user: nil, server: nil)
+      if [user, server].count(&:itself) != 1 # rubocop:disable Style/IfUnlessModifier
+        raise ArgumentError, "Only one of 'user' or 'server' should be provided at a time"
+      end
+
+      rest = {
+        sku_id: sku.resolve_id,
+        owner_id: (server || user).resolve_id,
+        owner_type: server ? 1 : 2
+      }
+
+      data = API::Application.create_test_entitlement(@bot.token, @bot.profile.id, **rest)
+      Entitlement.new(JSON.parse(data), self)
+    end
+
     # @!visibility private
     def inspect
       "<Bot client_id=#{@client_id.inspect} redact_token=#{@redact_token.inspect}>"
@@ -1332,6 +1429,18 @@ module Discordrb
         raise_event(InviteCreateEvent.new(data, invite, self))
       when :INVITE_DELETE
         raise_event(InviteDeleteEvent.new(data, self))
+      when :ENTITLEMENT_CREATE
+        raise_event(EntitlementCreateEvent.new(data, self))
+      when :ENTITLEMENT_UPDATE
+        raise_event(EntitlementUpdateEvent.new(data, self))
+      when :ENTITLEMENT_DELETE
+        raise_event(EntitlementDeleteEvent.new(data, self))
+      when :SUBSCRIPTION_CREATE
+        raise_event(SubscriptionCreateEvent.new(data, self))
+      when :SUBSCRIPTION_UPDATE
+        raise_event(SubscriptionUpdateEvent.new(data, self))
+      when :SUBSCRIPTION_DELETE
+        raise_event(SubscriptionDeleteEvent.new(data, self))
       when :MESSAGE_CREATE
         if ignored?(data['author']['id'])
           debug("Ignored author with ID #{data['author']['id']}")

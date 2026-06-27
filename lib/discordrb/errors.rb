@@ -242,5 +242,8 @@ module Discordrb
 
     # Reaction Blocked
     ReactionBlocked = Code(90_001)
+
+    # Unknown entitlement
+    UnknownEntitlement = Code(10_029)
   end
 end

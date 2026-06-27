@@ -313,4 +313,107 @@ module Discordrb::API::Application
       Authorization: token
     )
   end
+
+  # Get a list of entitlements for the application.
+  # https://discord.com/developers/docs/resources/entitlement#list-entitlements
+  def list_entitlements(token, application_id, limit: 100, user_id: nil, sku_ids: nil, before: nil, after: nil, server_id: nil, exclude_ended: nil, exclude_deleted: nil)
+    query = URI.encode_www_form({ limit: limit, user_id: user_id, sku_ids: sku_ids, before: before, after: after, guild_id: server_id, exclude_ended: exclude_ended, exclude_deleted: exclude_deleted }.compact)
+
+    Discordrb::API.request(
+      :applications_aid_entitlements,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements?#{query}",
+      Authorization: token
+    )
+  end
+
+  # Get a single entitlement by its ID.
+  # https://discord.com/developers/docs/resources/entitlement#get-entitlement
+  def get_entitlement(token, application_id, entitlement_id)
+    Discordrb::API.request(
+      :applications_aid_entitlements_eid,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements/#{entitlement_id}",
+      Authorization: token
+    )
+  end
+
+  # Create a test entitlement.
+  # https://discord.com/developers/docs/resources/entitlement#create-test-entitlement
+  def create_test_entitlement(token, application_id, sku_id:, owner_id:, owner_type:)
+    Discordrb::API.request(
+      :applications_aid_entitlements_eid,
+      nil,
+      :post,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements",
+      { sku_id:, owner_id:, owner_type: }.to_json,
+      content_type: :json,
+      Authorization: token
+    )
+  end
+
+  # Consume a one-time purchase entitlement.
+  # https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement
+  def consume_entitlement(token, application_id, entitlement_id)
+    Discordrb::API.request(
+      :applications_aid_entitlements_eid,
+      nil,
+      :post,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements/#{entitlement_id}/consume",
+      nil,
+      Authorization: token
+    )
+  end
+
+  # Delete a test entitlement.
+  # https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement
+  def delete_test_entitlement(token, application_id, entitlement_id)
+    Discordrb::API.request(
+      :applications_aid_entitlements_eid,
+      nil,
+      :delete,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/entitlements/#{entitlement_id}",
+      Authorization: token
+    )
+  end
+
+  # Get a list of SKUs for the application.
+  # https://discord.com/developers/docs/resources/sku#list-skus
+  def list_skus(token, application_id)
+    Discordrb::API.request(
+      :applications_aid_skus,
+      application_id,
+      :get,
+      "#{Discordrb::API.api_base}/applications/#{application_id}/skus",
+      Authorization: token
+    )
+  end
+
+  # Get a list of subscriptions containing the SKU.
+  # https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions
+  def list_sku_subscriptions(token, sku_id, limit: 100, before: nil, after: nil, user_id: nil)
+    query = URI.encode_www_form({ limit: limit, user_id: user_id, before: before, after: after }.compact)
+
+    Discordrb::API.request(
+      :skus_sid_subscriptions,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/skus/#{sku_id}/subscriptions?#{query}",
+      Authorization: token
+    )
+  end
+
+  # Get a single subscription for the SKU.
+  # https://discord.com/developers/docs/resources/subscription#get-sku-subscription
+  def get_sku_subscription(token, sku_id, subscription_id)
+    Discordrb::API.request(
+      :skus_sid_subscriptions_sid,
+      nil,
+      :get,
+      "#{Discordrb::API.api_base}/skus/#{sku_id}/subscriptions/#{subscription_id}",
+      Authorization: token
+    )
+  end
 end
