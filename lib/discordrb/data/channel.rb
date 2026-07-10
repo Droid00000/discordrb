@@ -1,596 +1,562 @@
 # frozen_string_literal: true
 
-require 'discordrb/webhooks/view'
-require 'time'
-
 module Discordrb
-  # A Discord channel, including data like the topic
+  # A channel on Discord.
   class Channel
     include IDObject
 
-    # Map of channel types.
+    # Mapping of types.
     TYPES = {
       text: 0,
       dm: 1,
       voice: 2,
-      group: 3,
+      group_dm: 3,
       category: 4,
-      news: 5,
-      store: 6,
-      news_thread: 10,
+      announcement: 5,
+      announcement_thread: 10,
       public_thread: 11,
       private_thread: 12,
-      stage_voice: 13,
+      stage: 13,
       directory: 14,
       forum: 15,
       media: 16
     }.freeze
 
-    # Map of channel flags.
-    FLAGS = {
-      pinned: 1 << 1,
-      require_tag: 1 << 4,
-      hide_download_options: 1 << 15
+    # Mapping of layouts.
+    LAYOUTS = {
+      default: 0,
+      list: 1,
+      gallery: 2
     }.freeze
 
-    # Map of forum layouts.
-    FORUM_LAYOUTS = {
-      not_set: 0,
-      list_view: 1,
-      gallery_view: 2
-    }.freeze
-
-    # Map of forum sort orders.
-    FORUM_SORT_ORDERS = {
-      latest_activity: 0,
+    # Mapping of sort orders.
+    SORT_ORDERS = {
+      recent_activity: 0,
       creation_time: 1
     }.freeze
 
-    # Map of video quality modes.
-    VIDEO_QUALITY_MODES = {
-      auto: 1,
+    # Mapping of video qualities.
+    VIDEO_QUALITIES = {
+      automatic: 1,
       full: 2
     }.freeze
 
-    # @return [String] this channel's name.
-    attr_reader :name
+    # Mapping of flags.
+    FLAGS = {
+      pinned: 1 << 1,
+      requires_tag: 1 << 4,
+      hide_download_options: 1 << 15,
+      obfuscated: 1 << 17,
+      spoiler: 1 << 21
+    }.freeze
 
-    # @return [Integer, nil] the ID of the parent channel, if this channel is inside a category. If this channel is a
-    #   thread, this is the text channel it is a child to.
-    attr_reader :parent_id
-
-    # @return [Integer] the type of this channel
-    # @see TYPES
+    # @return [Integer] the type of the channel.
     attr_reader :type
 
-    # @return [Integer, nil] the ID of the owner of the group channel or nil if this is not a group channel. If this
-    #   channel is a thread, this is the member that started the thread.
-    attr_reader :owner_id
+    # @return [String, nil] the name of the channel; `nil` for obfuscated channels.
+    attr_reader :name
 
-    # @return [Array<Recipient>, nil] the array of recipients of the private messages, or nil if this is not a Private channel
-    attr_reader :recipients
-
-    # @return [String] the channel's topic
-    attr_reader :topic
-
-    # @return [Integer] the bitrate (in bps) of the channel
-    attr_reader :bitrate
-
-    # @return [Integer] the amount of users that can be in the channel. `0` means it is unlimited.
-    attr_reader :user_limit
-    alias_method :limit, :user_limit
-
-    # @return [Integer] the channel's position on the channel list
-    attr_reader :position
-
-    # @return [Integer] the amount of time (in seconds) users need to wait to send in between messages.
-    attr_reader :rate_limit_per_user
-    alias_method :slowmode_rate, :rate_limit_per_user
-
-    # @return [Integer, nil] An approximate count of messages sent in a thread, excluding deleted messages.
-    attr_reader :message_count
-
-    # @return [Integer, nil] An approximate count of members in a thread. Stops counting at 50.
-    attr_reader :member_count
-
-    # @return [true, false, nil] Whether or not this thread is archived.
-    attr_reader :archived
-    alias_method :archived?, :archived
-
-    # @return [Integer, nil] How long after the last message before a thread is automatically archived.
-    attr_reader :auto_archive_duration
-
-    # @return [Time, nil] The timestamp of when this threads status last changed.
-    attr_reader :archive_timestamp
-
-    # @return [true, false, nil] Whether this thread is locked or not.
-    attr_reader :locked
-    alias_method :locked?, :locked
-
-    # @return [Time, nil] When the current user joined this thread.
-    attr_reader :join_timestamp
-
-    # @return [Integer, nil] Member flags for this thread, used for notifications.
-    attr_reader :member_flags
-
-    # @return [true, false, nil] For private threads, determines whether non-moderators can add other non-moderators to
-    #   a thread.
-    attr_reader :invitable
-    alias_method :invitable?, :invitable
-
-    # @return [Time, nil] The time at when the last pinned message was pinned in this channel.
-    attr_reader :last_pin_timestamp
-
-    # @return [Integer, nil] The ID of the last message sent in this channel. This may not point to a valid message.
-    attr_reader :last_message_id
-
-    # @return [Integer] An approximate count of messages sent in this thread, including deleted messages.
-    attr_reader :total_message_sent
-    alias_method :total_messages_sent, :total_message_sent
-
-    # @return [Integer] The flags set on this channel combined as a bitfield.
+    # @return [Integer] the flags for the channel represented as a bitfield.
     attr_reader :flags
 
-    # @return [String, nil] The ID of the RTC voice region for this voice or stage channel. A region of `nil` means the
-    #   the voice region will automatically be determined by Discord.
+    # @return [String, nil] the topic of the channel; dobules as the guidelines of a forum.
+    attr_reader :topic
+
+    # @return [true, false] whether or not the thread has been locked.
+    attr_reader :locked
+
+    # @return [Integer, nil] the bitrate (in bits) of the voice or stage channel.
+    attr_reader :bitrate
+
+    # @return [Integer] the sorting position of the channel; not guranteed to be unique.
+    attr_reader :position
+
+    # @return [true, false] whether or not the thread has been archived.
+    attr_reader :archived
+
+    # @return [true, false] Whether or not non-moderators can add other non-moderators
+    #   to the private thread.
+    attr_reader :invitable
+
+    # @return [Integer, nil] the ID of the category channel, or the thread's parent channel.
+    attr_reader :parent_id
+
+    # @return [User, nil] the user that the private channel is associated with.
+    attr_reader :recipient
+
+    # @return [Integer, nil] the user limit of the voice or stage channel; `0` for no limit.
+    attr_reader :user_limit
+
+    # @return [Time, nil] the time at when the thread was last archived or un-archived.
+    attr_reader :archived_at
+
+    # @return [String, nil] the RTC voice region of the voice channel; `nil` if automatic.
     attr_reader :voice_region
 
-    # @return [Integer, nil] The video quality mode of this voice or stage channel.
-    attr_reader :video_quality_mode
+    # @return [Integer] the number of messages sent in the thread, excluding deleted messages.
+    attr_reader :message_count
 
-    # @return [Integer, nil] The default client-side duration before a thread is automatically hidden.
+    # @return [Integer] the duration (in seconds) a user has to wait between sending messages.
+    attr_reader :slowmode_rate
+
+    # @return [Integer, nil] the ID of the most recently sent message, or the most recently created
+    #   thread in a forum. May not reference a valid thread or message.
+    attr_reader :last_entity_id
+
+    # @return [Integer] the number of messages ever sent in the thread, including deleted messages.
+    attr_reader :total_message_count
+
+    # @return [Symbol, nil] the default tag matching algorithim to use when searching for threads in the forum.
+    attr_reader :default_tag_matching
+
+    # @return [Integer, nil] the duration after which the thread will automatically be hidden.
+    attr_reader :auto_archive_duration
+
+    # @return [Time, nil] the time at when the last pinned message was pinned.
+    attr_reader :last_message_pinned_at
+
+    # @return [Integer, nil] the default slowmode rate to copy onto newly-created threads in the channel.
+    attr_reader :default_thread_slowmode_rate
+
+    # @return [Integer, nil] the default auto archive duration to copy onto newly-created threads in the channel.
     attr_reader :default_auto_archive_duration
 
-    # @return [Integer, nil] The default sorting order for threads in this forum or media channel.
-    attr_reader :default_sort_order
-
-    # @return [Integer, nil] The default layout used to display threads in this forum or media channel.
-    attr_reader :default_forum_layout
-
-    # @return [Integer, nil] The initial slowmode rate set on newly created threads in this channel.
-    attr_reader :default_thread_rate_limit_per_user
-
-    # @return [true, false] whether or not this channel is a PM or group channel.
-    def private?
-      pm? || group?
-    end
-
-    # @return [String] a string that will mention the channel as a clickable link on Discord.
-    def mention
-      "<##{@id}>"
-    end
-
-    # @return [Recipient, nil] the recipient of the private messages, or nil if this is not a PM channel
-    def recipient
-      @recipients.first if pm?
-    end
+    alias_method :locked?, :locked
+    alias_method :archived?, :archived
+    alias_method :invitable?, :invitable
 
     # @!visibility private
     def initialize(data, bot, server = nil)
       @bot = bot
-      # data is sometimes a Hash and other times an array of Hashes, you only want the last one if it's an array
-      data = data[-1] if data.is_a?(Array)
-
+      @server = server
       @id = data['id'].to_i
-      @type = data['type'] || 0
-      @topic = data['topic']
-      @bitrate = data['bitrate']
-      @user_limit = data['user_limit']
-      @position = data['position']
-      @parent_id = data['parent_id']&.to_i
-
-      if private?
-        @recipients = []
-        data['recipients']&.each do |recipient|
-          recipient_user = bot.ensure_user(recipient)
-          @recipients << Recipient.new(recipient_user, self, bot)
-        end
-        if pm?
-          @name = @recipients.first.username
-        else
-          @name = data['name']
-          @owner_id = data['owner_id']
-        end
-      else
-        @name = data['name']
-        @server_id = server&.id || data['guild_id'].to_i
-        @server = server
-      end
-
-      @nsfw = data['nsfw'] || false
-      @rate_limit_per_user = data['rate_limit_per_user'] || 0
-      @message_count = data['message_count']
-      @member_count = data['member_count']
-      @total_message_sent = data['total_message_sent'] || 0
-
-      if (metadata = data['thread_metadata'])
-        @archived = metadata['archived']
-        @auto_archive_duration = metadata['auto_archive_duration']
-        @archive_timestamp = Time.iso8601(metadata['archive_timestamp'])
-        @locked = metadata['locked']
-        @invitable = metadata['invitable']
-        @create_timestamp = Time.iso8601(metadata['create_timestamp']) if metadata['create_timestamp']
-      end
+      @owner_id = data['owner_id']&.to_i
+      @server_id = @server&.id || data['guild_id']&.to_i
+      @recipient = @bot.ensure_user(data['recipients'][0]) if dm?
 
       if (member = data['member'])
-        @join_timestamp = Time.iso8601(member['join_timestamp'])
-        @member_flags = member['flags']
+        member['id'] = @id
+        @bot.ensure_thread_member(member)
       end
 
-      @flags = data['flags'] || 0
-      @voice_region = data['rtc_region']
-      @video_quality_mode = data['video_quality_mode']
-      @last_message_id = data['last_message_id']&.to_i
-
-      @default_auto_archive_duration = data['default_auto_archive_duration']
-      @default_sort_order = data['default_sort_order']
-      @default_forum_layout = data['default_forum_layout']
-      @default_thread_rate_limit_per_user = data['default_thread_rate_limit_per_user']
-
-      @applied_tags = data['applied_tags']&.map(&:to_i) || []
-
-      process_available_tags(data['available_tags'])
-      process_last_pin_timestamp(data['last_pin_timestamp'])
-      process_permission_overwrites(data['permission_overwrites'])
-      process_default_reaction_emoji(data['default_reaction_emoji'])
+      update_data(data)
     end
 
-    # @return [Server, nil] the server this channel is on. If this channel is a PM channel, it will be nil.
-    # @raise [Discordrb::Errors::NoPermission] This can happen when receiving interactions for servers in which the bot is not
-    #   authorized with the `bot` scope.
-    def server
-      return @server if @server
-      return nil if private?
+    #  ##     ##    ###    #### ##    ##
+    #  ###   ###   ## ##    ##  ###   ##
+    #  #### ####  ##   ##   ##  ####  ##
+    #  ## ### ## ##     ##  ##  ## ## ##
+    #  ##     ## #########  ##  ##  ####
+    #  ##     ## ##     ##  ##  ##   ###
+    #  ##     ## ##     ## #### ##    ##
 
-      @server = @bot.server(@server_id)
-      raise Discordrb::Errors::NoPermission, 'The bot does not have access to this server' unless @server
+    # @!group General
 
-      @server
+    # Get the time at when the channel was created.
+    # @return [Time] The time at when the channel was created.
+    #   Not accurate for threads created before January 9th, 2022.
+    def creation_time
+      @create_timestamp || super
     end
 
-    # @return [true, false] whether or not this channel is a text channel
-    def text?
-      @type.zero?
-    end
-
-    # @return [true, false] whether or not this channel is a PM channel.
-    def pm?
-      @type == 1
-    end
-
-    # @return [true, false] whether or not this channel is a voice channel.
-    def voice?
-      @type == 2
-    end
-
-    # @return [true, false] whether or not this channel is a group channel.
-    def group?
-      @type == 3
-    end
-
-    # @return [true, false] whether or not this channel is a category channel.
-    def category?
-      @type == 4
-    end
-
-    # @return [true, false] whether or not this channel is a news channel.
-    def news?
-      @type == 5
-    end
-
-    # @return [true, false] whether or not this channel is a store channel.
-    def store?
-      @type == 6
-    end
-
-    # @return [true, false] whether or not this channel is a news thread.
-    def news_thread?
-      @type == 10
-    end
-
-    # @return [true, false] whether or not this channel is a public thread.
-    def public_thread?
-      @type == 11
-    end
-
-    # @return [true, false] whether or not this channel is a private thread.
-    def private_thread?
-      @type == 12
-    end
-
-    # @return [true, false] whether or not this channel is a thread.
-    def thread?
-      news_thread? || public_thread? || private_thread?
-    end
-
-    # @return [true, false] whether or not this channel is a stage channel.
-    def stage?
-      @type == 13
-    end
-
-    # @return [true, false] whether or not this channel is a directory channel.
-    def directory?
-      @type == 14
-    end
-
-    # @return [true, false] whether or not this channel is a forum channel.
-    def forum?
-      @type == 15
-    end
-
-    # @return [true, false] whether or not this channel is a media channel.
-    def media?
-      @type == 16
-    end
-
-    # Check if this channel is a forum or media channel.
-    # @return [true, false] whether or not only threads can be created in this channel.
-    def thread_only?
-      forum? || media?
-    end
-
-    # @return [Channel, nil] the category channel, if this channel is in a category
-    def category
-      @bot.channel(@parent_id) if @parent_id
-    end
-
-    alias_method :parent, :category
-
-    # Sets this channels parent category
-    # @param channel [Channel, String, Integer] the target category channel, or its ID
-    # @raise [ArgumentError] if the target channel isn't a category
-    def category=(channel)
-      channel = @bot.channel(channel)
-      raise ArgumentError, 'Cannot set parent category to a channel that isn\'t a category' unless channel.category?
-
-      modify(parent: channel)
-    end
-
-    alias_method :parent=, :category=
-
-    # Sorts this channel's position to follow another channel.
-    # @param other [Channel, String, Integer, nil] The channel, or its ID, below which this channel should be sorted. If the given
-    #   channel is a category, this channel will be sorted at the top of that category. If it is `nil`, the channel will
-    #   be sorted at the top of the channel list.
-    # @param lock_permissions [true, false] Whether the channel's permissions should be synced to the category's
-    def sort_after(other = nil, lock_permissions = false)
-      raise TypeError, 'other must be one of Channel, NilClass, String, or Integer' unless other.is_a?(Channel) || other.nil? || other.respond_to?(:resolve_id)
-
-      other = @bot.channel(other.resolve_id) if other
-
-      # Container for the API request payload
-      move_argument = []
-
-      if other
-        raise ArgumentError, 'Can only sort a channel after a channel of the same type!' unless other.category? || (@type == other.type)
-
-        raise ArgumentError, 'Can only sort a channel after a channel in the same server!' unless other.server == server
-
-        # Store `others` parent (or if `other` is a category itself)
-        parent = if category? && other.category?
-                   # If we're sorting two categories, there is no new parent
-                   nil
-                 elsif other.category?
-                   # `other` is the category this channel will be moved into
-                   other
-                 else
-                   # `other`'s parent is the category this channel will be
-                   # moved into (if it exists)
-                   other.parent
-                 end
-      end
-
-      # Collect and sort the IDs within the context (category or not) that we
-      # need to form our payload with
-      ids = if parent
-              parent.children
-            else
-              server.channels.reject(&:parent_id).select { |c| c.type == @type }
-            end.sort_by(&:position).map(&:id)
-
-      # Move our channel ID after the target ID by deleting it,
-      # getting the index of `other`, and inserting it after.
-      ids.delete(@id) if ids.include?(@id)
-      index = other ? (ids.index { |c| c == other.id } || -1) + 1 : 0
-      ids.insert(index, @id)
-
-      # Generate `move_argument`, making the positions in order from how
-      # we have sorted them in the above logic
-      ids.each_with_index do |id, pos|
-        # These keys are present in each element
-        hash = { id: id, position: pos }
-
-        # Conditionally add `lock_permissions` and `parent_id` if we're
-        # iterating past ourselves
-        if id == @id
-          hash[:lock_permissions] = true if lock_permissions
-          hash[:parent_id] = parent.nil? ? nil : parent.id
-        end
-
-        # Add it to the stack
-        move_argument << hash
-      end
-
-      API::Server.update_channel_positions(@bot.token, @server_id, move_argument)
-    end
-
-    # Check if this channel is marked as NSFW.
-    # @return [true, false] Whether or not this channel is marked as NSFW.
+    # Check if the channel has been marked as age-restricted.
+    # @return [true, false] Whether or not the channel is age-restricted.
     def nsfw?
       thread? ? parent.nsfw? : @nsfw
     end
 
-    # Get the time at when this channel was created at.
-    # @return [Time] The time at when the channel was created.
-    def creation_time
-      return @create_timestamp if @create_timestamp
-
-      Time.at(((@id >> 22) + Discordrb::DISCORD_EPOCH) / 1000.0)
+    # Check if the channel is an orphan, meaning it isn't in a category.
+    # @return [true, false] Whether or not the channel is an orphan channel.
+    def orphan?
+      category? == false && @parent_id.nil?
     end
 
-    # Sets whether this channel is NSFW
-    # @param nsfw [true, false]
-    # @raise [ArgumentError] if value isn't one of true, false
-    def nsfw=(nsfw)
-      raise ArgumentError, 'nsfw value must be true or false' unless nsfw.is_a?(TrueClass) || nsfw.is_a?(FalseClass)
-
-      modify(nsfw: nsfw)
+    # Get the category the channel is under, or the thread's parent.
+    # @return [Channel, nil] The category the channel is under, or the thread's parent.
+    def parent
+      @bot.channel(@parent_id) if @parent_id
     end
 
-    # This channel's permission overwrites
-    # @overload permission_overwrites
-    #   The overwrites represented as a hash of role/user ID
-    #   to an Overwrite object
-    #   @return [Hash<Integer => Overwrite>] the channel's permission overwrites
-    # @overload permission_overwrites(type)
-    #   Return an array of a certain type of overwrite
-    #   @param type [Symbol] the kind of overwrite to return
-    #   @return [Array<Overwrite>]
-    def permission_overwrites(type = nil)
-      return @permission_overwrites unless type
-
-      @permission_overwrites.values.select { |e| e.type == type }
+    # Get the server the channel is associated with, if applicable.
+    # @return [Server, nil] The server for the channel, or `nil` if the channel is a DM.
+    def server
+      @server ||= (@bot.server(@server_id) if @server_id)
     end
 
-    alias_method :overwrites, :permission_overwrites
-
-    # Bulk sets this channels permission overwrites
-    # @param overwrites [Array<Overwrite>]
-    def permission_overwrites=(overwrites)
-      modify(permission_overwrites: overwrites)
+    # Get a link that will navigate to the channel in the Discord client.
+    # @return [String] A link that will navigate to the channel in the Discord client.
+    def link
+      "https://discord.com/channels/#{@server_id || '@me'}/#{@id}"
     end
 
-    # Sets the amount of time (in seconds) users have to wait in between sending messages.
-    # @param rate [Integer]
-    # @raise [ArgumentError] if value isn't between 0 and 21600
-    def rate_limit_per_user=(rate)
-      raise ArgumentError, 'rate_limit_per_user must be between 0 and 21600' unless rate.between?(0, 21_600)
-
-      modify(rate_limit_per_user: rate)
+    # Delete the channel. This cannot be undone for server channels.
+    # @param reason [String, nil] The reason to show in the audit log for deleting the channel.
+    # @return [nil]
+    def delete(reason: nil)
+      update_data(JSON.parse(API::Channel.delete(@bot.token, @id, reason)))
+      nil
     end
 
-    alias_method :slowmode_rate=, :rate_limit_per_user=
+    # Modify the properties of the channel.
+    # @param name [String] The new 1-100 character name of the channel.
+    # @param type [Integer, Symbol] The new type of the channel. You can only convert between text and announcement channels.
+    # @param topic [String, nil] The 0-1024 character topic of the channel; 0-4096 characters for forum channels.
+    # @param nsfw [true, false, nil] Whether or not the channel should be marked as age-restricted.
+    # @param slowmode_rate [Integer, nil] The new slowmode-rate of the channel; between 0-21600 (in seconds).
+    # @param bitrate [Integer, nil] The new bitrate of the voice or stage channel; minimum of 8000 (in bits).
+    # @param user_limit [Integer, nil] The maximum number of users who can join the voice or stage channel; 0 for no limit.
+    # @param permission_overwrites [Array<Overwrite, Hash, #to_hash>, nil] The new permission overwrites to set for the channel.
+    # @param parent [Channel, Integer, String, nil] The new category channel to set, or `nil` to orphan the chnanel.
+    # @param voice_region [VoiceRegion, String, nil] The new voice region to set for the voice or stage channel.
+    # @param video_quality_mode [Symbol, Integer, nil] The new camera video quality mode to set for the voice or stage channel.
+    # @param default_auto_archive_duration [Integer, nil] The default client-side duration before a thread is archived due to inactivity.
+    # @param flags [Symbol, Integer, Array<Symbol, Integer>] The flags to set for the channel.
+    # @param tags [Array<ChannelTag, #to_h, #resolve_id>] The tags to set on the thread channel, or the new tags that will be available in the forum channel.
+    # @param default_reaction [Integer, String, Emoji, nil] The emoji to display on threads created in the forum channel.
+    # @param default_sort_order [Integer, Symbol, nil] The default order used to order threads in the forum channel.
+    # @param default_forum_layout [Integer, Symbol] The default layout type used to display threads in the forum channel.
+    # @param archived [true, false] Whether or not the thread should be archived.
+    # @param locked [true, false] Whether or not the thread should be locked.
+    # @param invitable [true, false] Whether or not non-moderators should be able to add other non-moderators to the private thread.
+    # @param add_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to add to the channel. Mutually exclusive with `flags:`.
+    # @param remove_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to remove from the channel. Mutually exclusive with `flags:`.
+    # @param position [Integer, nil] The new sorting position of the channel. Generally, this parameter should not be used. Please use {#sort_after} instead.
+    # @param auto_archive_duration [Integer] The amount of minutes after which the thread will stop showing in the channel list.
+    # @param default_thread_slowmode_rate [Integer] The default slowmode rate to set on threads created in the text or forum channel.
+    # @param status [String, nil] The status to set for the voice channel; between 1-500 characters, or `nil` to clear the existing status.
+    # @param reason [String, nil] The reason to show in the server's audit log for modifying the channel.
+    # @return [nil]
+    def modify(
+      name: :undef, type: :undef, topic: :undef, nsfw: :undef, slowmode_rate: :undef, bitrate: :undef,
+      user_limit: :undef, permission_overwrites: :undef, parent: :undef, voice_region: :undef, video_quality_mode: :undef,
+      default_auto_archive_duration: :undef, flags: :undef, tags: :undef, default_reaction: :undef, default_sort_order: :undef,
+      default_forum_layout: :undef, archived: :undef, locked: :undef, invitable: :undef, add_flags: :undef, remove_flags: :undef,
+      position: :undef, auto_archive_duration: :undef, default_thread_slowmode_rate: :undef, status: :undef, reason: nil
+    )
+      data = {
+        name: name,
+        type: TYPES[type] || type,
+        topic: topic,
+        nsfw: nsfw,
+        position: position,
+        rate_limit_per_user: slowmode_rate,
+        bitrate: bitrate,
+        user_limit: user_limit,
+        permission_overwrites: permission_overwrites == :undef ? permission_overwrites : permission_overwrites&.map(&:to_hash),
+        parent_id: parent == :undef ? parent : parent&.resolve_id,
+        rtc_region: voice_region == :undef ? voice_region : voice_region&.to_s,
+        video_quality_mode: VIDEO_QUALITY_MODES[video_quality_mode] || video_quality_mode,
+        default_auto_archive_duration: default_auto_archive_duration,
+        default_reaction_emoji: default_reaction == :undef ? default_reaction : Emoji.build_emoji_hash(default_reaction),
+        default_sort_order: FORUM_SORT_ORDERS[default_sort_order] || default_sort_order,
+        default_forum_layout: FORUM_LAYOUTS[default_forum_layout] || default_forum_layout,
+        archived: archived,
+        flags: flags == :undef ? flags : Array(flags).map { |bit| FLAGS[bit] || bit.to_i }.reduce(&:|),
+        default_thread_rate_limit_per_user: default_thread_slowmode_rate,
+        auto_archive_duration: auto_archive_duration,
+        locked: locked,
+        invitable: invitable
+      }
 
-    # Syncs this channels overwrites with its parent category
-    # @raise [RuntimeError] if this channel is not in a category
-    def sync_overwrites
-      raise 'Cannot sync overwrites on a channel with no parent category' unless parent
+      if tags != :undef && ((forum? || media?) || thread?)
+        tags = (thread? ? tags&.map(&:resolve_id)&.uniq : tags&.map(&:to_h))
 
-      self.permission_overwrites = parent.permission_overwrites
+        data[thread? ? :applied_tags : :available_tags] = tags
+      end
+
+      if data[:type] != :undef
+        if news? && data[:type] != TYPES[:text]
+          raise ArgumentError, 'Can only convert news channels to text channels'
+        elsif text? && data[:type] != TYPES[:news]
+          raise ArgumentError, 'Can only convert text channels to news channels'
+        elsif !text? && !news?
+          raise ArgumentError, 'Can only convert between text and news channels'
+        end
+      end
+
+      if add_flags != :undef || remove_flags != :undef
+        raise ArgumentError, "'add_flags' and 'remove_flags' cannot be used with 'flags'" if flags != :undef
+
+        to_flags = lambda do |value|
+          [*(value == :undef ? 0 : value)].map { |bit| FLAGS[bit] || bit.to_i }.reduce(&:|)
+        end
+
+        data[:flags] = ((@flags & ~to_flags.call(remove_flags)) | to_flags.call(add_flags))
+      end
+
+      if status != :undef && voice?
+        API::Channel.set_voice_channel_status(@bot.token, @id, status.to_s, reason: reason)
+
+        return unless data.any? { |_, value| value != :undef }
+      end
+
+      update_data(JSON.parse(API::Channel.update!(@bot.token, @id, **data, reason: reason)))
+      nil
     end
 
-    alias_method :sync, :sync_overwrites
+    alias_method :url, :link
+    alias_method :jump_url, :link
+    alias_method :jump_link, :link
+    alias_method :category, :parent
 
-    # @return [true, false, nil] whether this channels permissions match the permission overwrites of the category that it's in, or nil if it is not in a category
-    def synchronized?
-      return unless parent
+    # @!endgroup
 
-      permission_overwrites == parent.permission_overwrites
+    #  ######## ##    ## ########  ########  ######
+    #     ##     ##  ##  ##     ## ##       ##    ##
+    #     ##      ####   ##     ## ##       ##
+    #     ##       ##    ########  ######    ######
+    #     ##       ##    ##        ##             ##
+    #     ##       ##    ##        ##       ##    ##
+    #     ##       ##    ##        ########  ######
+
+    # @!group Types
+
+    # Check if the channel is a thread channel; regardless of its specific sub-type.
+    # @return [true, false] Whether or not the channel is any of the three thread types.
+    def thread?
+      announcement_thread? || public_thread? || private_thread?
     end
 
-    alias_method :synced?, :synchronized?
-
-    # Returns the children of this channel, if it is a category. Otherwise returns an empty array.
-    # @return [Array<Channel>]
-    def children
-      return [] unless category?
-
-      server.channels.select { |c| c.parent_id == id }
+    # @!method text?
+    #   @return [true, false] whether or not the channel is a text channel within a server.
+    # @!method dm?
+    #   @return [true, false] whether or not the channel is a private channel between two users.
+    # @!method voice?
+    #   @return [true, false] whether or not the channel is a voice channel within a server.
+    # @!method group_dm?
+    #   @return [true, false] whether or not the channel is a private channel between multiple users.
+    # @!method category?
+    #   @return [true, false] whether or not the channel is an organizational category within a server.
+    # @!method announcement?
+    #   @return [true, false] whether or not the channel is a news channel; letting members {#follow} the channel.
+    # @!method announcement_thread?
+    #   @return [true, false] whether or not the channel is a thread created in an annoucement channel.
+    # @!method public_thread?
+    #   @return [true, false] whether or not the channel is a thread viewable by anyone with permissions.
+    # @!method private_thread?
+    #   @return [true, false] whether or not the channel is a thread only viewable by invited members.
+    # @!method stage?
+    #   @return [true, false] whether or not the channel is a voice channel used for hosting events within a server.
+    # @!method directory?
+    #   @return [true, false] whether or not the channel is the main channel in a student hub.
+    # @!method forum?
+    #   @return [true, false] whether or not the channel is a thread-only channel within a server.
+    # @!method media?
+    #   @return [true, false] whether or not the channel is a thread-only channel that only supports gallery view.
+    TYPES.each do |name, value|
+      define_method("#{name}?") { @type == value }
     end
 
-    alias_method :channels, :children
+    # @!endgroup
 
-    # Returns the text channels in this category, if it is a category channel. Otherwise returns an empty array.
-    # @return [Array<Channel>]
-    def text_channels
-      children.select(&:text?)
+    #  ######## ##          ###     ######    ######
+    #  ##       ##         ## ##   ##    ##  ##    ##
+    #  ##       ##        ##   ##  ##        ##
+    #  ######   ##       ##     ## ##   ####  ######
+    #  ##       ##       ######### ##    ##        ##
+    #  ##       ##       ##     ## ##    ##  ##    ##
+    #  ##       ######## ##     ##  ######    ######
+
+    # @!group Flags
+
+    # @!method pinned?
+    #   @return [true, false] whether or not the thread has been pinned in its parent channel.
+    # @!method requires_tag?
+    #   @return [true, false] whether or not a tag must be applied to any threads created in the channel.
+    # @!method hide_download_options?
+    #   @return [true, false] whether or not the download options are hidden in the media channel.
+    # @!method obfuscated?
+    #   @return [true, false] whether or not the bot can't view the channel and its info has been hidden.
+    # @!method spoiler?
+    #   @return [true, false] whether or not the channel may contain spoilers or sensitive discussions.
+    FLAGS.each do |name, value|
+      if name == :spoiler
+        define_method("#{name}?") { thread? ? parent.spoiler? : @flags.anybits?(value) }
+      else
+        define_method("#{name}?") { @flags.anybits?(value) }
+      end
     end
 
-    # Returns the voice channels in this category, if it is a category channel. Otherwise returns an empty array.
-    # @return [Array<Channel>]
-    def voice_channels
-      children.select(&:voice?)
+    # @!endgroup
+
+    #  ########  ######## ########  ##     ## ####  ######   ######  ####  #######  ##    ##  ######
+    #  ##     ## ##       ##     ## ###   ###  ##  ##    ## ##    ##  ##  ##     ## ###   ## ##    ##
+    #  ##     ## ##       ##     ## #### ####  ##  ##       ##        ##  ##     ## ####  ## ##
+    #  ########  ######   ########  ## ### ##  ##   ######   ######   ##  ##     ## ## ## ##  ######
+    #  ##        ##       ##   ##   ##     ##  ##        ##       ##  ##  ##     ## ##  ####       ##
+    #  ##        ##       ##    ##  ##     ##  ##  ##    ## ##    ##  ##  ##     ## ##   ### ##    ##
+    #  ##        ######## ##     ## ##     ## ####  ######   ######  ####  #######  ##    ##  ######
+
+    # @!group Permission Overwrites
+
+    # Get a single permission overwrite for the channel by ID.
+    # @param target [#resolve_id] The ID of the permission overwrite to retrieve.
+    # @return [Overwrite, nil] The permission overwrite for the given ID or `nil`.
+    def permission_overwrite(target)
+      target_id = target.resolve_id
+
+      @overwrites.find { |value| value.id == target_id }
     end
 
-    # @return [Overwrite] any member-type permission overwrites on this channel
-    def member_overwrites
-      permission_overwrites :member
+    # Get the explicit permission overwrites for members and roles.
+    # @param type [Symbol, Integer, nil] The specific type of overwrites to return.
+    # @return [Array<Overwrite>] The explicit permission overwrites for the channel.
+    def permission_overwrites(type: nil)
+      case type
+      when nil, :all
+        @overwrites.dup
+      when Overwrite::TYPES[:role], :role
+        @overwrites.select { |value| value.type == :role }
+      when Overwrite::TYPES[:member], :member, :user
+        @overwrites.select { |value| value.type == :member }
+      else
+        raise ArgumentError, "The value for the 'type' argument is invalid"
+      end
     end
 
-    # @return [Overwrite] any role-type permission overwrites on this channel
-    def role_overwrites
-      permission_overwrites :role
+    # Modify the permissions for a specific overwrite.
+    # @param target [Integer, String, Role, User, Member] The target of the overwrite.
+    # @param deny [Permissions, Integer, String, nil] The permissisons that should be denied.
+    # @param allow [Permissions, Integer, String, nil] The permissisons that should be allowed.
+    # @param reason [String, nil] The reason to show in the audit log for modifying the overwrite.
+    # @return [nil]
+    def modify_overwrite(
+      target:, allow: :undef, deny: :undef, reason: nil
+    )
+      type = if target.is_a?(Role) || target.respond_to?(:username)
+               target.is_a?(Role) ? 0 : 1
+             else
+               server.role(target) ? 0 : 1
+             end
+
+      id = target.resolve_id
+      old = permission_overwrite(id)
+      deny = (deny.respond_to?(:bits) ? deny.bits : deny)&.to_i
+      allow = (allow.respond_to?(:bits) ? allow.bits : allow)&.to_i
+
+      data = {
+        type: type,
+        reason: reason,
+        deny: deny == :undef ? old&.deny&.bits&.to_s : deny&.to_s,
+        allow: allow == :undef ? old&.allow&.bits&.to_s : allow&.to_s
+      }
+
+      API::Channel.update_permisssion_overwrite(@bot.token, @id, id, **data)
+      nil
     end
 
-    # @return [true, false] whether or not this channel is the default channel
-    def default_channel?
-      server.default_channel == self
+    # Delete a specific permission overwrite.
+    # @param target [Integer, String, Role, User, Member] The ID of the overwrite to delete.
+    # @param reason [String, nil] The reason to show in the audit log for deleting the overwrite.
+    # @return [nil]
+    def delete_overwrite(target, reason: nil)
+      API::Channel.delete_permission(@bot.token, @id, target.resolve_id, reason)
+      nil
     end
 
-    alias_method :default?, :default_channel?
+    # @!endgroup
 
-    # @return [true, false] whether or not this channel has slowmode enabled
-    def slowmode?
-      @rate_limit_per_user != 0
+    #  ##     ## ########  ######   ######     ###     ######   ########  ######
+    #  ###   ### ##       ##    ## ##    ##   ## ##   ##    ##  ##       ##    ##
+    #  #### #### ##       ##       ##        ##   ##  ##        ##       ##
+    #  ## ### ## ######    ######   ######  ##     ## ##   #### ######    ######
+    #  ##     ## ##             ##       ## ######### ##    ##  ##             ##
+    #  ##     ## ##       ##    ## ##    ## ##     ## ##    ##  ##       ##    ##
+    #  ##     ## ########  ######   ######  ##     ##  ######   ########  ######
+
+    # @!group Messages
+
+    # Start typing in the channel.
+    # @return [nil]
+    def begin_typing
+      API::Channel.start_typing(@bot.token, @id)
+      nil
     end
 
-    # Sends a message to this channel.
-    # @param content [String] The content to send. Should not be longer than 2000 characters or it will result in an error.
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
-    # @param components [View, Array<Hash>] Interaction components to associate with this message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    # @return [Message] the message that was sent.
-    def send_message(content, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
-      @bot.send_message(@id, content, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
+    # Get a single message by its ID.
+    # @param id [Integer, String, Message] the ID of the message to retrieve.
+    # @return [Message, nil] The message that was retrieved, or `nil` if it doesn't exist.
+    def message(id)
+      response = API::Channel.message(@bot.token, @id, id.resolve_id)
+      Message.new(JSON.parse(response), @bot)
+    rescue Discordrb::Errors::UnknownMessage
+      nil
     end
 
-    alias_method :send, :send_message
-
-    # Sends a temporary message to this channel.
-    # @param content [String] The content to send. Should not be longer than 2000 characters or it will result in an error.
-    # @param timeout [Float] The amount of time in seconds after which the message sent will be deleted.
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
-    # @param components [View, Array<Hash>] Interaction components to associate with this message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    def send_temporary_message(content, timeout, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
-      @bot.send_temporary_message(@id, content, timeout, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
+    # Get the most recently sent message in the channel.
+    # @return [Message, nil] The most recently sent message, or `nil` if it couldn't be found.
+    # @note This method uses the {#last_entity_id} method. For a more reliable way of fetching
+    #   the latest message, please consider using the {#messages} method instead.
+    def last_message
+      message(@last_entity_id) if @last_entity_id && !(forum? || media?)
     end
 
-    # Convenience method to send a message with an embed.
-    # @example Send a message with an embed
-    #   channel.send_embed do |embed|
-    #     embed.title = 'The Ruby logo'
-    #     embed.image = Discordrb::Webhooks::EmbedImage.new(url: 'https://www.ruby-lang.org/images/header-ruby-logo.png')
-    #   end
-    # @param message [String] The message that should be sent along with the embed. If this is the empty string, only the embed will be shown.
-    # @param embed [Discordrb::Webhooks::Embed, nil] The embed to start the building process with, or nil if one should be created anew.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
-    # @param components [View, Array<Hash>] Interaction components to associate with this message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    # @yield [embed] Yields the embed to allow for easy building inside a block.
-    # @yieldparam embed [Discordrb::Webhooks::Embed] The embed from the parameters, or a new one.
-    # @return [Message] The resulting message.
-    def send_embed(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
-      embed ||= Discordrb::Webhooks::Embed.new
-      view = Discordrb::Webhooks::View.new
+    # Get the messages that have been pinned in the channel.
+    # @param limit [Integer, nil] The maximum number of pins to retrieve, or `nil` to retrieve all the pins.
+    # @return [Array<Message>] The messages that have been pinned, ordered in descending order by {Message#pinned_at}.
+    def pins(limit: 50)
+      get_pins = proc do |fetch_limit, before = nil|
+        response = JSON.parse(API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before&.iso8601))
+        response['items'].map { |pin| Message.new(pin['message'].merge!({ 'pinned_at' => pin['pinned_at'] }), @bot) }
+      end
 
-      yield(embed, view) if block_given?
+      paginator = Paginator.new(limit, :down) do |last_page|
+        if last_page && last_page.count < 50
+          []
+        else
+          get_pins.call(50, last_page&.last&.pinned_at)
+        end
+      end
 
-      send_message(message, tts, embed, attachments, allowed_mentions, message_reference, components || view.to_a, flags)
+      paginator.to_a
     end
 
-    # Send a message to this channel.
+    # Get the messages that have been sent in the channel.
+    # @param limit [Integer, nil] The maximum number of messages to fetch, or `nil` to retrieve all the messages.
+    # @param after [Message, Integer, String, Time, nil] Get messages that were sent after this snowflake ID.
+    # @param before [Message, Integer, String, Time, nil] Get messages that were sent before this snowflake ID.
+    # @param around [Message, Integer, String, Time, nil] Get messages that were sent around this snowflake ID.
+    # @param oldest_first [true, false] Whether the oldest messages in the channel should be fetched first.
+    # @return [Array<Message>] The messages that were fetched. By default, messages will be returned in descending order by
+    #   message ID (newest messages first). On the contrary, when using the `after:` or `oldest_first:` parameters, messages
+    #   will be returned in ascending order by message ID (oldest messages first).
+    def messages(limit: 100, after: nil, before: nil, around: nil, oldest_first: false)
+      if [before, after, around, oldest_first].count(&:itself) > 1
+        raise ArgumentError, "'before', 'after', 'around', and 'oldest_first' are mutually exclusive"
+      end
+
+      if around && (!limit || limit > 100)
+        raise ArgumentError, "You cannot fetch more than 100 messages when using the 'around' parameter"
+      end
+
+      after = 0 if oldest_first
+
+      rest = {
+        limit: limit && limit <= 100 ? limit : 100,
+        after: after.is_a?(Time) ? IDObject.synthesise(after) : after&.resolve_id,
+        before: before.is_a?(Time) ? IDObject.synthesise(before) : before&.resolve_id,
+        around: around.is_a?(Time) ? IDObject.synthesise(around) : around&.resolve_id
+      }.compact
+
+      get_messages = proc do |query = nil|
+        response = API::Channel.get_channel_messages(@bot.token, @id, **rest, **query&.compact)
+        JSON.parse(response).map { |message| Message.new(message, @bot) }
+      end
+
+      return get_messages.call if around
+
+      paginator = Paginator.new(limit, after ? :up : :down) do |page|
+        if after
+          get_messages.call(after: page&.first&.id)
+        else
+          get_messages.call(before: page&.last&.id)
+        end
+      end
+
+      paginator.to_a
+    end
+
+    # Send a message in the channel.
     # @example This sends a silent message with an embed.
     #   channel.send_message!(content: 'Hi <@171764626755813376>', flags: :suppress_notifications) do |builder|
     #     builder.add_embed do |embed|
@@ -637,406 +603,247 @@ module Discordrb
       end
     end
 
-    # Sends multiple messages to a channel
-    # @param content [Array<String>] The messages to send.
-    def send_multiple(content)
-      content.each { |text| send_message!(content: text) }
-    end
+    # Delete multiple messages that were sent within the last 14 days.
+    # @param messages [Array<Message, Integer, String>] the messages that should be deleted.
+    # @param reason [String, nil] The reason to show in the audit log for deleting the messages.
+    # @return [nil]
+    def delete_messages(messages, reason: nil)
+      unless (messages = [*messages].map(&:resolve_id)).length.between?(0, 100)
+        raise ArgumentError, "The 'messages' array must be 1-100 elements in length"
+      end
 
-    # Splits a message into chunks whose length is at most the Discord character limit, then sends them individually.
-    # Useful for sending long messages, but be wary of rate limits!
-    def split_send(content)
-      send_multiple(Discordrb.split_message(content))
+      # If we're only deleting one message, don't bother.
+      if messages.length > 1
+        minimum_id = IDObject.synthesise(Time.now - 1_209_600)
+
+        messages.reject! { |message_id| message_id < minimum_id }
+      end
+
+      if messages.one?
+        begin
+          API::Channel.delete_message(@bot.token, @id, messages[0])
+        rescue Discordrb::Errors::UnknownMessage
+          return nil
+        end
+      elsif messages.any?
+        API::Channel.bulk_delete_messages(@bot.token, @id, messages, reason)
+      end
+
       nil
     end
 
-    # Sends a file to this channel. If it is an image, it will be embedded.
-    # @param file [File] The file to send. There's no clear size limit for this, you'll have to attempt it for yourself (most non-image files are fine, large images may fail to embed)
-    # @param caption [string] The caption for the file.
-    # @param tts [true, false] Whether or not this file's caption should be sent using Discord text-to-speech.
-    # @param filename [String] Overrides the filename of the uploaded file
-    # @param spoiler [true, false] Whether or not this file should appear as a spoiler.
-    # @example Send a file from disk
-    #   channel.send_file(File.open('rubytaco.png', 'r'))
-    def send_file(file, caption: nil, tts: false, filename: nil, spoiler: nil)
-      @bot.send_file(@id, file, caption: caption, tts: tts, filename: filename, spoiler: spoiler)
-    end
-
-    # Deletes a message on this channel. Mostly useful in case a message needs to be deleted when only the ID is known
-    # @param message [Message, String, Integer, String, Integer] The message, or its ID, that should be deleted.
-    def delete_message(message)
-      API::Channel.delete_message(@bot.token, @id, message.resolve_id)
-    end
-
-    # Permanently deletes this channel
-    # @param reason [String] The reason the for the channel deletion.
-    def delete(reason = nil)
-      API::Channel.delete(@bot.token, @id, reason)
-    end
-
-    # Sets this channel's name. The name must be alphanumeric with dashes, unless this is a voice channel (then there are no limitations)
-    # @param name [String] The new name.
-    def name=(name)
-      modify(name: name)
-    end
-
-    # Sets this channel's topic.
-    # @param topic [String] The new topic.
-    def topic=(topic)
-      raise 'Tried to set topic on voice channel' if voice?
-
-      modify(topic: topic)
-    end
-
-    # Sets this channel's bitrate.
-    # @param bitrate [Integer] The new bitrate (in bps). Number has to be between 8000-96000 (128000 for VIP servers)
-    def bitrate=(bitrate)
-      raise 'Tried to set bitrate on text channel' if text?
-
-      modify(bitrate: bitrate)
-    end
-
-    # Sets this channel's user limit.
-    # @param limit [Integer] The new user limit. `0` for unlimited, has to be a number between 0-99
-    def user_limit=(limit)
-      raise 'Tried to set user_limit on text channel' if text?
-
-      modify(user_limit: limit)
-    end
-
-    alias_method :limit=, :user_limit=
-
-    # Sets this channel's position in the list.
-    # @param position [Integer] The new position.
-    def position=(position)
-      modify(position: position)
-    end
-
-    # Defines a permission overwrite for this channel that sets the specified thing to the specified allow and deny
-    # permission sets, or change an existing one.
-    # @overload define_overwrite(overwrite)
-    #   @param thing [Overwrite] an Overwrite object to apply to this channel
-    #   @param reason [String] The reason the for defining the overwrite.
-    # @overload define_overwrite(thing, allow, deny)
-    #   @param thing [User, Role] What to define an overwrite for.
-    #   @param allow [#bits, Permissions, Integer] The permission sets that should receive an `allow` override (i.e. a
-    #     green checkmark on Discord)
-    #   @param deny [#bits, Permissions, Integer] The permission sets that should receive a `deny` override (i.e. a red
-    #     cross on Discord)
-    #   @param reason [String] The reason the for defining the overwrite.
-    #   @example Define a permission overwrite for a user that can then mention everyone and use TTS, but not create any invites
-    #     allow = Discordrb::Permissions.new
-    #     allow.can_mention_everyone = true
-    #     allow.can_send_tts_messages = true
-    #
-    #     deny = Discordrb::Permissions.new
-    #     deny.can_create_instant_invite = true
-    #
-    #     channel.define_overwrite(user, allow, deny)
-    def define_overwrite(thing, allow = 0, deny = 0, reason: nil)
-      unless thing.is_a? Overwrite
-        allow_bits = allow.respond_to?(:bits) ? allow.bits : allow
-        deny_bits = deny.respond_to?(:bits) ? deny.bits : deny
-
-        thing = Overwrite.new(thing, allow: allow_bits, deny: deny_bits)
-      end
-
-      API::Channel.update_permission(@bot.token, @id, thing.id, thing.allow.bits, thing.deny.bits, thing.type, reason)
-    end
-
-    # Deletes a permission overwrite for this channel
-    # @param target [Member, User, Role, Profile, Recipient, String, Integer] What permission overwrite to delete
-    #   @param reason [String] The reason the for the overwrite deletion.
-    def delete_overwrite(target, reason = nil)
-      raise 'Tried deleting a overwrite for an invalid target' unless target.respond_to?(:resolve_id)
-
-      API::Channel.delete_permission(@bot.token, @id, target.resolve_id, reason)
-    end
-
-    # The list of users currently in this channel. For a voice channel, it will return all the members currently
-    # in that channel. For a text channel, it will return all online members that have permission to read it.
-    # @return [Array<Member>] the users in this channel
-    def users
-      if text?
-        server.online_members(include_idle: true).select { |u| u.can_read_messages? self }
-      elsif voice?
-        server.voice_states.filter_map { |id, voice_state| server.member(id) if !voice_state.voice_channel.nil? && voice_state.voice_channel.id == @id }
-      end
-    end
-
-    # Retrieves some of this channel's message history.
-    # @param amount [Integer] How many messages to retrieve. This must be less than or equal to 100, if it is higher
-    #   than 100 it will be treated as 100 on Discord's side.
-    # @param before_id [Integer] The ID of the most recent message the retrieval should start at, or nil if it should
-    #   start at the current message.
-    # @param after_id [Integer] The ID of the oldest message the retrieval should start at, or nil if it should start
-    #   as soon as possible with the specified amount.
-    # @param around_id [Integer] The ID of the message retrieval should start from, reading in both directions
-    # @example Count the number of messages in the last 50 messages that contain the letter 'e'.
-    #   message_count = channel.history(50).count {|message| message.content.include? "e"}
-    # @example Get the last 10 messages before the provided message.
-    #   last_ten_messages = channel.history(10, message.id)
-    # @return [Array<Message>] the retrieved messages.
-    def history(amount, before_id = nil, after_id = nil, around_id = nil)
-      logs = API::Channel.messages(@bot.token, @id, amount, before_id, after_id, around_id)
-      JSON.parse(logs).map { |message| Message.new(message, @bot) }
-    end
-
-    # Retrieves message history, but only message IDs for use with prune.
-    # @note For internal use only
-    # @!visibility private
-    def history_ids(amount, before_id = nil, after_id = nil, around_id = nil)
-      logs = API::Channel.messages(@bot.token, @id, amount, before_id, after_id, around_id)
-      JSON.parse(logs).map { |message| message['id'].to_i }
-    end
-
-    # Returns a single message from this channel's history by ID.
-    # @param message_id [Integer] The ID of the message to retrieve.
-    # @return [Message, nil] the retrieved message, or `nil` if it couldn't be found.
-    def load_message(message_id)
-      raise ArgumentError, 'message_id cannot be nil' if message_id.nil?
-
-      response = API::Channel.message(@bot.token, @id, message_id)
-      Message.new(JSON.parse(response), @bot)
-    rescue Discordrb::Errors::UnknownMessage
-      nil
-    end
-
-    alias_method :message, :load_message
-
-    # Fetch the messages that have been sent in the channel.
-    # @param limit [Integer, nil] The maximum number of messages to fetch, or `nil` for no limit.
-    # @param after [Message, Integer, String, Time, nil] Get messages sent after this snowflake ID.
-    # @param before [Message, Integer, String, Time, nil] Get messages sent before this snowflake ID.
-    # @param around [Message, Integer, String, Time, nil] Get messages sent around this snowflake ID.
-    # @param oldest_first [true, false] Whether the oldest messages in the channel should be fetched first.
-    # @return [Array<Message>] The messages that were fetched. By default, messages will be returned in descending
-    #   order by message ID (newest messages first). On the contrary, when using the `after:` or `oldest_first:` parameters,
-    #   messages will be returned in ascending order by message ID (oldest messages first).
-    def messages(limit: 100, after: nil, before: nil, around: nil, oldest_first: false)
-      if [before, after, around, oldest_first].count(&:itself) > 1
-        raise ArgumentError, "'before', 'after', 'around', and 'oldest_first' are mutually exclusive"
-      end
-
-      if around && (!limit || limit > 100)
-        raise ArgumentError, "You cannot fetch more than 100 messages when using the 'around' parameter"
-      end
-
-      after = 0 if oldest_first
-
-      rest = {
-        limit: limit && limit <= 100 ? limit : 100,
-        after: after.is_a?(Time) ? IDObject.synthesise(after) : after&.resolve_id,
-        before: before.is_a?(Time) ? IDObject.synthesise(before) : before&.resolve_id,
-        around: around.is_a?(Time) ? IDObject.synthesise(around) : around&.resolve_id
-      }.compact
-
-      get_messages = proc do |query = nil|
-        response = API::Channel.get_channel_messages(@bot.token, @id, **rest, **query&.compact)
-        JSON.parse(response).map { |message| Message.new(message, @bot) }
-      end
-
-      return get_messages.call if around
-
-      paginator = Paginator.new(limit, after ? :up : :down) do |page|
-        if after
-          get_messages.call(after: page&.first&.id)
-        else
-          get_messages.call(before: page&.last&.id)
-        end
-      end
-
-      paginator.to_a
-    end
-
-    # Requests the pinned messages in a channel.
-    # @param limit [Integer, nil] the limit of how many pinned messages to retrieve. `nil` will return all the pinned messages.
-    # @return [Array<Message>] the messages pinned in the channel.
-    def pins(limit: 50)
-      get_pins = proc do |fetch_limit, before = nil|
-        resp = API::Channel.pinned_messages(@bot.token, @id, fetch_limit, before&.iso8601)
-        JSON.parse(resp)['items'].map { |pin| Message.new(pin['message'].merge({ 'pinned_at' => pin['pinned_at'] }), @bot) }
-      end
-
-      # Can be done without pagination.
-      return get_pins.call(limit) if limit && limit <= 50
-
-      paginator = Paginator.new(limit, :down) do |last_page|
-        if last_page && last_page.count < 50
-          []
-        else
-          get_pins.call(50, last_page&.last&.pinned_at)
-        end
-      end
-
-      paginator.to_a
-    end
-
-    # Delete the last N messages on this channel.
-    # @param amount [Integer] The amount of message history to consider for pruning. Must be a value between 2 and 100 (Discord limitation)
-    # @param strict [true, false] Whether an error should be raised when a message is reached that is too old to be bulk
-    #   deleted. If this is false only a warning message will be output to the console.
-    # @param reason [String, nil] The reason for pruning
-    # @raise [ArgumentError] if the amount of messages is not a value between 2 and 100
-    # @yield [message] Yields each message in this channels history for filtering the messages to delete
-    # @example Pruning messages from a specific user ID
-    #   channel.prune(100) { |m| m.author.id == 83283213010599936 }
-    # @return [Integer] The amount of messages that were successfully deleted
-    def prune(amount, strict = false, reason = nil, &block)
-      raise ArgumentError, 'Can only delete between 1 and 100 messages!' unless amount.between?(1, 100)
-
-      messages =
-        if block
-          history(amount).select(&block).map(&:id)
-        else
-          history_ids(amount)
-        end
-
-      case messages.size
-      when 0
-        0
-      when 1
-        API::Channel.delete_message(@bot.token, @id, messages.first, reason)
-        1
-      else
-        bulk_delete(messages, strict, reason)
-      end
-    end
-
-    # Deletes a collection of messages
-    # @param messages [Array<Message, String, Integer>] the messages (or message IDs) to delete. Total must be an amount between 2 and 100 (Discord limitation)
-    # @param strict [true, false] Whether an error should be raised when a message is reached that is too old to be bulk
-    #   deleted. If this is false only a warning message will be output to the console.
-    # @param reason [String, nil] The reason for deleting the messages
-    # @raise [ArgumentError] if the amount of messages is not a value between 2 and 100
-    # @return [Integer] The amount of messages that were successfully deleted
-    def delete_messages(messages, strict = false, reason = nil)
-      raise ArgumentError, 'Can only delete between 2 and 100 messages!' unless messages.count.between?(2, 100)
-
-      messages.map!(&:resolve_id)
-      bulk_delete(messages, strict, reason)
-    end
-
-    # Updates the cached permission overwrites
-    # @note For internal use only
-    # @!visibility private
-    def update_overwrites(overwrites)
-      @permission_overwrites = overwrites
-    end
-
-    # Add an {Await} for a message in this channel. This is identical in functionality to adding a
-    # {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
-    # @see Bot#add_await
-    # @deprecated Will be changed to blocking behavior in v4.0. Use {#await!} instead.
-    def await(key, attributes = {}, &block)
-      @bot.add_await(key, Discordrb::Events::MessageEvent, { in: @id }.merge(attributes), &block)
-    end
-
-    # Add a blocking {Await} for a message in this channel. This is identical in functionality to adding a
-    # {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
+    # Add a blocking {Await} for a message in this channel. This is identical in functionality to
+    # adding a {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
     # @see Bot#add_await!
     def await!(attributes = {}, &block)
       @bot.add_await!(Discordrb::Events::MessageEvent, { in: @id }.merge(attributes), &block)
     end
 
-    # Creates a new invite to this channel.
-    # @param max_age [Integer] How many seconds this invite should last.
-    # @param max_uses [Integer] How many times this invite should be able to be used.
-    # @param temporary [true, false] Whether membership should be temporary (kicked after going offline).
-    # @param unique [true, false] If true, Discord will always send a unique invite instead of possibly re-using a similar one
-    # @param reason [String] The reason the for the creation of this invite.
-    # @return [Invite] the created invite.
-    def make_invite(max_age = 0, max_uses = 0, temporary = false, unique = false, reason = nil)
-      response = API::Channel.create_invite(@bot.token, @id, max_age, max_uses, temporary, unique, reason)
-      Invite.new(JSON.parse(response), @bot)
+    # Add an {Await} for a message in this channel. This is identical in functionality to adding a
+    # {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
+    # @see Bot#add_await
+    def await(key, attributes = {}, &block)
+      @bot.add_await(key, Discordrb::Events::MessageEvent, { in: @id }.merge(attributes), &block)
     end
 
-    alias_method :invite, :make_invite
+    # @!endgroup
 
-    # Starts typing, which displays the typing indicator on the client for five seconds.
-    # If you want to keep typing you'll have to resend this every five seconds. (An abstraction
-    # for this will eventually be coming)
-    # @example Send a typing indicator for the bot in a given channel.
-    #   channel.start_typing()
-    def start_typing
-      API::Channel.start_typing(@bot.token, @id)
+    #  ##          ## ######## ########  ##     ##  #######   #######  ##    ##  ######  
+    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ## 
+    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##  ##   ##       
+    #  ##    ##    ## ######   ########  ######### ##     ## ##     ## #####     ######  
+    #   ##  ####  ##  ##       ##     ## ##     ## ##     ## ##     ## ##  ##         ## 
+    #    ####  ####   ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ## 
+    #     ##    ##    ######## ########  ##     ##  #######   #######  ##    ##  ######
+
+    # @!group Webhooks
+
+    # Retrieve the webhooks for the channel.
+    # @return [Array<Webhook>] The webhooks for the channel.
+    def webhooks
+      response = API::Channel.webhooks(@bot.token, @id)
+      JSON.parse(response).map { |item| Webhook.new(item, @bot) }
     end
 
-    # Creates a webhook in this channel
-    # @param name [String] the default name of this webhook.
-    # @param avatar [String] the default avatar URL to give this webhook.
-    # @param reason [String] the reason for the webhook creation.
-    # @raise [ArgumentError] if the channel isn't a text channel in a server.
-    # @return [Webhook] the created webhook.
-    def create_webhook(name, avatar = nil, reason = nil)
-      raise ArgumentError, 'Tried to create a webhook in a non-server channel' unless server
+    # Create a webhook (an easy way to send messages) for the channel.
+    # @param name [String] The default name of the webhook; 1-80 characters.
+    # @param avatar [File, #read, nil] The default avatar image of the webhook.
+    # @param reason [String, nil] The audit log reason for creating the webhook.
+    # @return [Webhook] The webhook that was created.
+    def create_webhook(name:, avatar: nil, reason: nil)
+      avatar = Discordrb.encode64(avatar) if avatar.respond_to?(:read)
 
       response = API::Channel.create_webhook(@bot.token, @id, name, avatar, reason)
       Webhook.new(JSON.parse(response), @bot)
     end
 
-    # Requests a list of Webhooks on the channel.
-    # @return [Array<Webhook>] webhooks on the channel.
-    def webhooks
-      raise 'Tried to request webhooks from a non-server channel' unless server
+    # @!endgroup
 
-      webhooks = JSON.parse(API::Channel.webhooks(@bot.token, @id))
-      webhooks.map { |webhook_data| Webhook.new(webhook_data, @bot) }
-    end
+    #  #### ##    ## ##     ## #### ######## ########  ######
+    #   ##  ###   ## ##     ##  ##     ##    ##       ##    ##
+    #   ##  ####  ## ##     ##  ##     ##    ##       ##
+    #   ##  ## ## ## ##     ##  ##     ##    ######    ######
+    #   ##  ##  ####  ##   ##   ##     ##    ##             ##
+    #   ##  ##   ###   ## ##    ##     ##    ##       ##    ##
+    #  #### ##    ##    ###    ####    ##    ########  ######
 
-    # Requests a list of Invites to the channel.
-    # @return [Array<Invite>] invites to the channel.
+    # @!group Invites
+
+    # Retrieve the invites for the channel.
+    # @return [Array<Invite>] The invites for the channel.
     def invites
-      raise 'Tried to request invites from a non-server channel' unless server
-
-      invites = JSON.parse(API::Channel.invites(@bot.token, @id))
-      invites.map { |invite_data| Invite.new(invite_data, @bot) }
+      response = API::Channel.invites(@bot.token, @id)
+      JSON.parse(response).map { |item| Invite.new(item, @bot) }
     end
 
-    # Follow the announcement (news) channel to send crossposted messages to a target channel.
-    # @param target [Channel, Integer, String] The target channel to send crossposted messages to.
-    # @param reason [String, nil] The audit log reason shown for the created webhook in the target channel.
-    # @return [Integer] the ID of the created webhook in the target channel.
-    def follow(target, reason: nil)
-      raise 'Cannot follow a non-announcement channel' unless news?
+    # @!endgroup
 
+    #   ######     ###    ######## ########  #######   #######  ########  ##    ##
+    #  ##    ##   ## ##      ##    ##       ##     ## ##     ## ##     ##  ##  ##
+    #  ##        ##   ##     ##    ##       ##        ##     ## ##     ##   ####
+    #  ##       ##     ##    ##    ######   ##   #### ##     ## ########     ##
+    #  ##       #########    ##    ##       ##    ##  ##     ## ##   ##      ##
+    #  ##    ## ##     ##    ##    ##       ##    ##  ##     ## ##    ##     ##
+    #   ######  ##     ##    ##    ########  ######    #######  ##     ##    ##
+
+    # @!group Category Channels
+
+    # Get the channels within the category.
+    # @return [Array<Channel>] The channels contained within the category.
+    def children
+      category? ? server.channels.select { |value| value.parent_id == @id } : []
+    end
+
+    # @!endgroup
+
+    #     ###     ##    ## ##    ##  #######  ##     ## ##    ##  ######  ######## ##     ## ######## ##    ## ########
+    #    ## ##    ###   ## ###   ## ##     ## ##     ## ###   ## ##    ## ##       ###   ### ##       ###   ##    ##
+    #   ##   ##   ####  ## ####  ## ##     ## ##     ## ####  ## ##       ##       #### #### ##       ####  ##    ##
+    #  ##     ##  ## ## ## ## ## ## ##     ## ##     ## ## ## ## ##       ######   ## ### ## ######   ## ## ##    ##
+    #  #########  ##  #### ##  #### ##     ## ##     ## ##  #### ##       ##       ##     ## ##       ##  ####    ##
+    #  ##     ##  ##   ### ##   ### ##     ## ##     ## ##   ### ##    ## ##       ##     ## ##       ##   ###    ##
+    #  ##     ##  ##    ## ##    ##  #######   #######  ##    ##  ######  ######## ##     ## ######## ##    ##    ##
+
+    # @!group Annoucement Channels
+
+    # Follow the annoucement channel.
+    # @param target [Integer, String, Channel] The channel to send crossposted message to.
+    # @param reason [String, nil] The reason to show in the audit log for creating the follower webhook.
+    # @return [Integer] The ID of the follower webhook that was created in the target channel.
+    def follow(target, reason: nil)
       JSON.parse(API::Channel.follow_channel(@bot.token, @id, target.resolve_id, reason))['webhook_id'].to_i
     end
 
-    # Returns the last message or forum post created in this channel.
-    # @return [Message, Channel, nil] the last message sent in this channel,
-    #   the most recent forum post if this is a forum or media channel, or `nil`.
-    def last_message
-      return unless @last_message_id
+    # @!endgroup
 
-      if forum? || media?
-        @bot.channel(@last_message_id)
-      else
-        load_message(@last_message_id)
+    #  ##     ##  #######  ####  ######  ########
+    #  ##     ## ##     ##  ##  ##    ## ##
+    #  ##     ## ##     ##  ##  ##       ##
+    #  ##     ## ##     ##  ##  ##       ######
+    #   ##   ##  ##     ##  ##  ##       ##
+    #    ## ##   ##     ##  ##  ##    ## ##
+    #     ###     #######  ####  ######  ########
+
+    # @!group Voice Channels
+
+    # Retrieve the video quality mode of the channel.
+    # @return [Symbol, nil] The video quality mode of the channel.
+    # @see VIDEO_QUALITIES
+    def video_quality
+      VIDEO_QUALITIES.key(@video_quality_mode)
+    end
+
+    # Retrieve the status of the voice channel.
+    # @return [String, nil] The status of the voice channel, or `nil`.
+    def status
+      if !instance_variable_defined?(:@status) && voice?
+        @bot.gateway.send_request_channel_info(@server_id, %i[status voice_start_time])
+
+        sleep(0.01) until instance_variable_defined?(:@status)
       end
+
+      @status
     end
 
-    # Start a thread.
-    # @param name [String] The name of the thread.
-    # @param auto_archive_duration [60, 1440, 4320, 10080] How long before a thread is automatically
-    #   archived.
-    # @param message [Message, Integer, String] The message to reference when starting this thread.
-    # @param type [Symbol, Integer] The type of thread to create. Can be a key from {TYPES} or the value.
-    # @return [Channel]
-    def start_thread(name, auto_archive_duration, message: nil, type: 11)
-      message_id = message&.id || message
-      type = TYPES[type] || type
+    # Retrieve the start time of the sesison for the voice channel.
+    # @return [Time, nil] The time at when the voice session started, or `nil`.
+    def start_time
+      if !instance_variable_defined?(:@start_time) && voice?
+        @bot.gateway.send_request_channel_info(@server_id, %i[status voice_start_time])
 
-      data = if message
-               API::Channel.start_thread_with_message(@bot.token, @id, message_id, name, auto_archive_duration)
-             else
-               API::Channel.start_thread_without_message(@bot.token, @id, name, auto_archive_duration, type)
-             end
+        sleep(0.01) until instance_variable_defined?(:@start_time)
+      end
 
-      @bot.ensure_channel(JSON.parse(data))
+      @start_time
     end
 
-    # Start a thread in a forum or media channel.
+    # @!endgroup
+
+    #  ########  #######  ########  ##     ## ###     ###
+    #  ##       ##     ## ##     ## ##     ## ####   ####
+    #  ##       ##     ## ##     ## ##     ## ## ## ## ##
+    #  ######   ##     ## ########  ##     ## ##  ###  ##
+    #  ##       ##     ## ##   ##   ##     ## ##       ##
+    #  ##       ##     ## ##    ##  ##     ## ##       ##
+    #  ##        #######  ##     ##  #######  ##       ##
+
+    # @!group Forum Channels
+
+    # Retrieve the default layout of the forum channel.
+    # @return [Symbol, nil] the default layout of the forum channel.
+    # @see LAYOUTS
+    def default_layout
+      LAYOUTS.key(@default_layout)
+    end
+
+    # Retrieve the default sort order of the forum channel.
+    # @return [Symbol, nil] The default sort order of the forum channel.
+    # @see SORT_ORDERS
+    def default_sort_order
+      SORT_ORDERS.key(@default_sort_order)
+    end
+
+    # Retrieve a tag in the forum channel.
+    # @param tag_id [Integer, String, ChannelTag] The ID of the tag to retrieve.
+    # @return [ChannelTag, nil] The tag that was retrieved, or `nil` if not found.
+    def tag(tag_id)
+      tag_id = tag_id&.resolve_id
+
+      @available_tags.find { |tag| tag.id == tag_id }
+    end
+
+    # Retrieve the tags for the channel.
+    # @return [Array<ChannelTag>] The available tags in the forum channel, or the
+    #   tags that have been applied to the thread.
+    def tags
+      return @available_tags.dup unless thread?
+
+      @applied_tags&.filter_map { |id| parent.tag(id) } || []
+    end
+
+    # Create a new tag in the forum channel.
+    # @param name [String] the 1-20 character name of the tag.
+    # @param moderated [true, false] Whether the tag should be moderated.
+    # @param emoji [Integer, String, Emoji, nil] The emoji to set for the tag.
+    # @param reason [String, nil] The reason to show in the audit log for creating the tag.
+    # @return [nil]
+    def create_tag(name:, moderated:, emoji: nil, reason: nil)
+      new_data = {
+        name: name,
+        moderated: moderated,
+        **(emoji ? Emoji.build_emoji_hash(emoji) : {})
+      }
+
+      update_forum_tags(new_data, reason) if forum? || media?
+    end
+
+    # Get the default reaction shown on threads in the forum channel.
+    # @return [Emoji, nil] The default reaction emoji of the forum channel.
+    def default_reaction
+      @default_reaction.is_a?(Integer) ? server.emojis[@default_reaction] : @default_reaction
+    end
+
+    # Start a thread in the forum channel.
     # @param name [String] The name of the forum post to create.
     # @param auto_archive_duration [Integer, nil] How long before the post is automatically archived.
     # @param rate_limit_per_user [Integer, nil] The slowmode rate of the forum post to create.
@@ -1049,7 +856,7 @@ module Discordrb
     # @param attachments [Array<File>, nil] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param flags [Integer, Symbol, Array<Symbol, Integer>, nil] The flags to set on the forum post's starter message. Currently only `:suppress_embeds` (1 << 2), `:suppress_notifications` (1 << 12), and `:uikit_components` (1 << 15) can be set.
     # @param has_components [true, false] Whether the starter message for this forum post includes any V2 components. Enabling this disables sending content and embeds.
-    # @param reason [String, nil] The reason for creating this forum post.
+    # @param reason [String, nil] The reason to show in the server's audit log for creating the forum post.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the builder overwrite method data.
     # @yieldparam view [Webhooks::View] An optional component builder. Arguments passed to the builder overwrite method data.
     # @return [Message] the starter message of the forum post. The forum post that was created can be accessed via {Message#thread}.
@@ -1073,92 +880,72 @@ module Discordrb
       Message.new(response['message'].merge!('channel_id' => response['id'], 'thread' => response), @bot)
     end
 
-    # Get the default reaction emoji of the forum or media channel.
-    # @return [Emoji, nil] The default reaction emoji of the forum or media channel.
-    def default_reaction
-      @default_reaction.is_a?(Integer) ? server.emojis[@default_reaction] : @default_reaction
-    end
+    alias_method :create_forum_post, :start_forum_thread
+    alias_method :create_forum_thread, :start_forum_thread
 
-    # Get a tag in this forum or media channel.
-    # @param id [String, Integer] The ID of the tag to find.
-    # @return [ChannelTag, nil] The tag that was found or `nil` if it couldn't be found.
-    def tag(id)
-      id = id.resolve_id
-      @available_tags.find { |tag| tag == id }
-    end
+    # @!endgroup
 
-    # Check if a specific tag has been applied to this thread.
-    # @param id [String, Integer, ChannelTag] The tag you want to check.
-    # @return [true, false] Whether or not the thread has the tag applied.
-    def tag?(id)
-      @applied_tags.any?(id&.resolve_id)
-    end
+    #  ######## ##     ## ########  ########    ###    ########
+    #     ##    ##     ## ##     ## ##         ## ##   ##     ##
+    #     ##    ##     ## ##     ## ##        ##   ##  ##     ##
+    #     ##    ######### ########  ######   ##     ## ##     ##
+    #     ##    ##     ## ##   ##   ##       ######### ##     ##
+    #     ##    ##     ## ##    ##  ##       ##     ## ##     ##
+    #     ##    ##     ## ##     ## ######## ##     ## ########
 
-    # Get the tags for this channel. If this channel is a thread channel,
-    #   then the tags that have been applied to the thread will be returned,
-    #   and if the channel is a forum or media channel, then the tags that can
-    #   be applied onto threads created in this channel will be returned instead.
-    # @return [Array<ChannelTag>] The available or set channel tags for this channel.
-    def tags
-      return @available_tags if forum? || !thread_only?
+    # @!group Thread Channels
 
-      @applied_tags.filter_map { |tag_id| parent&.tag(tag_id) }
-    end
-
-    # Add one or more tags to this thread channel.
-    # @param tags [Array, Integer, String, ChannelTag] The tags to add to the thread.
-    def add_tags(tags, reason: nil)
-      raise 'Cannot add tags to this channel' unless parent&.thread_only?
-
-      modify(tags: @applied_tags + Array(tags).map(&:resolve_id), reason: reason)
-    end
-
-    alias_method :add_tag, :add_tags
-
-    # Remove one or more tag from this thread channel.
-    # @param tags [Array, Integer, String, ChannelTag] The tags to remove from the thread.
-    def remove_tags(tags, reason: nil)
-      raise 'Cannot remove tags from this channel' unless parent&.thread_only?
-
-      modify(tags: @applied_tags - Array(tags).map(&:resolve_id), reason: reason)
-    end
-
-    alias_method :remove_tag, :remove_tags
-
-    # Create a tag in this forum or media channel.
-    # @param name [String] The 1-20 character name of the tag to create.
-    # @param moderated [true, false] Whether or not the tag should be moderated.
-    # @param emoji [Emoji, Integer, String, nil] An optional emoji to set for the tag.
-    # @param reason [String, nil] The reason to show in the audit log for creating the tag.
+    # Join the thread.
     # @return [nil]
-    def create_tag(name:, moderated:, emoji: nil, reason: nil)
-      update_tags({ name:, moderated:, **Emoji.build_emoji_hash(emoji) }, reason) if thread_only?
-    end
-
-    # @!group Threads
-
-    # Join this thread.
     def join_thread
       @bot.join_thread(@id)
     end
 
-    # Leave this thread.
+    # Leave the thread.
+    # @return [nil]
     def leave_thread
       @bot.leave_thread(@id)
     end
 
-    # Get the members in the thread.
-    # @return [Array<Member>] the members who have joined the thread.
-    # @raise [Discordrb::Errors::NoPermission] This may occur when the application has not enabled the `GUILD_MEMBERS` privileged intent on the Discord Developer Portal.
-    def members
+    # Retrieve a member in the thread.
+    # @param user_id [Member, User, Integer, String] The ID of the thread member to retrieve.
+    # @return [Member, nil] The thread member for the given ID, or `nil`.
+    def thread_member(user_id)
+      @bot.thread_member(user_id)
+    end
+
+    # Add a member to the thread.
+    # @param user_id [Member, User, Integer, String] The ID of the member to add to the thread.
+    # @return [nil]
+    def add_thread_member(user_id)
+      @bot.add_thread_member(@id, user_id)
+    end
+
+    # Remove a member from the thread.
+    # @param user_id [Member, User, Integer, String] The ID of the member to remove from the thread.
+    # @return [nil]
+    def remove_thread_member(user_id)
+      @bot.remove_thread_member(@id, user_id)
+    end
+
+    # Retrieve the members that have joined the thread.
+    # @return [Array<Member>] The members that have joined the thread.
+    # @raise [Discordrb::Errors::NoPermission] If the bot hasn't enabled the `GUILD_MEMBERS` intent.
+    def thread_members
       return [] unless thread?
 
-      return (@bot.thread_members[@id]&.keys&.filter_map { |id| @bot.member(@server_id, id) } || []) if @thread_members_chunked
+      if @thread_members && @bot.gateway.intents.anybits?(INTENTS[:server_members])
+        user_ids = @bot.thread_members[@id]&.keys || []
+
+        return user_ids.filter_map { |user_id| server.member(@server_id, user_id) }
+      end
 
       get_members = proc do |before = nil|
-        JSON.parse(API::Channel.list_thread_members!(@bot.token, @id, before, 100, true)).map do |data|
-          @bot.ensure_thread_member(data)
-          Member.new(data['member'], server, @bot).tap { |member| server&.cache_member(member) }
+        list = API::Channel.list_thread_members!(@bot.token, @id, before, 100, true)
+
+        JSON.parse(list).map do |thread_member|
+          @bot.ensure_thread_member(thread_member)
+          server.ensure_member(thread_member['member'])
         end
       end
 
@@ -1170,248 +957,148 @@ module Discordrb
         end
       end
 
-      members = paginator.to_a
-      @thread_members_chunked = true
-      members
+      paginator.to_a.tap { @thread_members = true }
     end
 
-    # Add a member to the thread.
-    # @param member [Member, Integer, String] The member, or ID of the member, to add to this thread.
-    def add_member(member)
-      @bot.add_thread_member(@id, member)
+    # Get the user who initially started the thread.
+    # @return [User, nil] The user who initially started the thread.
+    def owner
+      @bot.user(@owner_id) if @owner_id
     end
 
-    # Remove a member from the thread.
-    # @param member [Member, Integer, String] The member, or ID of the member, to remove from a thread.
-    def remove_member(member)
-      @bot.remove_thread_member(@id, member)
+    # Check if a tag is applied to the thread.
+    # @param tag [ChannelTag, Integer, String] The tag that should be checked.
+    # @return [true, false] Whether or not the tag has been applied to the thread.
+    # @see #tags
+    def tag?(tag)
+      @applied_tags&.any?(tag&.resolve_id) || false
     end
+
+    # Add a set of tags to the thread.
+    # @param tags [Array<ChannelTag, Integer, String>, #resolve_id] The tags to apply to the thread.
+    # @param reason [String, nil] The reason to show in the audit log for adding the tags to the thread.
+    # @return [nil]
+    def add_tags(tags, reason: nil)
+      return unless thread? && (parent.forum? || parent.media?)
+
+      modify(tags: @applied_tags + [*tags].map(&:resolve_id), reason: reason)
+    end
+
+    # Remove a set of tags from the thread.
+    # @param tags [Array<ChannelTag, Integer, String>, #resolve_id] The tags to remove from the thread.
+    # @param reason [String, nil] The reason to show in the audit log for removing the tags from the thread.
+    # @return [nil]
+    def remove_tags(tags, reason: nil)
+      return unless thread? && (parent.forum? || parent.media?)
+
+      modify(tags: @applied_tags - [*tags].map(&:resolve_id), reason: reason)
+    end
+
+    # Start a thread in the channel.
+    # @param name [String] The 1-100 character name of the thread.
+    # @param message [Message, Integer, String, nil] The message to reference when starting the thread.
+    # @param type [Symbol, Integer, nil] The type of thread to create. Not required when `message:` is passed.
+    # @param slowmode_rate [Integer, nil] the duration (in seconds) a member has to wait between sending messages.
+    # @param auto_archive_duration [Integer, nil] the duration after which the thread will automatically be hidden.
+    #   The only values that are valid for this argument are: `60`, `1440`, `4320`, `10080`.
+    # @param reason [String, nil] The reason to show in the server's audit log for creating the thread.
+    # @return [Channel] The thread that was created.
+    def start_thread(name:, type: nil, message: nil, slowmode_rate: nil, auto_archive_duration: nil, reason: nil)
+      new_data = {
+        name: name,
+        rate_limit_per_user: slowmode_rate,
+        type: message ? nil : (TYPES[type] || type),
+        auto_archive_duration: auto_archive_duration
+      }.compact
+
+      response = if (message = message&.resolve_id)
+                   API::Channel.start_thread_with_message!(@bot.token, @id, message, **new_data, reason: reason)
+                 else
+                   API::Channel.start_thread_without_message!(@bot.token, @id, name, **new_data, reason: reason)
+                 end
+
+      @bot.ensure_channel(JSON.parse(response), @server)
+    end
+
+    alias_method :add_tag, :add_tags
+    alias_method :remove_tag, :remove_tags
 
     # @!endgroup
 
-    # Modify the properties of the channel.
-    # @param name [String] The new 1-100 character name of the channel.
-    # @param type [Integer, Symbol] The new type of the channel. You can only convert between text and announcement channels.
-    # @param topic [String, nil] The 0-1024 character topic of the channel; 0-4096 characters for forum channels.
-    # @param nsfw [true, false, nil] Whether or not the channel should be marked as age-restricted.
-    # @param rate_limit_per_user [Integer, nil] The new slowmode-rate of the channel; between 0-21600 (in seconds).
-    # @param bitrate [Integer, nil] The new bitrate of the voice or stage channel; minimum of 8000 (in bits).
-    # @param user_limit [Integer, nil] The maximum number of users who can join the voice or stage channel; 0 for no limit.
-    # @param permission_overwrites [Array<Overwrite, Hash, #to_hash>, nil] The new permission overwrites to set for the channel.
-    # @param parent [Channel, Integer, String, nil] The new category channel to set, or `nil` to orphan the chnanel.
-    # @param voice_region [VoiceRegion, String, nil] The new voice region to set for the voice or stage channel.
-    # @param video_quality_mode [Symbol, Integer, nil] The new camera video quality mode to set for the voice or stage channel.
-    # @param default_auto_archive_duration [Integer, nil] The default client-side duration before a thread is archived due to inactivity.
-    # @param flags [Symbol, Integer, Array<Symbol, Integer>] The flags to set for the channel.
-    # @param tags [Array<ChannelTag, #to_h, #resolve_id>] The tags to set on the thread channel, or the new tags that will be available in the forum channel.
-    # @param default_reaction [Integer, String, Emoji, nil] The emoji to display on threads created in the forum channel.
-    # @param default_sort_order [Integer, Symbol, nil] The default order used to order threads in the forum channel.
-    # @param default_forum_layout [Integer, Symbol] The default layout type used to display threads in the forum channel.
-    # @param archived [true, false] Whether or not the thread should be archived.
-    # @param locked [true, false] Whether or not the thread should be locked.
-    # @param invitable [true, false] Whether or not non-moderators should be able to add other non-moderators to the private thread.
-    # @param add_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to add to the channel. Mutually exclusive with `flags:`.
-    # @param remove_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to remove from the channel. Mutually exclusive with `flags:`.
-    # @param position [Integer, nil] The new sorting position of the channel. Generally, this parameter should not be used. Please use {#sort_after} instead.
-    # @param auto_archive_duration [Integer] The amount of minutes after which the thread will stop showing in the channel list.
-    # @param default_thread_rate_limit_per_user [Integer] The default slowmode rate to set on threads created in the text or forum channel.
-    # @param reason [String, nil] The reason to show in the server's audit log for modifying the channel.
-    # @return [nil]
-    def modify(
-      name: :undef, type: :undef, topic: :undef, nsfw: :undef, rate_limit_per_user: :undef, bitrate: :undef,
-      user_limit: :undef, permission_overwrites: :undef, parent: :undef, voice_region: :undef, video_quality_mode: :undef,
-      default_auto_archive_duration: :undef, flags: :undef, tags: :undef, default_reaction: :undef, default_sort_order: :undef,
-      default_forum_layout: :undef, archived: :undef, locked: :undef, invitable: :undef, add_flags: :undef, remove_flags: :undef,
-      position: :undef, auto_archive_duration: :undef, default_thread_rate_limit_per_user: :undef, reason: nil
-    )
-      data = {
-        name: name,
-        type: TYPES[type] || type,
-        topic: topic,
-        nsfw: nsfw,
-        position: position,
-        rate_limit_per_user: rate_limit_per_user,
-        bitrate: bitrate,
-        user_limit: user_limit,
-        permission_overwrites: permission_overwrites == :undef ? permission_overwrites : permission_overwrites&.map(&:to_hash),
-        parent_id: parent == :undef ? parent : parent&.resolve_id,
-        rtc_region: voice_region == :undef ? voice_region : voice_region&.to_s,
-        video_quality_mode: VIDEO_QUALITY_MODES[video_quality_mode] || video_quality_mode,
-        default_auto_archive_duration: default_auto_archive_duration,
-        default_reaction_emoji: default_reaction == :undef ? default_reaction : Emoji.build_emoji_hash(default_reaction),
-        default_sort_order: FORUM_SORT_ORDERS[default_sort_order] || default_sort_order,
-        default_forum_layout: FORUM_LAYOUTS[default_forum_layout] || default_forum_layout,
-        archived: archived,
-        flags: flags == :undef ? flags : Array(flags).map { |bit| FLAGS[bit] || bit.to_i }.reduce(&:|),
-        default_thread_rate_limit_per_user: default_thread_rate_limit_per_user,
-        auto_archive_duration: auto_archive_duration,
-        locked: locked,
-        invitable: invitable
-      }
+    #  ####  ###   ## ######## ######## ########  ##    ##    ###    ##        ######
+    #   ##   ###   ##    ##    ##       ##     ## ###   ##   ## ##   ##       ##    ##
+    #   ##   ####  ##    ##    ##       ##     ## ####  ##  ##   ##  ##       ##
+    #   ##   ## ## ##    ##    ######   ########  ## ## ## ##     ## ##        ######
+    #   ##   ##  ####    ##    ##       ##   ##   ##  #### ######### ##             ##
+    #   ##   ##   ###    ##    ##       ##    ##  ##   ### ##     ## ##       ##    ##
+    #  ####  ##    ##    ##    ######## ##     ## ##    ## ##     ## ########  ######
 
-      if tags != :undef && (thread_only? || thread?)
-        tags = (thread? ? tags&.map(&:resolve_id)&.uniq : tags&.map(&:to_h))
+    # @!visibility private
+    def update_data(new_data)
+      @type = new_data['type']
+      @flags = new_data['flags'] || 0
+      @name = obfuscated? ? nil : new_data['name']
+      @topic = new_data['topic'] == '' ? nil : new_data['topic']
+      @bitrate = new_data['birtate']
+      @position = new_data['position'] || 0
 
-        data[thread_only? ? :available_tags : :applied_tags] = tags
-      end
+      @parent_id = new_data['parent_id']&.to_i
+      @user_limit = new_data['user_limit']
+      @message_count = new_data['message_count'] || 0
+      @voice_region = new_data['rtc_region']
+      @slowmode_rate = new_data['rate_limit_per_user'] || 0
 
-      if data[:type] != :undef
-        if news? && data[:type] != TYPES[:text]
-          raise ArgumentError, 'Can only convert news channels to text channels'
-        elsif text? && data[:type] != TYPES[:news]
-          raise ArgumentError, 'Can only convert text channels to news channels'
-        elsif !text? && !news?
-          raise ArgumentError, 'Can only convert between text and news channels'
-        end
-      end
+      @last_entity_id = new_data['last_message_id']&.to_i
+      @total_message_count = new_data['total_message_sent'] || 0
+      @default_tag_matching = new_data['default_tag_setting']&.to_sym
 
-      if add_flags != :undef || remove_flags != :undef
-        raise ArgumentError, "'add_flags' and 'remove_flags' cannot be used with 'flags'" if flags != :undef
+      metadata = new_data['thread_metadata']
+      @locked = metadata&.[]('locked') || false
+      @archived = metadata&.[]('archived') || false
+      @invitable = metadata&.[]('invitable') || false
+      @archived_at = Time.iso8601(metadata['archive_timestamp']) if metadata&.[]('archive_timestamp')
+      @create_timestamp ||= Time.iso8601(metadata['create_timestamp']) if metadata&.[]('create_timestamp')
+      @auto_archive_duration = metadata&.[]('auto_archive_duration')
 
-        to_flags = lambda do |value|
-          [*(value == :undef ? 0 : value)].map { |bit| FLAGS[bit] || bit.to_i }.reduce(&:|)
-        end
+      @nsfw = new_data['nsfw'] || false
+      @default_layout = new_data['default_forum_layout']
+      @default_sort_order = new_data['default_sort_order']
+      @video_quality_mode = new_data['video_quality_mode']
+      @applied_tags = new_data['applied_tags']&.map(&:to_i)
+      @overwrites = data['permission_overwrite']&.map { |item| Overwrite.from_hash(item) } || []
+      @available_tags = data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
 
-        data[:flags] = ((@flags & ~to_flags.call(remove_flags)) | to_flags.call(add_flags))
-      end
-
-      update_data(JSON.parse(API::Channel.update!(@bot.token, @id, **data, reason: reason)))
-      nil
+      process_last_pin_timestamp(new_data['last_pin_timestamp'])
+      process_default_reaction_emoji(new_data['default_reaction_emoji'])
     end
 
-    # The default `inspect` method is overwritten to give more useful output.
-    def inspect
-      "<Channel name=#{@name} id=#{@id} topic=\"#{@topic}\" type=#{@type} position=#{@position} server=#{@server || @server_id}>"
+    # @!visibility private
+    def process_last_entity_id(last_id)
+      @last_entity_id = last_id
     end
 
-    # Set the last pin timestamp of a channel.
-    # @param time [String, nil] the time of the last pinned message in the channel
-    # @note For internal use only
+    # @!visibility private
+    def remove_permission_overwrite(id)
+      @overwrites.reject! { |overwrite| overwrite.id == id }
+    end
+
     # @!visibility private
     def process_last_pin_timestamp(time)
-      @last_pin_timestamp = time ? Time.parse(time) : time
+      @last_message_pinned_at = time ? Time.parse(time) : time
     end
 
-    # Set the last message ID of a channel.
-    # @param id [Integer, nil] the ID of the last message in a channel
-    # @note For internal use only
     # @!visibility private
-    def process_last_message_id(id)
-      @last_message_id = id
-    end
-
-    # Set the available tags of a channel.
-    # @param tag [Hash] the data for the tag to create
-    # @param reason [String, nil] the reason to show in the audit log
-    # @note For internal use only
-    # @!visibility private
-    def update_tags(tag, reason)
-      raise 'Cannot execute action on channel' unless thread_only?
-
+    def update_forum_tags(tag, reason)
       tags = @available_tags.dup.tap { |old| old.delete(tag[:id]) }
 
       modify(tags: (tag[:d] ? tags : (tags << tag)), reason: reason)
     end
 
-    # Updates the cached data with new data
-    # @note For internal use only
-    # @!visibility private
-    def update_data(new_data = nil)
-      new_data ||= JSON.parse(API::Channel.resolve(@bot.token, @id))
-      @type = new_data['type'] || 0
-      @topic = new_data['topic']
-      @bitrate = new_data['bitrate']
-      @name = new_data['name'] || @name
-      @user_limit = new_data['user_limit']
-
-      @position = new_data['position']
-      @parent_id = new_data['parent_id']&.to_i
-      @nsfw = new_data['nsfw'] || false
-      @rate_limit_per_user = new_data['rate_limit_per_user'] || 0
-      @message_count = new_data['message_count']
-      @member_count = new_data['member_count']
-
-      @total_message_sent = new_data['total_message_sent'] || 0
-      @flags = new_data['flags'] || 0
-      @voice_region = new_data['rtc_region']
-      @video_quality_mode = new_data['video_quality_mode']
-      @last_message_id = new_data['last_message_id']&.to_i
-
-      @default_auto_archive_duration = new_data['default_auto_archive_duration']
-      @default_sort_order = new_data['default_sort_order']
-      @default_forum_layout = new_data['default_forum_layout']
-      @default_thread_rate_limit_per_user = new_data['default_thread_rate_limit_per_user']
-
-      if (metadata = new_data['thread_metadata'])
-        @archived = metadata['archived']
-        @auto_archive_duration = metadata['auto_archive_duration']
-        @archive_timestamp = Time.iso8601(metadata['archive_timestamp'])
-        @locked = metadata['locked']
-        @invitable = metadata['invitable']
-      end
-
-      @applied_tags = new_data['applied_tags']&.map(&:to_i) || []
-
-      process_available_tags(new_data['available_tags'])
-      process_last_pin_timestamp(new_data['last_pin_timestamp'])
-      process_permission_overwrites(new_data['permission_overwrites'])
-      process_default_reaction_emoji(new_data['default_reaction_emoji'])
-    end
-
-    # @return [String] a URL that a user can use to navigate to this channel in the client
-    def link
-      "https://discord.com/channels/#{@server_id || '@me'}/#{@id}"
-    end
-
-    alias_method :jump_link, :link
-
     private
-
-    TWO_WEEKS = 86_400 * 14
-    private_constant :TWO_WEEKS
-
-    # Deletes a list of messages on this channel using bulk delete.
-    def bulk_delete(ids, strict = false, reason = nil)
-      min_snowflake = IDObject.synthesise(Time.now - TWO_WEEKS)
-
-      ids.reject! do |e|
-        next unless e < min_snowflake
-
-        message = "Attempted to bulk_delete message #{e} which is too old (min = #{min_snowflake})"
-        raise ArgumentError, message if strict
-
-        Discordrb::LOGGER.warn(message)
-        true
-      end
-
-      API::Channel.bulk_delete_messages(@bot.token, @id, ids, reason)
-      ids.size
-    end
-
-    # @!visibility private
-    def process_permission_overwrites(overwrites)
-      # Populate permission overwrites
-      @permission_overwrites = {}
-
-      overwrites&.each do |element|
-        id = element['id'].to_i
-        @permission_overwrites[id] = Overwrite.from_hash(element)
-      end
-    end
-
-    # @!visibility private
-    def process_available_tags(tags)
-      # Populate available tags
-      @available_tags = []
-
-      tags&.each do |element|
-        @available_tags << ChannelTag.new(element, self, @bot)
-      end
-    end
 
     # @!visibility private
     def process_default_reaction_emoji(emoji)
-      return @default_reaction = nil unless emoji
+      return (@default_reaction = nil) unless emoji&.any?
 
       @default_reaction = if (name = emoji['emoji_name'])
                             Emoji.new({ 'name' => name }, @bot)

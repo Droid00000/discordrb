@@ -1103,7 +1103,7 @@ module Discordrb
       server = channel.server
 
       # The last message ID of a forum channel is the most recent post
-      channel.parent.process_last_message_id(channel.id) if channel.parent&.forum? || channel.parent&.media?
+      channel.parent.process_last_entity_id(channel.id) if channel.parent&.forum? || channel.parent&.media?
 
       # Handle normal and private channels separately
       if server
@@ -1367,7 +1367,7 @@ module Discordrb
           raise_event(ChannelCreateEvent.new(message.channel, self))
         end
 
-        message.channel.process_last_message_id(message.id)
+        message.channel.process_last_entity_id(message.id)
 
         event = MessageEvent.new(message, self)
         raise_event(event)

@@ -621,14 +621,14 @@ module Discordrb
     # @note For internal use only
     # @!visibility private
     def delete_role(role_id)
-      @roles.delete(role_id.resolve_id)
+      role_id = role_id.resolve_id
+      @roles.delete(role_id)
       @members.each_value do |member|
         new_roles = member.roles.reject { |r| r.id == role_id }
         member.update_roles(new_roles)
       end
       @channels.each do |channel|
-        overwrites = channel.permission_overwrites.reject { |id, _| id == role_id }
-        channel.update_overwrites(overwrites)
+        channel.remove_permission_overwrite(role_id)
       end
     end
 

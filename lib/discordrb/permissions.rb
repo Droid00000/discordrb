@@ -113,7 +113,7 @@ module Discordrb
     end
 
     # Create a new Permissions object either as a blank slate to add permissions to (for example for
-    #   {Channel#define_overwrite}) or from existing bit data to read out.
+    #   {Channel#modify_overwrite}) or from existing bit data to read out.
     # @example Create a permissions object that could allow/deny read messages, connect, and speak by setting flags
     #   permission = Permissions.new
     #   permission.can_read_messages = true
