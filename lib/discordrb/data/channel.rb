@@ -197,6 +197,21 @@ module Discordrb
       nil
     end
 
+    # Get the members that can view the channel, or are connected to it.
+    # @param connected [true, false, nil] When set to `true`, the members who are currently
+    #   connected to the voice or stage channel will be returned instead.
+    # @return [Array<Member>] The members who can view the channel, are connected to it, or
+    #   the members who have joined the thread.
+    def members(connected: true)
+      return thread_members if thread?
+
+      if connected && (voice? || stage?)
+        server.members.select { |member| member.voice_channel == self }
+      else
+        server&.members&.select { |member| member.can_read_messages?(self) } || []
+      end
+    end
+
     # Modify the properties of the channel.
     # @param name [String] The new 1-100 character name of the channel.
     # @param type [Integer, Symbol] The new type of the channel. You can only convert between text and announcement channels.
@@ -873,18 +888,6 @@ module Discordrb
       end
 
       @start_time
-    end
-
-    # Get the members that can view the channel, or are connected to it.
-    # @param connected [true, false, nil] When set to `true`, the members who are currently
-    #   connected to the voice or stage channel will be returned instead.
-    # @return [Array<Member>] The members who can view the channel, or are connected to it.
-    def members(connected: true)
-      if connected && (voice? || stage?)
-        server.members.select { |member| member.voice_channel == self }
-      else
-        server&.members&.select { |member| member.can_read_messages?(self) } || []
-      end
     end
 
     # @!endgroup
