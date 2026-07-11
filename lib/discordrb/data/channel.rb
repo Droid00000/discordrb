@@ -206,7 +206,7 @@ module Discordrb
       return thread_members if thread?
 
       if connected && (voice? || stage?)
-        server.members.select { |member| member.voice_channel == self }
+        server.members.select { |member| member.voice_channel&.id == @id }
       else
         server&.members&.select { |member| member.can_read_messages?(self) } || []
       end
@@ -451,6 +451,7 @@ module Discordrb
       deny = (deny.respond_to?(:bits) ? deny.bits : deny)&.to_i
       allow = (allow.respond_to?(:bits) ? allow.bits : allow)&.to_i
 
+      # rubocop:disable Style/SafeNavigationChainLength
       data = {
         type: type,
         reason: reason,
@@ -458,6 +459,7 @@ module Discordrb
         allow: allow == :undef ? old&.allow&.bits&.to_s : allow&.to_s
       }
 
+      # rubocop:enable Style/SafeNavigationChainLength
       API::Channel.update_permisssion_overwrite(@bot.token, @id, id, **data)
       nil
     end
@@ -888,6 +890,12 @@ module Discordrb
       end
 
       @start_time
+    end
+
+    # Get the scheduled events for the voice or stage channel.
+    # @return [Array<ScheduledEvent>] The scheduled events for the voice or stage channel.
+    def scheduled_events
+      server&.scheduled_events&.select { |event| event.channel&.id == @id } || []
     end
 
     # @!endgroup
