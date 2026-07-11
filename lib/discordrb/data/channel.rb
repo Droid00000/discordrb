@@ -749,6 +749,51 @@ module Discordrb
       JSON.parse(response).map { |item| Invite.new(item, @bot) }
     end
 
+    # Create an invite for the channel.
+    # @param duration [Integer, nil] How long the invite should last before expring.
+    # @param max_uses [Integer, nil] The number of ttimes the invite can be used before expiring.
+    # @param temporary [true, false] Whether or not the invite should only grant temporary membership.
+    # @param unique [true, false] Whether or not the API should attempt to generate a unique invite code.
+    # @param stream_user [User, Member, Integer, String, nil] The member whose "Go Live" stream should be shown.
+    # @param embedded_application [Application, Integer, String, nil] The embedded application to open for the invite.
+    # @param roles [Array<Role, Integer, String>, nil] The roles that should be granted to users who accept the invite.
+    # @param target_users [Array<User, Member, Integer, String>, File, nil] The users that're allowed to accept the invite.
+    # @param reason [String, nil] The reason to show in the server's audit log for creating the invite.
+    # @return [Invite, nil] The invite that was created, or `nil` if Discord's safety team has disabled invites for the server.
+    # @raise [ArgumentError] If `stream_user` and `embedded_application` are passed in conjunction with each other.
+    def create_invite(
+      duration: 86_400, max_uses: 0, temporary: false, unique: false, stream_user: nil,
+      embedded_application: nil, roles: nil, flags: nil, target_users: nil, reason: nil
+    )
+      if target_users && !target_users.respond_to?(:read)
+        user_ids = [*target_users].tap { |list| list.map!(&:resolve_id) }
+        target_users = StringIO.new(user_ids.join("\n"), 'rb')
+        target_users.define_singleton_method(:path) { 'target_users.csv' }
+      end
+
+      if stream_user && embedded_application
+        raise ArgumentError, "'stream_user' and 'embedded_application' are mutually exclusive"
+      elsif stream_user || embedded_application
+        target_type = stream_user ? 1 : 2
+      end
+
+      data = {
+        unique: unique,
+        max_uses: max_uses,
+        temporary: temporary,
+        max_age: duration || 0,
+        target_users_file: target_users,
+        target_type: target_type || nil,
+        target_user_id: stream_user&.resolve_id,
+        role_ids: ([*roles].map(&:resolve_id) if roles),
+        target_application_id: embedded_application&.resolve_id,
+        flags: flags
+      }
+
+      response = API::Channel.create_invite!(@bot.token, @id, **data.compact, reason: reason)
+      response.empty? ? Invite.new(JSON.parse(response), @bot) : nil
+    end
+
     # @!endgroup
 
     #   ######     ###    ######## ########  #######   #######  ########  ##    ##
@@ -799,8 +844,8 @@ module Discordrb
 
     # @!group Voice Channels
 
-    # Retrieve the video quality mode of the channel.
-    # @return [Symbol, nil] The video quality mode of the channel.
+    # Retrieve the video quality mode of the voice channel.
+    # @return [Symbol, nil] The video quality of the voice channel.
     # @see VIDEO_QUALITIES
     def video_quality_mode
       VIDEO_QUALITIES.key(@video_quality_mode)
@@ -828,6 +873,18 @@ module Discordrb
       end
 
       @start_time
+    end
+
+    # Get the members that can view the channel, or are connected to it.
+    # @param connected [true, false, nil] When set to `true`, the members who are currently
+    #   connected to the voice or stage channel will be returned instead.
+    # @return [Array<Member>] The members who can view the channel, or are connected to it.
+    def members(connected: true)
+      if connected && (voice? || stage?)
+        server.members.select { |member| member.voice_channel == self }
+      else
+        server&.members&.select { |member| member.can_read_messages?(self) } || []
+      end
     end
 
     # @!endgroup

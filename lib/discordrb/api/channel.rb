@@ -314,7 +314,7 @@ module Discordrb::API::Channel
     )
   end
 
-  # Create an instant invite from a server or a channel id
+  # @deprecated Please migrate to using {.create_invite!}
   # https://discord.com/developers/docs/resources/channel#create-channel-invite
   def create_invite(token, channel_id, max_age = 0, max_uses = 0, temporary = false, unique = false, reason = nil)
     Discordrb::API.request(
@@ -326,6 +326,30 @@ module Discordrb::API::Channel
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Create an invite for the channel.
+  # https://discord.com/developers/docs/resources/channel#create-channel-invite
+  def create_invite!(token, channel_id, flags: :undef, max_age: :undef, max_uses: :undef, temporary: :undef, unique: :undef, target_type: :undef, target_user_id: :undef, target_application_id: :undef, target_users_file: :undef, role_ids: :undef, reason: nil)
+    body = { flags:, max_age:, max_uses:, temporary:, unique:, target_type:, target_user_id:, target_application_id:, role_ids: }.reject { |_, value| value == :undef }
+
+    headers = { 'X-Audit-Log-Reason': reason, Authorization: token }
+    headers[:content_type] = :json if target_users_file == :undef || !target_users_file
+
+    body = if target_users_file != :undef && target_users_file
+             { target_users_file:, payload_json: body.to_json }
+           else
+             body.to_json
+           end
+
+    Discordrb::API.request(
+      :channels_cid_invites,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/invites",
+      body,
+      headers
     )
   end
 
