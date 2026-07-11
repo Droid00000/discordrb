@@ -583,8 +583,9 @@ module Discordrb::API::Channel
       :post,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/threads",
       { name:, type:, auto_archive_duration:, rate_limit_per_user: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
       Authorization: token,
-      content_type: :json
+      'X-Audit-Log-Reason': reason
     )
   end
 

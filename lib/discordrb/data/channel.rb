@@ -214,14 +214,14 @@ module Discordrb
     # @param tags [Array<ChannelTag, #to_h, #resolve_id>] The tags to set on the thread channel, or the new tags that will be available in the forum channel.
     # @param default_reaction [Integer, String, Emoji, nil] The emoji to display on threads created in the forum channel.
     # @param default_sort_order [Integer, Symbol, nil] The default order used to order threads in the forum channel.
-    # @param default_forum_layout [Integer, Symbol] The default layout type used to display threads in the forum channel.
+    # @param default_layout [Integer, Symbol] The default layout type used to display threads in the forum channel.
     # @param archived [true, false] Whether or not the thread should be archived.
     # @param locked [true, false] Whether or not the thread should be locked.
     # @param invitable [true, false] Whether or not non-moderators should be able to add other non-moderators to the private thread.
+    # @param auto_archive_duration [Integer] The amount of minutes after which the thread will stop showing in the channel list.
+    # @param position [Integer, nil] The new sorting position of the channel. Generally, this parameter should not be used. Please use {#sort_after} instead.
     # @param add_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to add to the channel. Mutually exclusive with `flags:`.
     # @param remove_flags [Symbol, Integer, Array<Symbol, Integer>] The flags to remove from the channel. Mutually exclusive with `flags:`.
-    # @param position [Integer, nil] The new sorting position of the channel. Generally, this parameter should not be used. Please use {#sort_after} instead.
-    # @param auto_archive_duration [Integer] The amount of minutes after which the thread will stop showing in the channel list.
     # @param default_thread_slowmode_rate [Integer] The default slowmode rate to set on threads created in the text or forum channel.
     # @param status [String, nil] The status to set for the voice channel; between 1-500 characters, or `nil` to clear the existing status.
     # @param reason [String, nil] The reason to show in the server's audit log for modifying the channel.
@@ -230,8 +230,8 @@ module Discordrb
       name: :undef, type: :undef, topic: :undef, nsfw: :undef, slowmode_rate: :undef, bitrate: :undef,
       user_limit: :undef, permission_overwrites: :undef, parent: :undef, voice_region: :undef, video_quality_mode: :undef,
       default_auto_archive_duration: :undef, flags: :undef, tags: :undef, default_reaction: :undef, default_sort_order: :undef,
-      default_forum_layout: :undef, archived: :undef, locked: :undef, invitable: :undef, add_flags: :undef, remove_flags: :undef,
-      position: :undef, auto_archive_duration: :undef, default_thread_slowmode_rate: :undef, status: :undef, reason: nil
+      default_layout: :undef, archived: :undef, locked: :undef, invitable: :undef, auto_archive_duration: :undef, position: :undef,
+      add_flags: :undef, remove_flags: :undef, default_thread_slowmode_rate: :undef, status: :undef, reason: nil
     )
       data = {
         name: name,
@@ -245,11 +245,11 @@ module Discordrb
         permission_overwrites: permission_overwrites == :undef ? permission_overwrites : permission_overwrites&.map(&:to_hash),
         parent_id: parent == :undef ? parent : parent&.resolve_id,
         rtc_region: voice_region == :undef ? voice_region : voice_region&.to_s,
-        video_quality_mode: VIDEO_QUALITY_MODES[video_quality_mode] || video_quality_mode,
+        video_quality_mode: VIDEO_QUALITIES[video_quality_mode] || video_quality_mode,
         default_auto_archive_duration: default_auto_archive_duration,
         default_reaction_emoji: default_reaction == :undef ? default_reaction : Emoji.build_emoji_hash(default_reaction),
-        default_sort_order: FORUM_SORT_ORDERS[default_sort_order] || default_sort_order,
-        default_forum_layout: FORUM_LAYOUTS[default_forum_layout] || default_forum_layout,
+        default_sort_order: SORT_ORDERS[default_sort_order] || default_sort_order,
+        default_forum_layout: LAYOUTS[default_layout] || default_layout,
         archived: archived,
         flags: flags == :undef ? flags : Array(flags).map { |bit| FLAGS[bit] || bit.to_i }.reduce(&:|),
         default_thread_rate_limit_per_user: default_thread_slowmode_rate,
@@ -395,13 +395,15 @@ module Discordrb
     def permission_overwrite(target)
       target_id = target.resolve_id
 
-      @overwrites.find { |value| value.id == target_id }
+      obfuscated? ? nil : @overwrites.find { |value| value.id == target_id }
     end
 
     # Get the explicit permission overwrites for members and roles.
     # @param type [Symbol, Integer, nil] The specific type of overwrites to return.
     # @return [Array<Overwrite>] The explicit permission overwrites for the channel.
     def permission_overwrites(type: nil)
+      return [] if obfuscated?
+
       case type
       when nil, :all
         @overwrites.dup
@@ -632,6 +634,57 @@ module Discordrb
       nil
     end
 
+    # Delete multiple messages from the channel's history.
+    # @param limit [Integer, nil] The number of messages to fetch.
+    # @param after [Integer, Time, nil] Get messages starting from after this ID.
+    # @param before [Integer, Time, nil] Get messages starting from before this ID.
+    # @param around [Integer, Time, nil] Get messages starting from around this ID.
+    # @param oldest_first [true, false, nil] Whether to fetch the oldest messages first.
+    # @param one_for_one [true, false, nil] Whether to every message should be deleted individually.
+    # @param reason [String, nil] The reason to show in the audit log for bulk-deleting the messages.
+    # @yield [Message] Yields each message that was fetched in order to filter the messages to delete.
+    # @return [Array<Message>] The messages that were selected for deletion.
+    def purge_messages(
+      limit:, after: nil, before: nil, around: nil, oldest_first: nil,
+      one_for_one: true, reason: nil, &
+    )
+      messages = messages(limit:, after:, before:, around:, oldest_first:)
+      messages.select!(&) if block_given?
+
+      if one_for_one
+        messages.each do |message|
+          message.delete(reason)
+        rescue Discordrb::Errors::UnknownMessage
+          next
+        end
+      else
+        messages.each_slice(100) do |chunk|
+          minimum_id = IDObject.synthesise(Time.now - 1_209_600)
+
+          old, now = chunk.partition { |message| message.id < minimum_id }
+
+          if now.one?
+            begin
+              now[0].delete(reason)
+            rescue Discordrb::Errors::UnknownMessage
+              nil
+            end
+          elsif now.any?
+            now.map!(&:resolve_id)
+            API::Channel.bulk_delete_messages(@bot.token, @id, now, reason)
+          end
+
+          old.each do |message|
+            message.delete(reason)
+          rescue Discordrb::Errors::UnknownMessage
+            next
+          end
+        end
+      end
+
+      messages
+    end
+
     # Add a blocking {Await} for a message in this channel. This is identical in functionality to
     # adding a {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
     # @see Bot#add_await!
@@ -648,12 +701,12 @@ module Discordrb
 
     # @!endgroup
 
-    #  ##          ## ######## ########  ##     ##  #######   #######  ##    ##  ######  
-    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ## 
-    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##  ##   ##       
-    #  ##    ##    ## ######   ########  ######### ##     ## ##     ## #####     ######  
-    #   ##  ####  ##  ##       ##     ## ##     ## ##     ## ##     ## ##  ##         ## 
-    #    ####  ####   ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ## 
+    #  ##          ## ######## ########  ##     ##  #######   #######  ##    ##  ######
+    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ##
+    #  ##          ## ##       ##     ## ##     ## ##     ## ##     ## ##  ##   ##
+    #  ##    ##    ## ######   ########  ######### ##     ## ##     ## #####     ######
+    #   ##  ####  ##  ##       ##     ## ##     ## ##     ## ##     ## ##  ##         ##
+    #    ####  ####   ##       ##     ## ##     ## ##     ## ##     ## ##   ##  ##    ##
     #     ##    ##    ######## ########  ##     ##  #######   #######  ##    ##  ######
 
     # @!group Webhooks
@@ -749,7 +802,7 @@ module Discordrb
     # Retrieve the video quality mode of the channel.
     # @return [Symbol, nil] The video quality mode of the channel.
     # @see VIDEO_QUALITIES
-    def video_quality
+    def video_quality_mode
       VIDEO_QUALITIES.key(@video_quality_mode)
     end
 
