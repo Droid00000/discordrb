@@ -53,13 +53,13 @@ module Discordrb
     # @return [Integer] the type of the channel.
     attr_reader :type
 
-    # @return [String, nil] the name of the channel; `nil` for obfuscated channels.
+    # @return [String, nil] the name of the channel, `nil` for obfuscated channels.
     attr_reader :name
 
     # @return [Integer] the flags for the channel represented as a bitfield.
     attr_reader :flags
 
-    # @return [String, nil] the topic of the channel; dobules as the guidelines of a forum.
+    # @return [String, nil] the topic of the channel, dobules as the guidelines of a forum.
     attr_reader :topic
 
     # @return [true, false] whether or not the thread has been locked.
@@ -83,6 +83,9 @@ module Discordrb
 
     # @return [User, nil] the user that the private channel is associated with.
     attr_reader :recipient
+
+    # @return [Time, nil] the time at when the current bot account joined the thread.
+    attr_reader :joined_at
 
     # @return [Integer, nil] the user limit of the voice or stage channel; `0` for no limit.
     attr_reader :user_limit
@@ -136,6 +139,7 @@ module Discordrb
 
       if (member = data['member'])
         member['id'] = @id
+        @joined_at = Time.iso8601(member['join_timestamp'])
         @bot.ensure_thread_member(member)
       end
 
