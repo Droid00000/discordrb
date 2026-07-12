@@ -1190,8 +1190,8 @@ module Discordrb
       @default_sort_order = new_data['default_sort_order']
       @video_quality_mode = new_data['video_quality_mode']
       @applied_tags = new_data['applied_tags']&.map(&:to_i)
-      @overwrites = data['permission_overwrite']&.map { |item| Overwrite.from_hash(item) } || []
-      @available_tags = data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
+      @overwrites = new_data['permission_overwrite']&.map { |item| Overwrite.from_hash(item) } || []
+      @available_tags = new_data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
 
       process_last_pin_timestamp(new_data['last_pin_timestamp'])
       process_default_reaction_emoji(new_data['default_reaction_emoji'])
