@@ -1278,7 +1278,7 @@ module Discordrb
 
     # @!visibility private
     def process_stage_instance(instance)
-      return @stage_instance = nil unless instance
+      return (@stage_instance = nil) unless instance
 
       @stage_instance = StageInstance.new(instance, self, @bot)
     end
