@@ -441,7 +441,7 @@ module Discordrb
     # @param allow [Permissions, Integer, String, nil] The permissisons that should be allowed.
     # @param reason [String, nil] The reason to show in the audit log for modifying the overwrite.
     # @return [nil]
-    def modify_overwrite(
+    def modify_permission_overwrite(
       target:, allow: :undef, deny: :undef, reason: nil
     )
       type = if target.is_a?(Role) || target.respond_to?(:username)
@@ -472,10 +472,13 @@ module Discordrb
     # @param target [Integer, String, Role, User, Member] The ID of the overwrite to delete.
     # @param reason [String, nil] The reason to show in the audit log for deleting the overwrite.
     # @return [nil]
-    def delete_overwrite(target, reason: nil)
+    def delete_permission_overwrite(target, reason: nil)
       API::Channel.delete_permission(@bot.token, @id, target.resolve_id, reason)
       nil
     end
+
+    alias_method :modify_overwrite, :modify_permission_overwrite
+    alias_method :delete_overwrite, :delete_permission_overwrite
 
     # @!endgroup
 
@@ -707,14 +710,14 @@ module Discordrb
     end
 
     # Add a blocking {Await} for a message in this channel. This is identical in functionality to
-    # adding a {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
+    #   adding a {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
     # @see Bot#add_await!
     def await!(attributes = {}, &block)
       @bot.add_await!(Discordrb::Events::MessageEvent, { in: @id }.merge(attributes), &block)
     end
 
     # Add an {Await} for a message in this channel. This is identical in functionality to adding a
-    # {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
+    #   {Discordrb::Events::MessageEvent} await with the `in` attribute as this channel.
     # @see Bot#add_await
     def await(key, attributes = {}, &block)
       @bot.add_await(key, Discordrb::Events::MessageEvent, { in: @id }.merge(attributes), &block)
