@@ -941,9 +941,9 @@ module Discordrb
     # @return [Array<ChannelTag>] The available tags in the forum channel, or the
     #   tags that have been applied to the thread.
     def tags
-      return @available_tags.dup unless thread?
+      return @available_tags.dup unless @applied_tags
 
-      @applied_tags&.filter_map { |id| parent.tag(id) } || []
+      @applied_tags.filter_map { |id| parent.tag(id) }
     end
 
     # Create a new tag in the forum channel.
