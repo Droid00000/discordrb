@@ -347,9 +347,9 @@ module Discordrb
     # @!method category?
     #   @return [true, false] whether or not the channel is an organizational category within a server.
     # @!method announcement?
-    #   @return [true, false] whether or not the channel is a news channel; letting members {#follow} the channel.
+    #   @return [true, false] whether or not the channel is a news channel, allowing members to {#follow follow} it.
     # @!method announcement_thread?
-    #   @return [true, false] whether or not the channel is a thread created in an annoucement channel.
+    #   @return [true, false] whether or not the channel is a thread created from a message in an annoucement channel.
     # @!method public_thread?
     #   @return [true, false] whether or not the channel is a thread viewable by anyone with permissions.
     # @!method private_thread?
@@ -477,6 +477,8 @@ module Discordrb
       nil
     end
 
+    alias_method :overwrite, :permission_overwrite
+    alias_method :overwrites, :permission_overwrites
     alias_method :modify_overwrite, :modify_permission_overwrite
     alias_method :delete_overwrite, :delete_permission_overwrite
 
@@ -1063,9 +1065,9 @@ module Discordrb
       return [] unless thread?
 
       if @thread_members && @bot.gateway.intents.anybits?(INTENTS[:server_members])
-        user_ids = @bot.thread_members[@id]&.keys || []
+        snowflakes = @bot.thread_members[@id]
 
-        return user_ids.filter_map { |user_id| server.member(@server_id, user_id) }
+        return snowflakes&.filter_map { |user_id, _| server.member(user_id) } || []
       end
 
       get_members = proc do |before = nil|
@@ -1086,6 +1088,12 @@ module Discordrb
       end
 
       paginator.to_a.tap { @thread_members = true }
+    end
+
+    # Get the starter message of the thread.
+    # @return [Message, nil] The starter message of the thread.
+    def starter_message
+      message(@id) if thread?
     end
 
     # Get the user who initially started the thread.
@@ -1169,6 +1177,8 @@ module Discordrb
     # @return [StageInstance, nil] The stage instance associated with
     #   the stage channel, or `nil` if one doesn't exist.
     def stage_instance(request: false)
+      return unless stage?
+
       servers = @bot.gateway.intents.anybits?(INTENTS[:servers])
 
       return @stage_instance if servers && (@stage_instance || !request)
@@ -1264,6 +1274,13 @@ module Discordrb
     # @!visibility private
     def remove_permission_overwrite(id)
       @overwrites.reject! { |overwrite| overwrite.id == id }
+    end
+
+    # @!visibility private
+    def process_stage_instance(instance)
+      return @stage_instance = nil unless instance
+
+      @stage_instance = StageInstance.new(instance, self, @bot)
     end
 
     # @!visibility private
