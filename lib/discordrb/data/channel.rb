@@ -1150,6 +1150,62 @@ module Discordrb
 
     # @!endgroup
 
+    #   ######  ########    ###     ######   ########
+    #  ##    ##    ##      ## ##   ##    ##  ##
+    #  ##          ##     ##   ##  ##        ##
+    #   ######     ##    ##     ## ##   #### ######
+    #        ##    ##    ######### ##    ##  ##
+    #  ##    ##    ##    ##     ## ##    ##  ##
+    #   ######     ##    ##     ##  ######   ########
+
+    # @!group Stage Channels
+
+    # Retrieve the stage instance for the stage channel.
+    # @param request [true, false, nil] Whether to request the stage
+    #   instance from Discord if it isn't already cached.
+    # @return [StageInstance, nil] The stage instance associated with
+    #   the stage channel, or `nil` if one doesn't exist.
+    def stage_instance(request: false)
+      servers = @bot.gateway.intents.anybits?(INTENTS[:servers])
+
+      return @stage_instance if servers && (@stage_instance || !request)
+
+      response = JSON.parse(API::Channel.get_stage_instance(@bot.token, @id))
+      process_stage_instance(response)
+    rescue Discordrb::Errors::UnknownStageInstance
+      nil
+    end
+
+    # Create a stage instance for the stage channel.
+    # @param topic [String] The 1-120 character topic of the stage instance.
+    # @param mention_everyone [true, false] Whether to mention `@everyone` when the stage instance starts.
+    # @param scheduled_event [ScheduledEvent, Integer, String, nil] The scheduled event of the stage instance.
+    # @param reason [String, nil] The reason to show in the server's audit log for creating the stage instance.
+    # @return [StageInstance, nil] The stage instance that has been created.
+    def create_stage_instance(
+      topic:, mention_everyone:, scheduled_event: nil, reason: nil
+    )
+      data = {
+        topic: topic,
+        reason: reason,
+        send_start_notification: mention_everyone || false,
+        guild_scheduled_event_id: scheduled_event&.resolve_id || :undef
+      }
+
+      response = API::Channel.create_stage_instance(@bot.token, @id, **data)
+      process_stage_instance(JSON.parse(response))
+    end
+
+    # Retrieve the moderators of the stage channel.
+    # @return [Array<Member>] The moderators of the stage channel.
+    def stage_moderators
+      bits = Permissions.bits(%i[manage_channels mute_members move_members])
+
+      server&.members&.select { |member| member.permissions(self).allbits?(bits) } || []
+    end
+
+    # @!endgroup
+
     #  ####  ###   ## ######## ######## ########  ##    ##    ###    ##        ######
     #   ##   ###   ##    ##    ##       ##     ## ###   ##   ## ##   ##       ##    ##
     #   ##   ####  ##    ##    ##       ##     ## ####  ##  ##   ##  ##       ##

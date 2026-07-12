@@ -242,5 +242,8 @@ module Discordrb
 
     # Reaction Blocked
     ReactionBlocked = Code(90_001)
+
+    # Unknown stage instance
+    UnknownStageInstance = Code(10_067)
   end
 end
