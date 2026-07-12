@@ -1181,7 +1181,7 @@ module Discordrb
     # @param mention_everyone [true, false] Whether to mention `@everyone` when the stage instance starts.
     # @param scheduled_event [ScheduledEvent, Integer, String, nil] The scheduled event of the stage instance.
     # @param reason [String, nil] The reason to show in the server's audit log for creating the stage instance.
-    # @return [StageInstance, nil] The stage instance that has been created.
+    # @return [StageInstance] The stage instance that was successfully created.
     def create_stage_instance(
       topic:, mention_everyone:, scheduled_event: nil, reason: nil
     )
