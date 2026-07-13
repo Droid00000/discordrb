@@ -454,8 +454,8 @@ module Discordrb
 
       id = target.resolve_id
       old = permission_overwrite(id)
-      denied = (denied.respond_to?(:bits) ? denied.bits : denied)&.to_i
-      allowed = (allowed.respond_to?(:bits) ? allowed.bits : allowed)&.to_i
+      denied = denied.respond_to?(:bits) ? denied.bits : denied
+      allowed = allowed.respond_to?(:bits) ? allowed.bits : allowed
 
       # rubocop:disable Style/SafeNavigationChainLength
       data = {
