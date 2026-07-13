@@ -437,8 +437,8 @@ module Discordrb
 
     # Modify the permissions for a specific overwrite.
     # @param target [Integer, String, Role, User, Member] The target of the overwrite.
-    # @param denied [Permissions, Integer, String, nil] The permissisons that should be denied.
-    # @param allowed [Permissions, Integer, String, nil] The permissisons that should be allowed.
+    # @param denied [Permissions, Integer, nil] The permissisons that should be denied.
+    # @param allowed [Permissions, Integer, nil] The permissisons that should be allowed.
     # @param reason [String, nil] The reason to show in the audit log for modifying the overwrite.
     # @return [nil]
     def modify_permission_overwrite(
@@ -454,8 +454,8 @@ module Discordrb
 
       id = target.resolve_id
       old = permission_overwrite(id)
-      denied = denied.respond_to?(:bits) ? denied.bits : denied
-      allowed = allowed.respond_to?(:bits) ? allowed.bits : allowed
+      denied = denied.bits if denied.respond_to?(:bits)
+      allowed = allowed.bits if allowed.respond_to?(:bits)
 
       # rubocop:disable Style/SafeNavigationChainLength
       data = {
