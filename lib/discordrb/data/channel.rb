@@ -466,7 +466,7 @@ module Discordrb
       }
 
       # rubocop:enable Style/SafeNavigationChainLength
-      API::Channel.update_permisssion_overwrite(@bot.token, @id, id, **data)
+      API::Channel.update_permission_overwrite(@bot.token, @id, id, **data)
       nil
     end
 
