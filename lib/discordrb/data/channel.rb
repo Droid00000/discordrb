@@ -418,9 +418,7 @@ module Discordrb
     # @param target [#resolve_id] The ID of the permission overwrite to retrieve.
     # @return [Overwrite, nil] The permission overwrite for the given ID or `nil`.
     def permission_overwrite(target)
-      target_id = target.resolve_id
-
-      obfuscated? ? nil : @overwrites.find { |value| value.id == target_id }
+      obfuscated? ? nil : @overwrites[target&.resolve_id]
     end
 
     # Get the explicit permission overwrites for members and roles.
@@ -431,11 +429,11 @@ module Discordrb
 
       case type
       when nil, :all
-        @overwrites.dup
+        @overwrites.values
       when Overwrite::TYPES[:role], :role
-        @overwrites.select { |value| value.type == :role }
+        @overwrites.filter_map { |_, value| value if value.role? }
       when Overwrite::TYPES[:member], :member, :user
-        @overwrites.select { |value| value.type == :member }
+        @overwrites.filter_map { |_, value| value if value.member? }
       else
         raise ArgumentError, "The value for the 'type' argument is invalid"
       end
@@ -463,7 +461,6 @@ module Discordrb
       denied = denied.bits if denied.respond_to?(:bits)
       allowed = allowed.bits if allowed.respond_to?(:bits)
 
-      # rubocop:disable Style/SafeNavigationChainLength
       data = {
         type: type,
         reason: reason,
@@ -471,7 +468,6 @@ module Discordrb
         allow: (allowed == :undef ? old&.allowed&.bits : allowed)&.to_s
       }
 
-      # rubocop:enable Style/SafeNavigationChainLength
       API::Channel.update_permission_overwrite(@bot.token, @id, id, **data)
       nil
     end
@@ -1262,10 +1258,10 @@ module Discordrb
       @default_sort_order = new_data['default_sort_order']
       @video_quality_mode = new_data['video_quality_mode']
       @applied_tags = new_data['applied_tags']&.map(&:to_i)
-      @overwrites = new_data['permission_overwrites']&.map { |item| Overwrite.new(item, self, @bot) } || []
-      @available_tags = new_data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
+      @available_tags = new_data['available_tags']&.map { |value| ChannelTag.new(value, self, @bot) } || []
 
       process_last_pin_timestamp(new_data['last_pin_timestamp'])
+      process_permission_overwrites(new_data['permission_overwrites'])
       process_default_reaction_emoji(new_data['default_reaction_emoji'])
     end
 
@@ -1276,7 +1272,7 @@ module Discordrb
 
     # @!visibility private
     def remove_permission_overwrite(id)
-      @overwrites.reject! { |overwrite| overwrite.id == id }
+      @overwrites.delete(id.resolve_id)
     end
 
     # @!visibility private
@@ -1299,6 +1295,16 @@ module Discordrb
     end
 
     private
+
+    # @!visibility private
+    def process_permission_overwrites(array)
+      @overwrites = {}
+
+      array&.each do |item|
+        overwrite = Overwrite.new(item, self, @bot)
+        @overwrites[overwrite.resolve_id] = overwrite
+      end
+    end
 
     # @!visibility private
     def process_default_reaction_emoji(emoji)
