@@ -73,5 +73,10 @@ module Discordrb
         allow: @allowed.bits.to_s
       }
     end
+
+    # @!visibility private
+    def inspect
+      "<Overwrite id=#{@id} allowed=#{@allowed.bits} denied=#{@denied.bits}>"
+    end
   end
 end
