@@ -461,8 +461,8 @@ module Discordrb
       data = {
         type: type,
         reason: reason,
-        deny: denied == :undef ? old&.denied&.bits&.to_s : denied&.to_s,
-        allow: allowed == :undef ? old&.allowed&.bits&.to_s : allowed&.to_s
+        deny: (denied == :undef ? old&.denied&.bits : denied)&.to_s,
+        allow: (allowed == :undef ? old&.allowed&.bits : allowed)&.to_s
       }
 
       # rubocop:enable Style/SafeNavigationChainLength
@@ -1256,7 +1256,7 @@ module Discordrb
       @default_sort_order = new_data['default_sort_order']
       @video_quality_mode = new_data['video_quality_mode']
       @applied_tags = new_data['applied_tags']&.map(&:to_i)
-      @overwrites = new_data['permission_overwrite']&.map { |item| Overwrite.new(item, self, @bot) } || []
+      @overwrites = new_data['permission_overwrites']&.map { |item| Overwrite.new(item, self, @bot) } || []
       @available_tags = new_data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
 
       process_last_pin_timestamp(new_data['last_pin_timestamp'])
