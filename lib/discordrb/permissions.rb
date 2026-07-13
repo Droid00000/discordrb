@@ -241,8 +241,8 @@ module Discordrb
       return nil unless channel && channel.permission_overwrites[id]
 
       # Otherwise, check the allow and deny objects
-      allow = channel.permission_overwrites[id].allow
-      deny = channel.permission_overwrites[id].deny
+      allow = channel.permission_overwrites[id].allowed
+      deny = channel.permission_overwrites[id].denied
       if allow.instance_variable_get("@#{action}")
         :allow
       elsif deny.instance_variable_get("@#{action}")

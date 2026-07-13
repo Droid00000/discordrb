@@ -1,108 +1,76 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # A permissions overwrite, when applied to channels describes additional
-  # permissions a member needs to perform certain actions in context.
+  # A permission overwrite for a channel.
   class Overwrite
-    # Types of overwrites mapped to their API value.
+    # Mapping of types.
     TYPES = {
       role: 0,
       member: 1
     }.freeze
 
-    # @return [Integer] ID of the thing associated with this overwrite type
-    attr_accessor :id
+    # @return [Integer] the target ID of the overwrite.
+    attr_reader :id
 
-    # @return [Symbol] either :role or :member
-    attr_accessor :type
+    # @return [Symbol] the target type of the overwrite.
+    attr_reader :type
 
-    # @return [Permissions] allowed permissions for this overwrite type
-    attr_accessor :allow
+    # @return [Permissions] the denied permissions for the
+    #   overwrite (red x-mark).
+    attr_reader :denied
 
-    # @return [Permissions] denied permissions for this overwrite type
-    attr_accessor :deny
+    # @return [Permissions] the allowed permissions for the
+    #   overwrite (green checkmark).
+    attr_reader :allowed
 
-    # Creates a new Overwrite object
-    # @example Create an overwrite for a role that can mention everyone, send TTS messages, but can't create instant invites
-    #   allow = Discordrb::Permissions.new
-    #   allow.can_mention_everyone = true
-    #   allow.can_send_tts_messages = true
-    #
-    #   deny = Discordrb::Permissions.new
-    #   deny.can_create_instant_invite = true
-    #
-    #   # Find some role by name
-    #   role = server.roles.find { |r| r.name == 'some role' }
-    #
-    #   Overwrite.new(role, allow: allow, deny: deny)
-    # @example Create an overwrite by ID and permissions bits
-    #   Overwrite.new(120571255635181568, type: 'member', allow: 1024, deny: 0)
-    # @param object [Integer, #id] the ID or object this overwrite is for
-    # @param type [String, Symbol, Integer] the type of object this overwrite is for (only required if object is an Integer)
-    # @param allow [String, Integer, Permissions] allowed permissions for this overwrite, by bits or a Permissions object
-    # @param deny [String, Integer, Permissions] denied permissions for this overwrite, by bits or a Permissions object
-    # @raise [ArgumentError] if type is not :member or :role
-    def initialize(object = nil, type: nil, allow: 0, deny: 0)
-      if type
-        type = TYPES.value?(type) ? TYPES.key(type) : type.to_sym
-        raise ArgumentError, 'Overwrite type must be :member or :role' unless type
-      end
+    # @!visibility private
+    alias_method :resolve_id, :id
 
-      @id = object.respond_to?(:id) ? object.id : object
-
-      @type = case object
-              when User, Member, Recipient, Profile
-                :member
-              when Role
-                :role
-              else
-                type
-              end
-
-      @allow = allow.is_a?(Permissions) ? allow : Permissions.new(allow)
-      @deny = deny.is_a?(Permissions) ? deny : Permissions.new(deny)
+    # @!visibility private
+    def initialize(data, channel, bot)
+      @bot = bot
+      @channel = channel
+      @id = data['id'].to_i
+      @type = TYPES.key(data['type'])
+      @denied = Permissions.new(data['deny'].to_i)
+      @allowed = Permissions.new(data['allow'].to_i)
     end
 
-    # Comparison by attributes [:id, :type, :allow, :deny]
+    # Get the entity that the overwrite targets.
+    # @return [Role, Member, nil] The entity that the overwrite targets.
+    def target
+      server = channel.server
+
+      role? ? server.role(@id) : server.member(@id)
+    end
+
+    # Check if two overwrite objects are the same.
+    # @param other [Overwrite] The overwrite to compare against.
+    # @return [true, false] Whether or not the overwrites are the same.
     def ==(other)
-      return false unless other.is_a?(Discordrb::Overwrite)
+      return false unless other.is_a?(Overwrite)
 
-      id == other.id &&
-        type == other.type &&
-        allow == other.allow &&
-        deny == other.deny
+      @id == other.id && @type == other.type &&
+        @denied == other.denied && @allowed == other.allowed
     end
 
-    # @return [Overwrite] create an overwrite from a hash payload
-    # @!visibility private
-    def self.from_hash(data)
-      new(
-        data['id'].to_i,
-        type: TYPES.key(data['type']),
-        allow: Permissions.new(data['allow']),
-        deny: Permissions.new(data['deny'])
-      )
+    alias_method :eql?, :==
+
+    # @!method role?
+    #   @return [true, false] whether or not the overwrite is for a role.
+    # @!method member?
+    #   @return [true, false] whether or not the overwrite is for a member.
+    TYPES.each_key do |name|
+      define_method("#{name}?") { @type == name }
     end
 
-    # @return [Overwrite] copies an overwrite from another Overwrite
     # @!visibility private
-    def self.from_other(other)
-      new(
-        other.id,
-        type: other.type,
-        allow: Permissions.new(other.allow.bits),
-        deny: Permissions.new(other.deny.bits)
-      )
-    end
-
-    # @return [Hash] hash representation of an overwrite
-    # @!visibility private
-    def to_hash
+    def to_h
       {
-        id: id,
-        type: TYPES[type],
-        allow: allow.bits,
-        deny: deny.bits
+        id: @id,
+        type: TYPES[@type],
+        deny: @denied.bits.to_s,
+        allow: @allowed.bits.to_s
       }
     end
   end

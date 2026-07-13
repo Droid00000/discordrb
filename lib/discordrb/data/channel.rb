@@ -223,8 +223,8 @@ module Discordrb
     # @param nsfw [true, false, nil] Whether or not the channel should be marked as age-restricted.
     # @param slowmode_rate [Integer, nil] The new slowmode-rate of the channel; between 0-21600 (in seconds).
     # @param bitrate [Integer, nil] The new bitrate of the voice or stage channel; minimum of 8000 (in bits).
+    # @param permission_overwrites [Array<Overwrite, #to_h>, nil] The new permission overwrites to set for the channel.
     # @param user_limit [Integer, nil] The maximum number of users who can join the voice or stage channel; 0 for no limit.
-    # @param permission_overwrites [Array<Overwrite, Hash, #to_hash>, nil] The new permission overwrites to set for the channel.
     # @param parent [Channel, Integer, String, nil] The new category channel to set, or `nil` to orphan the chnanel.
     # @param voice_region [VoiceRegion, String, nil] The new voice region to set for the voice or stage channel.
     # @param video_quality_mode [Symbol, Integer, nil] The new camera video quality mode to set for the voice or stage channel.
@@ -247,7 +247,7 @@ module Discordrb
     # @return [nil]
     def modify(
       name: :undef, type: :undef, topic: :undef, nsfw: :undef, slowmode_rate: :undef, bitrate: :undef,
-      user_limit: :undef, permission_overwrites: :undef, parent: :undef, voice_region: :undef, video_quality_mode: :undef,
+      permission_overwrites: :undef, user_limit: :undef, parent: :undef, voice_region: :undef, video_quality_mode: :undef,
       default_auto_archive_duration: :undef, flags: :undef, tags: :undef, default_reaction: :undef, default_sort_order: :undef,
       default_layout: :undef, archived: :undef, locked: :undef, invitable: :undef, auto_archive_duration: :undef, position: :undef,
       add_flags: :undef, remove_flags: :undef, default_thread_slowmode_rate: :undef, status: :undef, reason: nil
@@ -261,7 +261,7 @@ module Discordrb
         rate_limit_per_user: slowmode_rate,
         bitrate: bitrate,
         user_limit: user_limit,
-        permission_overwrites: permission_overwrites == :undef ? permission_overwrites : permission_overwrites&.map(&:to_hash),
+        permission_overwrites: permission_overwrites == :undef ? permission_overwrites : permission_overwrites&.map(&:to_h),
         parent_id: parent == :undef ? parent : parent&.resolve_id,
         rtc_region: voice_region == :undef ? voice_region : voice_region&.to_s,
         video_quality_mode: VIDEO_QUALITIES[video_quality_mode] || video_quality_mode,
@@ -437,30 +437,32 @@ module Discordrb
 
     # Modify the permissions for a specific overwrite.
     # @param target [Integer, String, Role, User, Member] The target of the overwrite.
-    # @param deny [Permissions, Integer, String, nil] The permissisons that should be denied.
-    # @param allow [Permissions, Integer, String, nil] The permissisons that should be allowed.
+    # @param denied [Permissions, Integer, String, nil] The permissisons that should be denied.
+    # @param allowed [Permissions, Integer, String, nil] The permissisons that should be allowed.
     # @param reason [String, nil] The reason to show in the audit log for modifying the overwrite.
     # @return [nil]
     def modify_permission_overwrite(
-      target:, allow: :undef, deny: :undef, reason: nil
+      target:, allowed: :undef, denied: :undef, reason: nil
     )
       type = if target.is_a?(Role) || target.respond_to?(:username)
                target.is_a?(Role) ? 0 : 1
+             elsif target.is_a?(Overwrite)
+               target.role? ? 0 : 1
              else
                server.role(target) ? 0 : 1
              end
 
       id = target.resolve_id
       old = permission_overwrite(id)
-      deny = (deny.respond_to?(:bits) ? deny.bits : deny)&.to_i
-      allow = (allow.respond_to?(:bits) ? allow.bits : allow)&.to_i
+      denied = (denied.respond_to?(:bits) ? denied.bits : denied)&.to_i
+      allowed = (allowed.respond_to?(:bits) ? allowed.bits : allowed)&.to_i
 
       # rubocop:disable Style/SafeNavigationChainLength
       data = {
         type: type,
         reason: reason,
-        deny: deny == :undef ? old&.deny&.bits&.to_s : deny&.to_s,
-        allow: allow == :undef ? old&.allow&.bits&.to_s : allow&.to_s
+        deny: denied == :undef ? old&.denied&.bits&.to_s : denied&.to_s,
+        allow: allowed == :undef ? old&.allowed&.bits&.to_s : allowed&.to_s
       }
 
       # rubocop:enable Style/SafeNavigationChainLength
@@ -476,11 +478,6 @@ module Discordrb
       API::Channel.delete_permission(@bot.token, @id, target.resolve_id, reason)
       nil
     end
-
-    alias_method :overwrite, :permission_overwrite
-    alias_method :overwrites, :permission_overwrites
-    alias_method :modify_overwrite, :modify_permission_overwrite
-    alias_method :delete_overwrite, :delete_permission_overwrite
 
     # @!endgroup
 
@@ -1259,7 +1256,7 @@ module Discordrb
       @default_sort_order = new_data['default_sort_order']
       @video_quality_mode = new_data['video_quality_mode']
       @applied_tags = new_data['applied_tags']&.map(&:to_i)
-      @overwrites = new_data['permission_overwrite']&.map { |item| Overwrite.from_hash(item) } || []
+      @overwrites = new_data['permission_overwrite']&.map { |item| Overwrite.new(item, self, @bot) } || []
       @available_tags = new_data['available_tags']&.map { |item| ChannelTag.new(item, self, @bot) } || []
 
       process_last_pin_timestamp(new_data['last_pin_timestamp'])
