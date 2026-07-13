@@ -330,6 +330,12 @@ module Discordrb
 
     # @!group Types
 
+    # Check if the channel is a private channel.
+    # @return [true, false] Whether or not the channel is a DM or group DM channel.
+    def private?
+      dm? || group_dm?
+    end
+
     # Check if the channel is a thread channel; regardless of its specific sub-type.
     # @return [true, false] Whether or not the channel is any of the three thread types.
     def thread?

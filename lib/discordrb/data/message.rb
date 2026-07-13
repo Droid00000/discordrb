@@ -245,9 +245,7 @@ module Discordrb
     # @raise [Discordrb::Errors::NoPermission] This can happen when receiving interactions for servers in which the bot is not
     #   authorized with the `bot` scope.
     def server
-      return if @channel.private?
-
-      @server ||= @channel.server
+      @channel.server
     end
 
     # Get the roles that were mentioned in this message.
