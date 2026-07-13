@@ -396,7 +396,7 @@ module Discordrb
     #   @return [true, false] whether or not the channel may contain spoilers or sensitive discussions.
     FLAGS.each do |name, value|
       if name == :spoiler
-        define_method("#{name}?") { thread? ? parent.spoiler? : @flags.anybits?(value) }
+        define_method("#{name}?") { !nsfw? && (thread? ? parent.spoiler? : @flags.anybits?(value)) }
       else
         define_method("#{name}?") { @flags.anybits?(value) }
       end
