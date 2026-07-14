@@ -20,8 +20,8 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @type = data['type']
-      @party_id = data['party_id']
+      @type = data[:type]
+      @party_id = data[:party_id]
     end
 
     # @!method join?

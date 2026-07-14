@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'discordrb/id_object'
+require 'discordrb/snowflake'
 
 module Discordrb
   # Builder class for `allowed_mentions` when sending messages.
@@ -18,11 +18,12 @@ module Discordrb
     attr_accessor :replied_user
     alias_method :replied_user?, :replied_user
 
+    # Create a new allowed mentions instance.
     # @param parse [Array<"users", "roles", "everyone">] Mention types that can be inferred from the message.
-    #   `users` and `roles` allow for all mentions of the respective type to ping. `everyone` allows usage of `@everyone` and `@here`
-    # @param users [Array<User, String, Integer>] Users or user IDs that can be pinged. Cannot be used in conjunction with `"users"` in `parse`
-    # @param roles [Array<Role, String, Integer>] Roles or role IDs that can be pinged. Cannot be used in conjunction with `"roles"` in `parse`
-    # @param replied_user [true, false, nil] For replies, whether to mention the author of the message being replied to. Defaults to no mention
+    #   `users` and `roles` allow for all mentions of the respective type to ping. `everyone` allows usage of `@everyone` and `@here`.
+    # @param users [Array<User, String, Integer>] Users or user IDs that can be pinged. Cannot be used in conjunction with `"users"` in `parse`.
+    # @param roles [Array<Role, String, Integer>] Roles or role IDs that can be pinged. Cannot be used in conjunction with `"roles"` in `parse`.
+    # @param replied_user [true, false, nil] For replies, whether to mention the author of the message being replied to. Will default to no mention.
     def initialize(parse: nil, users: nil, roles: nil, replied_user: nil)
       @parse = parse
       @users = users
@@ -31,11 +32,11 @@ module Discordrb
     end
 
     # @!visibility private
-    def to_hash
+    def to_h
       {
         parse: @parse,
-        users: @users&.map { |user| user.is_a?(IDObject) ? user.id : user },
-        roles: @roles&.map { |role| role.is_a?(IDObject) ? role.id : role },
+        users: @users&.map { |user| user.is_a?(Snowflake) ? user.id : user },
+        roles: @roles&.map { |role| role.is_a?(Snowflake) ? role.id : role },
         replied_user: @replied_user
       }.compact
     end

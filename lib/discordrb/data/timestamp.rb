@@ -4,6 +4,7 @@ module Discordrb
   # A timestamp referenced in a message via markdown.
   class TimestampMarkdown
     # Mapping of timestamp styles.
+    # @see https://discord.com/developers/docs/reference#message-formatting-timestamp-styles
     STYLES = {
       short_time: 't', # 16:20
       long_time: 'T', # 16:20:30

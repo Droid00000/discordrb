@@ -176,7 +176,7 @@ module Discordrb::Voice
     # Permanently disconnects from the voice channel; to reconnect you will have to call {Bot#voice_connect} again.
     def destroy
       stop_playing
-      @bot.voice_destroy(@channel.server.id, false)
+      @bot.voice_destroy(@channel.guild.id, false)
       @ws.destroy
     end
 
@@ -199,13 +199,13 @@ module Discordrb::Voice
         rescue EOFError
           raise IOError, 'File or stream not found!' if @first_packet
 
-          @bot.debug('EOF while reading, breaking immediately')
+          Discordrb::LOGGER.debug('EOF while reading, breaking immediately')
           next :stop
         end
 
         # Check whether the buffer has enough data
         if !buf || buf.length != DATA_LENGTH
-          @bot.debug("No data is available! Retrying #{@retry_attempts} more times")
+          Discordrb::LOGGER.debug("No data is available! Retrying #{@retry_attempts} more times")
           next :stop if @retry_attempts.zero?
 
           @retry_attempts -= 1
@@ -264,7 +264,7 @@ module Discordrb::Voice
     def play_dca(file)
       stop_playing(true) if @playing
 
-      @bot.debug "Reading DCA file #{file}"
+      Discordrb::LOGGER.debug("Reading DCA file #{file}")
       input_stream = File.open(file)
 
       magic = input_stream.read(4)
@@ -281,7 +281,7 @@ module Discordrb::Voice
           header_str = input_stream.read(2)
 
           unless header_str
-            @bot.debug 'Finished DCA parsing (header is nil)'
+            Discordrb::LOGGER.debug('Finished DCA parsing (header is nil)')
             next :stop
           end
 
@@ -289,7 +289,7 @@ module Discordrb::Voice
 
           raise 'Negative header in DCA file! Your file is likely corrupted.' if header.negative?
         rescue EOFError
-          @bot.debug 'Finished DCA parsing (EOFError)'
+          Discordrb::LOGGER.debug('Finished DCA parsing (EOFError)')
           next :stop
         end
 
@@ -346,7 +346,7 @@ module Discordrb::Voice
 
         if (last_sent + IDEAL_LENGTH) > Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           sleep_duration = (last_sent + IDEAL_LENGTH - Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)) / 1000.0
-          @bot.debug("Waiting for next frame: #{sleep_duration * 1000}ms (encoding #{intermediate_adjust - start_time}ms)") if @adjust_debug
+          Discordrb::LOGGER.debug("Waiting for next frame: #{sleep_duration * 1000}ms (encoding #{intermediate_adjust - start_time}ms)") if @adjust_debug
           sleep sleep_duration if sleep_duration.positive?
         end
 
@@ -358,7 +358,7 @@ module Discordrb::Voice
         last_sent = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
       end
 
-      @bot.debug('Sending five silent frames to clear out buffers')
+      Discordrb::LOGGER.debug('Sending five silent frames to clear out buffers')
 
       5.times do
         increment_packet_headers
@@ -368,7 +368,7 @@ module Discordrb::Voice
         sleep IDEAL_LENGTH / 1000.0
       end
 
-      @bot.debug('Performing final cleanup after stream ended')
+      Discordrb::LOGGER.debug('Performing final cleanup after stream ended')
 
       # Final clean-up
       stop_playing

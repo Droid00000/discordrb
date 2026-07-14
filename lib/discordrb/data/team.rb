@@ -3,7 +3,7 @@
 module Discordrb
   # A group of users that can manage applications.
   class Team
-    include IDObject
+    include Snowflake
 
     # @return [String] the name of the team.
     attr_reader :name
@@ -13,7 +13,7 @@ module Discordrb
 
     # @return [String, nil] the hash of the team's icon.
     # @see #icon_url
-    attr_reader :icon_id
+    attr_reader :icon
 
     # @return [Array<Member>] the members that are a part of the team.
     attr_reader :members
@@ -21,11 +21,11 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @id = data['id'].to_i
-      @name = data['name']
-      @icon_id = data['icon']
-      @members = data['members'].map { |member| Member.new(member, self, bot) }
-      @owner = @members.find { |member| member.user.id == data['owner_user_id'].to_i }
+      @id = data[:id].to_i
+      @name = data[:name]
+      @icon = data[:icon]
+      @members = data[:members].map { |member| Member.new(member, self, bot) }
+      @owner = @members.find { |member| member.user.id == data[:owner_user_id].to_i }
     end
 
     # Utility method to get a team's icon URL.
@@ -33,7 +33,7 @@ module Discordrb
     # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] the URL to the icon image (`nil` if no image is set).
     def icon_url(format: 'webp', size: 4096)
-      API.team_icon_url(@id, @icon_id, format, size) if @icon_id
+      Assets[:team_icon, @id, @icon, format, size:] if @icon
     end
 
     # A member that has been invited to a team.
@@ -54,9 +54,9 @@ module Discordrb
       def initialize(data, team, bot)
         @bot = bot
         @team = team
-        @role = data['role'].to_sym
-        @state = data['membership_state']
-        @user = bot.ensure_user(data['user'])
+        @role = data[:role].to_sym
+        @state = data[:membership_state]
+        @user = bot.ensure_user(data[:user])
       end
 
       # Whether the team member has been invited to the team, but hasn't accepted the invite yet.

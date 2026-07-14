@@ -36,7 +36,7 @@ module Discordrb::Commands
     #     string, any of the strings in the array can be used.
     #   * Something Proc-like (responds to :call) that takes a {Message} object as an argument and returns either
     #     the command chain in raw form or `nil` if the given message shouldn't be parsed. This can be used to make more
-    #     complicated dynamic prefixes (e. g. based on server), or even something else entirely (suffixes, or most
+    #     complicated dynamic prefixes (e. g. based on guild), or even something else entirely (suffixes, or most
     #     adventurous, infixes).
     # @option attributes [true, false] :advanced_functionality Whether to enable advanced functionality (very powerful
     #   way to nest commands into chains, see https://github.com/shardlab/discordrb/wiki/Commands#command-chain-syntax
@@ -76,9 +76,6 @@ module Discordrb::Commands
       super(
         log_mode: attributes[:log_mode],
         token: attributes[:token],
-        client_id: attributes[:client_id],
-        type: attributes[:type],
-        name: attributes[:name],
         fancy_log: attributes[:fancy_log],
         suppress_ready: attributes[:suppress_ready],
         parse_self: attributes[:parse_self],
@@ -86,7 +83,7 @@ module Discordrb::Commands
         num_shards: attributes[:num_shards],
         redact_token: attributes.key?(:redact_token) ? attributes[:redact_token] : true,
         ignore_bots: attributes[:ignore_bots],
-        compress_mode: attributes[:compress_mode],
+        compression_mode: attributes[:compression_mode],
         intents: attributes[:intents] || :all
       )
 
@@ -187,8 +184,8 @@ module Discordrb::Commands
               memo + "`#{c.name}`, "
             end)[0..-3]
           else
-            event.user.pm(available_commands.reduce("**List of commands:**\n") { |m, e| m + "`#{e.name}`, " }[0..-3])
-            event.channel.pm? ? '' : 'Sending list in PM!'
+            event.user.send_message(content: available_commands.reduce("**List of commands:**\n") { |m, e| m + "`#{e.name}`, " }[0..-3])
+            event.channel.dm? ? '' : 'Sending list in DM!'
           end
         end
       end
@@ -225,15 +222,15 @@ module Discordrb::Commands
         if @attributes[:command_doesnt_exist_message]
           message = @attributes[:command_doesnt_exist_message]
           message = message.call(event) if message.respond_to?(:call)
-          event.respond message.gsub('%command%', name.to_s) if message
+          event.respond(content: message.gsub('%command%', name.to_s)) if message
         end
         return
       end
       return unless !check_permissions || channels?(event.channel, command.attributes[:channels])
 
-      arguments = arg_check(arguments, command.attributes[:arg_types], event.server) if check_permissions
+      arguments = arg_check(arguments, command.attributes[:arg_types], event.guild) if check_permissions
       if (check_permissions &&
-         permission?(event.author, command.attributes[:permission_level], event.server) &&
+         permission?(event.author, command.attributes[:permission_level], event.guild) &&
          required_permissions?(event.author, command.attributes[:required_permissions], event.channel) &&
          required_roles?(event.author, command.attributes[:required_roles]) &&
          allowed_roles?(event.author, command.attributes[:allowed_roles])) ||
@@ -242,17 +239,17 @@ module Discordrb::Commands
         result = command.call(event, arguments, chained, check_permissions)
         stringify(result)
       else
-        event.respond command.attributes[:permission_message].gsub('%name%', name.to_s) if command.attributes[:permission_message]
+        event.respond(content: command.attributes[:permission_message].gsub('%name%', name.to_s)) if command.attributes[:permission_message]
         nil
       end
     rescue Discordrb::Errors::NoPermission
-      event.respond @attributes[:no_permission_message] unless @attributes[:no_permission_message].nil?
+      event.respond(content: @attributes[:no_permission_message]) unless @attributes[:no_permission_message].nil?
       raise
     end
 
     # Transforms an array of string arguments based on types array.
     # For example, `['1', '10..14']` with types `[Integer, Range]` would turn into `[1, 10..14]`.
-    def arg_check(args, types = nil, server = nil)
+    def arg_check(args, types = nil, guild = nil)
       return args unless types
 
       args.each_with_index.map do |arg, i|
@@ -303,7 +300,7 @@ module Discordrb::Commands
         elsif types[i] == NilClass
           nil
         elsif [Discordrb::User, Discordrb::Role, Discordrb::Emoji].include? types[i]
-          result = parse_mention arg, server
+          result = parse_mentions(arg, guild).first
           result if result.instance_of? types[i]
         elsif types[i] == Discordrb::Invite
           resolve_invite_code arg
@@ -347,10 +344,10 @@ module Discordrb::Commands
     # Check if a user has permission to do something
     # @param user [User] The user to check
     # @param level [Integer] The minimum permission level the user should have (inclusive)
-    # @param server [Server] The server on which to check
+    # @param guild [Guild] The guild on which to check
     # @return [true, false] whether or not the user has the given permission
-    def permission?(user, level, server)
-      determined_level = if user.webhook? || server.nil?
+    def permission?(user, level, guild)
+      determined_level = if user.webhook_account? || guild.nil?
                            0
                          else
                            user.roles.reduce(0) do |memo, role|
@@ -391,7 +388,7 @@ module Discordrb::Commands
     # Internal handler for MESSAGE_CREATE that is overwritten to allow for command handling
     def create_message(data)
       message = Discordrb::Message.new(data, self)
-      return message if message.from_bot? && !@should_parse_self
+      return message if message.current_bot? && !@should_parse_self
       return message if message.webhook? && !@attributes[:webhook_commands]
 
       unless message.author
@@ -440,18 +437,18 @@ module Discordrb::Commands
 
     def required_permissions?(member, required, channel = nil)
       required.reduce(true) do |a, action|
-        a && !member.webhook? && !member.is_a?(Discordrb::Recipient) && member.permission?(action, channel)
+        a && !member.webhook_account? && !member.is_a?(Discordrb::User) && member.permission?(action, channel)
       end
     end
 
     def required_roles?(member, required)
-      return true if member.webhook? || member.is_a?(Discordrb::Recipient) || required.nil? || required.empty?
+      return true if member.webhook_account? || member.is_a?(Discordrb::User) || required.nil? || required.empty?
 
       required.is_a?(Array) ? check_multiple_roles(member, required) : member.role?(role)
     end
 
     def allowed_roles?(member, required)
-      return true if member.webhook? || member.is_a?(Discordrb::Recipient) || required.nil? || required.empty?
+      return true if member.webhook_account? || member.is_a?(Discordrb::User) || required.nil? || required.empty?
 
       required.is_a?(Array) ? check_multiple_roles(member, required, false) : member.role?(role)
     end
@@ -491,10 +488,10 @@ module Discordrb::Commands
           if event.file
             event.send_file(event.file, caption: result)
           else
-            event.respond result unless result.nil? || result.empty?
+            event.respond(content: result) unless result.nil? || result.empty?
           end
         rescue StandardError => e
-          log_exception(e)
+          Discordrb::LOGGER.log_exception(e)
         ensure
           @event_threads.delete(t)
         end

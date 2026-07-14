@@ -1,48 +1,38 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-require 'discordrb/data'
-
 module Discordrb::Events
-  # Event raised when a server's voice server is updating.
-  # Sent when initially connecting to voice and when a voice instance fails
-  # over to a new server.
-  # This event is exposed for use with library agnostic interfaces like telecom and
-  # lavalink.
+  # Raised whenever initially connecting to voice.
   class VoiceServerUpdateEvent < Event
-    # @return [String] The voice connection token
+    # @return [String] The voice connection token.
     attr_reader :token
 
-    # @return [Server] The server this update is for.
-    attr_reader :server
+    # @return [Guild] The guild associated with the event.
+    attr_reader :guild
 
-    # @return [String] The voice server host.
+    # @return [String, nil] The host of the voice server, if any.
     attr_reader :endpoint
 
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @token = data['token']
-      @endpoint = data['endpoint']
-      @server = bot.server(data['guild_id'])
+      @token = data[:token]
+      @endpoint = data[:endpoint]
+      @guild = bot.guild(data[:guild_id])
     end
   end
 
-  # Event handler for VoiceServerUpdateEvent
+  # Event handler for VOICE_SERVER_UPDATE events.
   class VoiceServerUpdateEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      return false unless event.is_a? VoiceServerUpdateEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(VoiceServerUpdateEvent)
 
       [
-        matches_all(@attributes[:from], event.server) do |a, e|
-          a == if a.is_a? String
-                 e.name
-               else
-                 e
-               end
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
         end
-      ]
+      ].reduce(true, &:&)
     end
   end
 end

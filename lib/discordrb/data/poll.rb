@@ -42,14 +42,14 @@ module Discordrb
     def initialize(data, message, bot)
       @bot = bot
       @message = message
-      @layout = data['layout_type']
-      @question = Media.new(data['question'], @bot)
-      @multiselect = data['allow_multiselect']
-      @closes_at = Time.parse(data['expiry']) if data['expiry']
-      results = data['results']
+      @layout = data[:layout_type]
+      @question = Media.new(data[:question], @bot)
+      @multiselect = data[:allow_multiselect]
+      @closes_at = Time.iso8601(data[:expiry]) if data[:expiry]
+      results = data[:results]
       @unknown_results = results.nil?
-      @finalised = results&.[]('is_finalized') || false
-      process_answers(data['answers'], results&.[]('answer_counts'))
+      @finalised = results&.[](:is_finalized) || false
+      process_answers(data[:answers], results&.[](:answer_counts))
     end
 
     # Get the total amount of votes cast on the poll.
@@ -86,12 +86,15 @@ module Discordrb
     end
 
     # Prematurely end the poll, only functional for polls created by the current bot.
-    # @return [Message] The resulting message. Will fail if the poll was not sent by the current bot.
+    # @return [Poll] The updated poll. Will fail if the poll was not sent by the current bot.
     # @raise [Discordrb::Errors::NoPermission] If the poll was not created by the current bot account.
     def close
-      raise Discordrb::Errors::NoPermission, 'Cannot close the poll' if !@message.from_bot? || closed?
+      if !@message.current_bot? || closed?
+        raise Discordrb::Errors::NoPermission, 'Cannot close the poll.'
+      end
 
-      Message.new(JSON.parse(API::Channel.end_poll(@bot.token, @message.channel.id, @message.id)), @bot)
+      response = @bot.http.end_poll(@message.channel.id, @message.id, @id)
+      self.tap { @message.update_data(response) }
     end
 
     # Check if two poll objects are equivalent.
@@ -125,14 +128,12 @@ module Discordrb
       }
     end
 
-    private
-
     # @!visibility private
     def process_answers(answers, counts)
       @answers = answers.map do |answer|
-        count_data = counts&.find { |count| count['id'] == answer['answer_id'] }
+        count_data = counts&.find { |count| count[:id] == answer[:answer_id] }
 
-        Answer.new(answer.tap { answer['_votes'] = count_data&.[]('count') }, self, @bot)
+        Answer.new(answer.tap { answer[:_votes] = count_data&.[](:count) }, self, @bot)
       end
     end
 
@@ -152,11 +153,11 @@ module Discordrb
       def initialize(data, poll, bot)
         @bot = bot
         @poll = poll
-        @id = data['answer_id']
-        @votes = data['_votes'] || 0
-        @media = Media.new(data['poll_media'], @bot)
-        @channel_id = data['_channel_id'] unless @poll
-        @message_id = @poll&.message&.id || data['_message_id']&.to_i
+        @id = data[:answer_id]
+        @votes = data[:_votes] || 0
+        @media = Media.new(data[:poll_media], @bot)
+        @channel_id = data[:_channel_id] unless @poll
+        @message_id = @poll&.message&.id || data[:_message_id]&.to_i
       end
 
       # Get the text of the poll answer.
@@ -184,11 +185,11 @@ module Discordrb
       def voters(after: nil, limit: 100)
         stable = @poll.nil? || @poll.finalised?
         channel_id = @channel_id || @poll.message.channel.id
-        after_time = after.is_a?(Time) ? IDObject.synthesise(after) : after&.resolve_id
+        after_time = after.is_a?(Time) ? Snowflake.synthesise(after) : after&.resolve_id
 
         get_users = lambda do |limit, after|
-          data = API::Channel.get_poll_voters(@bot.token, channel_id, @message_id, @id, after:, limit:)
-          JSON.parse(data)['users'].collect { |poll_voter_data| @bot.ensure_user(poll_voter_data) }
+          data = @bot.http.get_poll_answer_voters(channel_id, @message_id, @id, after:, limit:)
+          data[:users].collect { |poll_voter_data| @bot.ensure_user(poll_voter_data) }
         end
 
         return get_users.call(limit, after_time) if limit && limit <= 100
@@ -237,8 +238,8 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @text = data['text']
-        @emoji = Emoji.new(data['emoji'], @bot) if data['emoji']
+        @text = data[:text]
+        @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
       end
 
       # Check if two poll media objects are equivalent.
@@ -281,27 +282,27 @@ module Discordrb
       # @!visibility private
       def initialize(embed, reference, bot)
         @bot = bot
-        @message_id = reference['message_id'].to_i
-        embed = embed['fields'].to_h { |field| [field['name'], field['value']] }
-        @question = Media.new({ 'text' => embed['poll_question_text'] }, @bot)
-        @total_votes = embed['total_votes'].to_i
-        return unless (id = embed['victor_answer_id']&.to_i)
+        @message_id = reference[:message_id].to_i
+        embed = embed[:fields].to_h { |item| [item[:name].to_sym, item[:value]] }
+        @question = Media.new({ text: embed[:poll_question_text] }, @bot)
+        @total_votes = embed[:total_votes].to_i
+        return unless (id = embed[:victor_answer_id]&.to_i)
 
         data = {
-          'poll_media' => {
-            'text' => embed['victor_answer_text']
+          poll_media: {
+            text: embed[:victor_answer_text]
           },
-          'answer_id' => id,
-          '_message_id' => @message_id,
-          '_channel_id' => reference['channel_id'],
-          '_votes' => embed['victor_answer_votes'].to_i
+          answer_id: id,
+          _message_id: @message_id,
+          _channel_id: reference[:channel_id],
+          _votes: embed[:victor_answer_votes].to_i
         }
 
-        if embed['victor_answer_emoji_id'] || embed['victor_answer_emoji_name']
-          data['poll_media']['emoji'] = {
-            'name' => embed['victor_answer_emoji_name'],
-            'id' => embed['victor_answer_emoji_id']&.to_i,
-            'animated' => embed['victor_answer_emoji_animated'] == 'true'
+        if embed[:victor_answer_emoji_id] || embed[:victor_answer_emoji_name]
+          data[:poll_media][:emoji] = {
+            name: embed[:victor_answer_emoji_name],
+            id: embed[:victor_answer_emoji_id]&.to_i,
+            animated: embed[:victor_answer_emoji_animated] == 'true'
           }
         end
 
@@ -343,7 +344,7 @@ module Discordrb
       # @param emoji [Emoji, Reaction, Integer, String, nil] The emoji of the poll answer.
       # @return [void]
       def answer(text:, emoji: nil)
-        emoji = Emoji.build_emoji_hash(emoji, prefix: false) if emoji
+        emoji = Emoji.build_hash(emoji, prefix: false).compact if emoji
 
         @answers << { poll_media: { text: text, emoji: emoji }.compact }
       end

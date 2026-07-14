@@ -1,87 +1,119 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-require 'discordrb/data'
-
 module Discordrb::Events
-  # Raised when a role is created on a server
-  class ServerRoleCreateEvent < Event
-    # @return [Role] the role that got created
+  # Generic superclass for role events.
+  class GuildRoleEvent < Event
+    # @return [Role] the role associated with the event.
     attr_reader :role
 
-    # @return [Server] the server on which a role got created
-    attr_reader :server
-
-    # @!attribute [r] name
-    #   @return [String] this role's name
-    #   @see Role#name
-    delegate :name, to: :role
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
 
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @server = bot.server(data['guild_id'].to_i)
-      @role = @server&.role(data['role']['id'].to_i)
+      @guild = bot.guild(data[:guild_id].to_i)
+      @role = @guild&.role(data[:role][:id].to_i)
     end
   end
 
-  # Event handler for ServerRoleCreateEvent
-  class ServerRoleCreateEventHandler < EventHandler
+  # Raised whenever a guild role is created.
+  class GuildRoleCreateEvent < GuildRoleEvent; end
+
+  # Raised whenever a guild role is updated.
+  class GuildRoleUpdateEvent < GuildRoleEvent; end
+
+  # Raised whenever a guild role is deleted.
+  class GuildRoleDeleteEvent < Event
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
+
+    # @return [Integer] the ID of the role that was deleted.
+    attr_reader :role_id
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @role_id = data[:role_id]&.to_i
+      @guild = bot.guild(data[:guild_id].to_i)
+    end
+  end
+
+  # Generic event handler for role events.
+  class GuildRoleEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ServerRoleCreateEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(GuildRoleEvent)
 
       [
-        matches_all(@attributes[:name], event.name) do |a, e|
-          a == if a.is_a? String
-                 e.to_s
-               else
-                 e
-               end
+        matches_all(@attributes[:id], event.role.id) do |a, e|
+          a.resolve_id == e.resolve_id
+        end,
+
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a.resolve_id == e.resolve_id
+        end,
+
+        matches_all(@attributes[:name], event.role.name) do |a, e|
+          case a
+          when String
+            a == e
+          when Regexp
+            a.match?(e)
+          end
+        end,
+
+        matches_all(@attributes[:unicode_emoji], event.role) do |a, e|
+          case a
+          when Regexp
+            a.match?(e.unicode_emoji || '')
+          else
+            a&.to_s == e.unicode_emoji
+          end
+        end,
+
+        matches_all(@attributes[:bot_id], event.role.bot_id) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:hoisted], event.role.hoisted?) do |a, e|
+          a == e
+        end,
+
+        matches_all(@attributes[:mentionable], event.role.mentionable?) do |a, e|
+          a == e
+        end,
+
+        matches_all(@attributes[:color] || @attributes[:colour], event.role.color) do |a, e|
+          a&.to_i == e&.to_i
         end
       ].reduce(true, &:&)
     end
   end
 
-  # Raised when a role is deleted from a server
-  class ServerRoleDeleteEvent < Event
-    # @return [Integer] the ID of the role that got deleted.
-    attr_reader :id
+  # Event handler for GUILD_ROLE_CREATE events.
+  class GuildRoleCreateEventHandler < GuildRoleEventHandler; end
 
-    # @return [Server] the server on which a role got deleted.
-    attr_reader :server
+  # Event handler for GUILD_ROLE_UPDATE events.
+  class GuildRoleUpdateEventHandler < GuildRoleEventHandler; end
 
+  # Event handler for GUILD_ROLE_DELETE events.
+  class GuildRoleDeleteEventHandler < EventHandler
     # @!visibility private
-    def initialize(data, bot)
-      @bot = bot
-
-      # The role should already be deleted from the server's list
-      # by the time we create this event, so we'll create a temporary
-      # role object for event consumers to use.
-      @id = data['role_id'].to_i
-      server_id = data['guild_id'].to_i
-      @server = bot.server(server_id)
-    end
-  end
-
-  # EventHandler for ServerRoleDeleteEvent
-  class ServerRoleDeleteEventHandler < EventHandler
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ServerRoleDeleteEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(RoleDeleteEvent)
 
       [
-        matches_all(@attributes[:id], event.id) do |a, e|
+        matches_all(@attributes[:id], event.role_id) do |a, e|
+          a.resolve_id == e.resolve_id
+        end,
+
+        matches_all(@attributes[:guild], event.guild) do |a, e|
           a.resolve_id == e.resolve_id
         end
       ].reduce(true, &:&)
     end
   end
-
-  # Event raised when a role updates on a server
-  class ServerRoleUpdateEvent < ServerRoleCreateEvent; end
-
-  # Event handler for ServerRoleUpdateEvent
-  class ServerRoleUpdateEventHandler < ServerRoleCreateEventHandler; end
 end

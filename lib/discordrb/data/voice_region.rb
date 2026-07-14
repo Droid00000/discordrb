@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # The locations of voice servers on Discord.
+  # The locations of the voice servers on Discord.
   class VoiceRegion
     # @return [String] the ID of the voice region.
     attr_reader :id
@@ -25,27 +25,16 @@ module Discordrb
 
     # @!visibility private
     def initialize(data)
-      @id = data['id']
-      @name = data['name']
-      @custom = data['custom']
-      @optimal = data['optimal']
-      @deprecated = data['deprecated']
+      @id = data[:id]
+      @name = data[:name]
+      @custom = data[:custom]
+      @optimal = data[:optimal]
+      @deprecated = data[:deprecated]
     end
 
     # @!visibility private
     def inspect
       "<VoiceRegion id=\"#{@id}\" name=\"#{@name}\" deprecated=#{@deprecated}>"
     end
-
-    # @!method vip
-    #   @deprecated This attribute no longer exists and will be removed in 4.0.
-    #   @return [nil]
-    # @!method sample_port
-    #   @deprecated This attribute no longer exists and will be removed in 4.0.
-    #   @return [nil]
-    # @!method sample_hostname
-    #   @deprecated This attribute no longer exists and will be removed in 4.0.
-    #   @return [nil]
-    %i[sample_hostname sample_port vip].each { |name| define_method(name) { nil } }
   end
 end

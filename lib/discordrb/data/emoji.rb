@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # An emoji from a server, or a unicode one.
+  # An emoji from a guild, or a unicode one.
   class Emoji
-    include IDObject
+    include Snowflake
 
     # @return [String] the name of the emoji.
     attr_reader :name
@@ -11,8 +11,8 @@ module Discordrb
     # @return [Array<Role>, nil] the roles that can use the emoji.
     attr_reader :roles
 
-    # @return [Server, nil] the server the emoji is from, `nil` if unknown.
-    attr_reader :server
+    # @return [Guild, nil] the guild the emoji is from, `nil` if unknown.
+    attr_reader :guild
 
     # @return [true, false, nil] if the emoji is managed by an integration.
     attr_reader :managed
@@ -21,7 +21,7 @@ module Discordrb
     attr_reader :animated
 
     # @return [true, false, nil] if the emoji can be used. May be `false` due to
-    #   a loss of server boosts.
+    #   a loss of guild boosts.
     attr_reader :available
 
     # @return [true, false, nil] if the emoji must be wrapped in colons to be used.
@@ -33,18 +33,18 @@ module Discordrb
     alias_method :requires_colons?, :requires_colons
 
     # @!visibility private
-    def initialize(data, bot, server = nil)
+    def initialize(data, bot, guild = nil)
       @bot = bot
-      @server = server
-      @id = data['id']&.to_i
-      @name = data['name']
-      @roles = data['roles']&.filter_map { |id| server&.role(id) }
-      @managed = data['managed']
-      @animated = data['animated'] || false
-      @available = data['available']
-      @requires_colons = data['requires_colons']
-      @creator = @bot.ensure_user(data['user']) if data['user']
-      @application_emoji = data['_application'] if data['_application']
+      @guild = guild
+      @id = data[:id]&.to_i
+      @name = data[:name]
+      @roles = data[:roles]&.filter_map { |id| guild&.role(id) }
+      @managed = data[:managed]
+      @animated = data[:animated] || false
+      @available = data[:available]
+      @requires_colons = data[:require_colons]
+      @creator = @bot.ensure_user(data[:user]) if data[:user]
+      @application_emoji = data[:_application] if data[:_application]
     end
 
     # Get a string that will allow the emoji to be sent as a reaction.
@@ -66,7 +66,7 @@ module Discordrb
     #   number between 1-4096 that's a power of two.
     # @return [String, nil] The icon URL, or `nil` if the emoji is not a custom emoji.
     def url(format: 'webp', size: nil)
-      API.emoji_icon_url(@id, format, size) if @id
+      Assets[:custom_emoji, @id, format, size:] if @id
     end
 
     # Get a string that will allow the emoji to be sent in a message.
@@ -87,18 +87,16 @@ module Discordrb
     alias_method :eql?, :==
     alias_method :use, :mention
     alias_method :to_s, :mention
-    alias_method :icon_url, :url
 
-    # Get the user who uploaded the emoji to the server, or to the application.
+    # Get the user who uploaded the emoji to the guild, or to the application.
     # @return [User, nil] The uploader of the emoji, or `nil` if it couldn't be resolved.
     def creator
-      return @creator if @creator || (!@server && !@application_emoji)
+      return @creator if @creator || (!@guild && !@application_emoji)
 
-      if @server.bot.can_manage_emojis? || @server.bot.can_create_server_expressions?
-        update_data(JSON.parse(API::Server.get_emoji(@bot.token, @server.id, @id)))
+      if @guild.bot.can_create_expressions? || @guild.bot.can_manage_expressions?
+        update_data(@bot.http.get_guild_emoji(@guild.id, @id))
       elsif @application_emoji
-        data = API::Application.get_application_emoji(@bot.token, @bot.profile.id, @id)
-        update_data(JSON.parse(data))
+        update_data(@bot.http.get_application_emoji(@bot.application_id, @id))
       end
 
       @creator
@@ -108,30 +106,30 @@ module Discordrb
     # @param name [String] The new 2-32 character name of the emoji.
     # @param roles [Array<Role, Integer, String>, nil] The new roles that can use the
     #   emoji. This argument is always ignored for application emojis.
-    # @param reason [String, nil] The reason to show in the server's audit log for modifying
+    # @param reason [String, nil] The reason to show in the guild's audit log for modifying
     #   the emoji. This argument is always ignored for application emojis.
     # @return [nil]
     def modify(name: :undef, roles: :undef, reason: nil)
       roles = Array(roles).map(&:resolve_id) if roles != :undef && roles && !@application_emoji
 
       if @application_emoji && name != :undef
-        update_data(JSON.parse(API::Application.edit_application_emoji(@bot.token, @bot.profile.id, @id, name)))
-      elsif @server
-        update_data(JSON.parse(API::Server.update_emoji(@bot.token, @server.id, @id, name:, roles:, reason:)))
+        update_data(@bot.http.modify_application_emoji(@bot.application_id, @id, name: name))
+      elsif @guild
+        update_data(@bot.http.modify_guild_emoji(@guild.id, @id, name:, roles:, reason:))
       end
 
       nil
     end
 
     # Permanently delete the emoji.
-    # @param reason [String, nil] The reason to show in the server's audit log for
+    # @param reason [String, nil] The reason to show in the guild's audit log for
     #   deleting the emoji. This argument is always ignored for application emojis.
     # @return [nil]
     def delete(reason: nil)
       if @application_emoji
         @bot.delete_application_emoji(@id)
-      elsif @server
-        API::Server.delete_emoji(@bot.token, @server.id, @id, reason)
+      elsif @guild
+        @bot.http.delete_guild_emoji(@guild.id, @id, reason: reason)
       end
 
       nil
@@ -139,10 +137,10 @@ module Discordrb
 
     # @!visibility private
     def update_data(new_data)
-      @name = new_data['name']
-      @roles = new_data['roles']&.filter_map { |id| @server&.role(id) }
-      @available = new_data['available']
-      @creator = @bot.ensure_user(new_data['user']) if new_data['user']
+      @name = new_data[:name]
+      @roles = new_data[:roles]&.filter_map { |id| @guild&.role(id) }
+      @available = new_data[:available]
+      @creator = @bot.ensure_user(new_data[:user]) if new_data[:user]
     end
 
     # @!visibility private
@@ -151,7 +149,7 @@ module Discordrb
     end
 
     # @!visibility private
-    def self.build_emoji_hash(emoji, prefix: true)
+    def self.build_hash(emoji, prefix: true)
       data = { id: nil, name: nil }
 
       case emoji

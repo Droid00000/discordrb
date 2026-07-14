@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # An attachment to a message
+  # An attachment for a message.
   class Attachment
-    include IDObject
+    include Snowflake
 
     # Mapping of attachment flags.
     FLAGS = {
@@ -13,11 +13,10 @@ module Discordrb
       animated: 1 << 5
     }.freeze
 
-    # @return [String] the CDN URL this attachment can be downloaded at.
+    # @return [String] the CDN URL the attachment can be downloaded at.
     attr_reader :url
 
-    # @return [String] the attachment's proxy URL - I'm not sure what exactly this does, but I think it has something to
-    #   do with CDNs.
+    # @return [String] the attachment's proxy URL.
     attr_reader :proxy_url
 
     # @return [String] the attachment's filename.
@@ -32,13 +31,13 @@ module Discordrb
     # @return [Integer, nil] the height of an image file, in pixels, or `nil` if the file is not an image.
     attr_reader :height
 
-    # @return [String, nil] the attachment's description.
+    # @return [String, nil] the attachment's alt text.
     attr_reader :description
 
-    # @return [String, nil] the attachment's media type.
+    # @return [String, nil] the attachment's mime type.
     attr_reader :content_type
 
-    # @return [true, false] whether this attachment is ephemeral.
+    # @return [true, false] whether the attachment is ephemeral, meaning it will automatically be deleted.
     attr_reader :ephemeral
     alias_method :ephemeral?, :ephemeral
 
@@ -48,7 +47,7 @@ module Discordrb
     # @return [String, nil] the base64 encoded bytearray representing a sampled waveform for a voice message.
     attr_reader :waveform
 
-    # @return [Integer] the flags set on this attachment combined as a bitfield.
+    # @return [Integer] the flags set on the attachment combined as a bitfield.
     attr_reader :flags
 
     # @return [String, nil] the thumbhash of the attachment, if applicable.
@@ -70,60 +69,56 @@ module Discordrb
     def initialize(data, message, bot)
       @bot = bot
       @message = message
+      @id = data[:id].to_i
+      @url = data[:url]
+      @proxy_url = data[:proxy_url]
+      @filename = data[:filename]
+      @size = data[:size]
 
-      @id = data['id'].to_i
-      @url = data['url']
-      @proxy_url = data['proxy_url']
-      @filename = data['filename']
+      @width = data[:width]
+      @height = data[:height]
+      @description = data[:description]
+      @content_type = data[:content_type]
 
-      @size = data['size']
+      @ephemeral = data[:ephemeral] || false
+      @duration_seconds = data[:duration_secs]&.to_f
+      @waveform = data[:waveform]
+      @flags = data[:flags] || 0
 
-      @width = data['width']
-      @height = data['height']
+      @placeholder = data[:placeholder]
+      @placeholder_version = data[:placeholder_version]
 
-      @description = data['description']
-      @content_type = data['content_type']
-
-      @ephemeral = data['ephemeral']
-
-      @duration_seconds = data['duration_secs']&.to_f
-      @waveform = data['waveform']
-      @flags = data['flags'] || 0
-
-      @placeholder = data['placeholder']
-      @placeholder_version = data['placeholder_version']
-
-      @clip_application = Application.new(data['application'], @bot) if data['application']
-      @clip_participants = data['clip_participants']&.map { |user| @bot.ensure_user(user) } || []
-      @clip_creation_time = Time.iso8601(data['clip_created_at']) if data['clip_created_at']
+      @clip_application = Application.new(data[:application], @bot) if data[:application]
+      @clip_participants = data[:clip_participants]&.map { |user| @bot.ensure_user(user) } || []
+      @clip_creation_time = Time.iso8601(data[:clip_created_at]) if data[:clip_created_at]
     end
 
     # Check if the attachment is an image.
-    # @return [true, false] whether this file is an image file.
+    # @return [true, false] Whether or not the attachment is an image.
     def image?
       !(@width.nil? || @height.nil?)
     end
 
     # Get the message associated with the attachment.
-    # @return [Message, nil] the message this attachment object belongs to.
+    # @return [Message, nil] The message the attachment is associated with.
     def message
-      @message unless @message.is_a?(Snapshot)
+      @message if @message.is_a?(Message)
     end
 
     # Get the message snapshot associated with the attachment.
-    # @return [Snapshot, nil] the message snapshot this attachment object belongs to.
+    # @return [Snapshot, nil] The snapshot the attachment is associated with.
     def snapshot
-      @message unless @message.is_a?(Message)
+      @message if @message.is_a?(Snapshot)
     end
 
-    # @!method clip?
-    #   @return [true, false] whether or not the attachment is a clip from a stream.
-    # @!method thumbnail?
-    #   @return [true, false] whether or not the attachment is the thumbnail of a thread in a media channel.
-    # @!method animated?
-    #   @return [true, false] whether or not the attachment is considered to be an animated image.
     # @!method spoiler?
     #   @return [true, false] whether or not the attachment is marked as a spoiler.
+    # @!method clip?
+    #   @return [true, false] whether or not the attachment is a clip from a stream.
+    # @!method animated?
+    #   @return [true, false] whether or not the attachment is considered to be an animated image.
+    # @!method thumbnail?
+    #   @return [true, false] whether or not the attachment is the thumbnail of a thread in a media channel.
     FLAGS.each do |name, value|
       define_method("#{name}?") { @flags.anybits?(value) }
     end

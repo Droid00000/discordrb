@@ -1,110 +1,121 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-require 'discordrb/data'
-
 module Discordrb::Events
-  # Generic subclass for server member events (add/update/delete)
-  class ServerMemberEvent < Event
-    # @return [Member] the member in question.
-    attr_reader :user
-    alias_method :member, :user
+  # Generic superclass for guild member events.
+  class GuildMemberEvent < Event
+    # @return [Integer] the user ID of the guild member.
+    attr_reader :user_id
 
-    # @return [Array<Role>] the member's roles.
-    attr_reader :roles
+    # @return [true, false] whether the member is pending.
+    attr_reader :pending
+    alias pending? pending
 
-    # @return [Server] the server on which the event happened.
-    attr_reader :server
+    # @return [String, nil] the nickname of the guild member.
+    attr_reader :nickname
 
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @server = bot.server(data['guild_id'].to_i)
-      return unless @server
-
-      init_user(data, bot)
-      init_roles(data, bot)
+      @pending = data[:pending]
+      @user_id = data[:user][:id]&.to_i
+      @guild_id = data[:guild_id]&.to_i
+      @nickname = data[:nick] == '' ? nil : data[:nick]
     end
 
-    private
-
-    # @!visibility private
-    def init_user(data, _)
-      user_id = data['user']['id'].to_i
-      @user = @server.member(user_id)
+    # Get the guild associated with the event.
+    # @return [Guild] The guild associated with the event.
+    def guild
+      @bot.guild(@guild_id)
     end
 
-    # @!visibility private
-    def init_roles(data, _)
-      @roles = [@server.role(@server.id)]
-      return unless data['roles']
-
-      data['roles'].each do |element|
-        role_id = element.to_i
-        @roles << @server.roles.find { |r| r.id == role_id }
-      end
+    # Get the member associated with the event.
+    # @return [Member] The member associated with the event.
+    def member
+      guild&.member(@user_id)
     end
   end
 
-  # Generic event handler for member events
-  class ServerMemberEventHandler < EventHandler
+  # Raised whenever a guild member is added.
+  class GuildMemberAddEvent < GuildMemberEvent; end
+
+  # Raised whenever a guild member is updated.
+  class GuildMemberUpdateEvent < GuildMemberEvent; end
+
+  # Raised whenever a guild member is removed.
+  class GuildMemberRemoveEvent < Event
+    # @return [User] the user that was removed.
+    attr_reader :user
+
+    # @return [Guild] the guild the user was removed from.
+    attr_reader :guild
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @user = bot.ensure_user(data[:user])
+      @guild = bot.guild(data[:guild_id].to_i)
+    end
+  end
+
+  # Generic event handler for guild member events.
+  class GuildMemberEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ServerMemberEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(GuildMemberEvent)
 
       [
-        matches_all(@attributes[:username], event.user.name) do |a, e|
-          a == if a.is_a? String
-                 e.to_s
-               else
-                 e
-               end
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a.resolve_id == e.resolve_id
+        end,
+
+        matches_all(@attributes[:pending], event.pending?) do |a, e|
+          case a
+          when TrueClass
+            e.pending? == true
+          when FalseClass
+            e.pending? == false
+          end
+        end,
+
+        matches_all(@attributes[:nickname], event.nickname) do |a, e|
+          case a
+          when String
+            a == (e.nickname || '')
+          when Regexp
+            a.match?(e.nickame || '')
+          end
+        end,
+
+        matches_all(@attributes[:user] || @attributes[:id], event.user_id) do |a, e|
+          a.resolve_id == e.resolve_id
         end
       ].reduce(true, &:&)
     end
   end
 
-  # Member joins
-  # @see Discordrb::EventContainer#member_join
-  class ServerMemberAddEvent < ServerMemberEvent; end
+  # Event handler for GUILD_MEMBER_ADD events.
+  class GuildMemberAddEventHandler < GuildMemberEventHandler; end
 
-  # Event handler for {ServerMemberAddEvent}
-  class ServerMemberAddEventHandler < ServerMemberEventHandler; end
+  # Event handler for GUILD_MEMBER_UPDATE events.
+  class GuildMemberUpdateEventHandler < GuildMemberEventHandler; end
 
-  # Member is updated (roles added or deleted)
-  # @see Discordrb::EventContainer#member_update
-  class ServerMemberUpdateEvent < ServerMemberEvent
+  # Event handler for GUILD_MEMBER_REMOVE events.
+  class GuildMemberRemoveEventHandler < EventHandler
     # @!visibility private
-    # @note Override init_user so we don't make requests all the time on large servers
-    def init_user(data, _)
-      @user_id = data['user']['id']
-    end
+    def matches?(event)
+      # Check for the proper event type.
+      return false unless event.is_a?(GuildMemberRemoveEvent)
 
-    # @return [Member] the member in question.
-    def user
-      @server&.member(@user_id)
-    end
+      [
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a.resolve_id == e.resolve_id
+        end,
 
-    alias_method :member, :user
+        matches_all(@attributes[:user] || @attributes[:id], event.user) do |a, e|
+          a.resolve_id == e.resolve_id
+        end
+      ].reduce(true, &:&)
+    end
   end
-
-  # Event handler for {ServerMemberUpdateEvent}
-  class ServerMemberUpdateEventHandler < ServerMemberEventHandler; end
-
-  # Member leaves
-  # @see Discordrb::EventContainer#member_leave
-  class ServerMemberDeleteEvent < ServerMemberEvent
-    # @!visibility private
-    # @note Override init_user to account for the deleted user on the server
-    def init_user(data, bot)
-      @user = Discordrb::User.new(data['user'], bot)
-    end
-
-    # @return [User] the user in question.
-    attr_reader :user
-  end
-
-  # Event handler for {ServerMemberDeleteEvent}
-  class ServerMemberDeleteEventHandler < ServerMemberEventHandler; end
 end

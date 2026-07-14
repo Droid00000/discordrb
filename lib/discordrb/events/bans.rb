@@ -1,60 +1,43 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-
 module Discordrb::Events
-  # Raised when a user is banned
-  class UserBanEvent < Event
-    # @return [User] the user that was banned
+  # Raised whenever a user is banned.
+  class GuildBanAddEvent < Event
+    # @return [User] the user that was banned.
     attr_reader :user
 
-    # @return [Server] the server from which the user was banned
-    attr_reader :server
+    # @return [Guild] the guild the user was banned from.
+    attr_reader :guild
 
     # @!visibility private
     def initialize(data, bot)
-      @user = bot.user(data['user']['id'].to_i)
-      @server = bot.server(data['guild_id'].to_i)
       @bot = bot
+      @user = bot.ensure_user(data[:user])
+      @guild = bot.guild(data[:guild_id].to_i)
     end
   end
 
-  # Event handler for {UserBanEvent}
-  class UserBanEventHandler < EventHandler
+  # Raised whenever a user is unbanned.
+  class GuildBanRemoveEvent < GuildBanAddEvent; end
+
+  # Event handler for GUILD_BAN_ADD events.
+  class GuildBanAddEventHandler < EventHandler
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? UserBanEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(GuildBanAddEvent)
 
       [
-        matches_all(@attributes[:user], event.user) do |a, e|
-          case a
-          when String
-            a == e.name
-          when Integer
-            a == e.id
-          when :bot
-            e.current_bot?
-          else
-            a == e
-          end
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
         end,
-        matches_all(@attributes[:server], event.server) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+
+        matches_all(@attributes[:user] || @attributes[:member], event.user) do |a, e|
+          a&.resolve_id == e&.resolve_id
         end
       ].reduce(true, &:&)
     end
   end
 
-  # Raised when a user is unbanned from a server
-  class UserUnbanEvent < UserBanEvent; end
-
-  # Event handler for {UserUnbanEvent}
-  class UserUnbanEventHandler < UserBanEventHandler; end
+  # Event handler for GUILD_BAN_REMOVE events.
+  class GuildBanRemoveEventHandler < GuildBanAddEventHandler; end
 end

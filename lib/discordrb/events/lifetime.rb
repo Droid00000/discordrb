@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-
 module Discordrb::Events
   # Common superclass for all lifetime events
   class LifetimeEvent < Event
@@ -23,9 +21,9 @@ module Discordrb::Events
   # Event handler for {DisconnectEvent}
   class DisconnectEventHandler < TrueEventHandler; end
 
-  # @see Discordrb::EventContainer#heartbeat
-  class HeartbeatEvent < LifetimeEvent; end
+  # @see Discordrb::EventContainer#resumed
+  class ResumedEvent < LifetimeEvent; end
 
-  # Event handler for {HeartbeatEvent}
-  class HeartbeatEventHandler < TrueEventHandler; end
+  # Event handler for {ResumedEvent}
+  class ResumedEventHandler < TrueEventHandler; end
 end

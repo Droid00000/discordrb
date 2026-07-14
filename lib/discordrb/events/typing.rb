@@ -1,72 +1,81 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-
 module Discordrb::Events
-  # Event raised when a user starts typing
-  class TypingEvent < Event
+  # Raised whenever a user starts typing in a channel.
+  class TypingStartEvent < Event
     include Respondable
 
-    # @return [Channel] the channel on which a user started typing.
-    attr_reader :channel
+    # @return [Integer] the ID of the user that started typing.
+    attr_reader :user_id
 
-    # @return [User, Member, Recipient] the user that started typing.
-    attr_reader :user
-    alias_method :member, :user
+    # @return [Integer, nil] the ID of the guild where the user
+    #   started typing.
+    attr_reader :guild_id
 
-    # @return [Time] when the typing happened.
-    attr_reader :timestamp
+    # @return [Time] the timestamp at when the user started typing.
+    attr_reader :started_at
+
+    # @return [Integer] the ID of the channel where the user started
+    #   typing.
+    attr_reader :channel_id
 
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @user_id = data['user_id'].to_i
-
-      @channel_id = data['channel_id'].to_i
-      @channel = bot.channel(@channel_id)
-
-      @user = if channel.pm?
-                channel.recipient
-              elsif channel.group?
-                bot.user(@user_id)
-              else
-                bot.member(@channel.server.id, @user_id)
-              end
-
-      @timestamp = Time.at(data['timestamp'].to_i)
+      @user_id = data[:user_id]&.to_i
+      @guild_id = data[:guild_id]&.to_i
+      @channel_id = data[:channel_id]&.to_i
+      @started_at = Time.at(data[:timestamp].to_i)
     end
+
+    # Get the guild where the user started typing.
+    # @return [Guild, nil] The guild where the user started typing.
+    def guild
+      @channel.guild
+    end
+
+    # Get the channel where the user started typing.
+    # @return [Channel] The channel where the user started typing.
+    def channel
+      @bot.channel(@channel_id)
+    end
+
+    # Get the user or member who started typing.
+    # @return [User, Member] The user or member that started typing.
+    def member
+      @channel&.guild&.member(@user_id) || @bot.user(@user_id)
+    end
+
+    alias_method :user, :member
   end
 
-  # Event handler for TypingEvent
-  class TypingEventHandler < EventHandler
+  # Event handler for TYPING_START events.
+  class TypingStartEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? TypingEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(TypingStartEvent)
 
       [
-        matches_all(@attributes[:in], event.channel) do |a, e|
-          case a
-          when String
-            a.delete('#') == e.name
-          when Integer
-            a == e.id
-          else
-            a == e
-          end
+        matches_all(@attributes[:guild], event.guild_id) do |a, e|
+          a&.resolve_id == e.guild&.id
         end,
-        matches_all(@attributes[:from], event.user) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+
+        matches_all(@attributes[:after], event.started_at) do |a, e|
+          a > e
         end,
-        matches_all(@attributes[:after], event.timestamp) { |a, e| a > e },
-        matches_all(@attributes[:before], event.timestamp) { |a, e| a < e }
+
+        matches_all(@attributes[:before], event.started_at) do |a, e|
+          a < e
+        end,
+
+        matches_all(@attributes[:channel], event.channel_id) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:user] || @attributes[:member], event.user_id) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end
       ].reduce(true, &:&)
     end
   end

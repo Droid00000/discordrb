@@ -2,16 +2,16 @@
 
 require 'discordrb'
 
-bot = Discordrb::Bot.new(token: ENV.fetch('BOT_TOKEN', nil), intents: %i[servers server_emojis server_messages])
+bot = Discordrb::Bot.new(token: ENV.fetch('BOT_TOKEN', nil), intents: %i[guilds guild_emojis guild_messages])
 
-bot.register_application_command(:container, 'An example of a container component.', server_id: ENV.fetch('SERVER_ID', nil)) do |option|
+bot.register_application_command(:container, 'An example of a container component.', guild: ENV.fetch('GUILD_ID', nil)) do |option|
   option.boolean(:color, 'Whether the container should include an accent color.', required: false)
 end
 
 bot.application_command(:container) do |event|
-  # Transform the first 15 emojis from the server our command is
+  # Transform the first 15 emojis from the guild our command is
   # called from into the formart of: "mention - name **{Integer}**".
-  emojis = event.server.emojis.values.shuffle.take(15).map do |emoji|
+  emojis = event.guild.emojis.shuffle.take(15).map do |emoji|
     "#{emoji.mention} — #{emoji.name} **(#{rand(2001..5001)})**\n"
   end
 
@@ -22,13 +22,13 @@ bot.application_command(:container) do |event|
     view.container do |container|
       # A section must have either a thumbnail or a button.
       container.section do |section|
-        section.thumbnail(url: event.server.icon_url)
-        section.text_display(content: "### Emoji Statistics for #{event.server.name}")
+        section.thumbnail(url: event.guild.icon_url)
+        section.text_display(content: "### Emoji Statistics for #{event.guild.name}")
         section.text_display(content: 'These are the fake emoji statistics for your server.')
       end
 
       # Unlike embeds, if the accent color isn't set, the container simply won't have an accent color.
-      container.color = rand(0..0xFFFFFF) if event.options['color']
+      container.color = rand(0..0xFFFFFF) if event.options[:color]
 
       # A separator can appear as a thin, and translucent line when setting `divider` to true. Otherwise,
       # the separator can function as an invisible barrier to provide padding between components.
@@ -41,7 +41,7 @@ bot.application_command(:container) do |event|
       container.separator(divider: true, spacing: :small)
 
       # Create a new array with three random emojis for our select menu below.
-      emojis = event.server.emojis.values.shuffle.take(3)
+      emojis = event.guild.emojis.shuffle.take(3)
 
       # Since action rows can be added within containers, we can add any component supported by an action row
       # to the container including buttons and select menus!
@@ -71,7 +71,7 @@ end
 # The second example is a little more generic and uses a standard message sent to a channel.
 bot.message(content: '!sample') do |event|
   # Any of the components used below can be used within a container as well.
-  event.send_message!(has_components: true) do |_, view|
+  event.send_message(has_components: true) do |_, view|
     view.text_display(content: <<~CONTENT)
       This is a text display component! Any markdown that can be used in the `content` field can also be used here.\n
       🧢 ~~strikethrough~~ **bold text** *italics* ||spoiler|| `code` __underline__ [masked link](https://youtu.be/dQw4w9WgXcQ)\n
@@ -111,7 +111,7 @@ end
 # This last example shows how a file component looks.
 bot.message(content: '!file') do |event|
   # Any attachments that are provided must be manually exposed via the component system.
-  event.send_message!(attachments: [File.open('data/music.mp3', 'rb')], has_components: true) do |_, view|
+  event.send_message(attachments: [File.open('data/music.mp3', 'rb')], has_components: true) do |_, view|
     view.container do |container|
       # All components accept an `id:` KWARG. This ID can be any 32-bit integer.
       # This is not to be confused with the `custom_id:` parameter used to pass state between interactions.

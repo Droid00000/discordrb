@@ -6,9 +6,9 @@ require 'securerandom'
 bot = Discordrb::Bot.new(token: ENV.fetch('DISCORDRB_TOKEN'))
 
 bot.message(content: 'TEST') do |event|
-  event.channel.send_message!(content: 'Examples of different select menus')
+  event.channel.send_message(content: 'Examples of different select menus')
 
-  event.channel.send_message!(content: 'string_select (old select_menu, but alias define to keep legacy)') do |_, view|
+  event.channel.send_message(content: 'string_select (old select_menu, but alias define to keep legacy)') do |_, view|
     view.row do |row|
       row.string_select(custom_id: 'string_select', placeholder: 'Test of StringSelect', max_values: 3) do |menu|
         menu.option(label: 'Value 1', value: '1', description: 'First value', emoji: { name: '1️⃣' })
@@ -24,31 +24,31 @@ bot.message(content: 'TEST') do |event|
     end
   end
 
-  event.channel.send_message!(content: 'user_select') do |_, view|
+  event.channel.send_message(content: 'user_select') do |_, view|
     view.row do |row|
       row.user_select(custom_id: 'user_select', placeholder: 'Test of UserSelect', max_values: 3, disabled: true)
     end
   end
 
-  event.channel.send_message!(content: 'user_select') do |_, view|
+  event.channel.send_message(content: 'user_select') do |_, view|
     view.row do |row|
       row.user_select(custom_id: 'user_select', placeholder: 'Test of UserSelect', max_values: 3)
     end
   end
 
-  event.channel.send_message!(content: 'role_select') do |_, view|
+  event.channel.send_message(content: 'role_select') do |_, view|
     view.row do |row|
       row.role_select(custom_id: 'role_select', placeholder: 'Test of RoleSelect', max_values: 3)
     end
   end
 
-  event.channel.send_message!(content: 'mentionable_select') do |_, view|
+  event.channel.send_message(content: 'mentionable_select') do |_, view|
     view.row do |row|
       row.mentionable_select(custom_id: 'mentionable_select', placeholder: 'Test of MentionableSelect', max_values: 3)
     end
   end
 
-  event.channel.send_message!(content: 'channel_select') do |_, view|
+  event.channel.send_message(content: 'channel_select') do |_, view|
     view.row do |row|
       row.channel_select(custom_id: 'channel_select', placeholder: 'Test of ChannelSelect', max_values: 3)
     end

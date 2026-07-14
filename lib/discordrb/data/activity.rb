@@ -2,9 +2,19 @@
 
 module Discordrb
   # Contains information about user activities such as the game they are playing,
-  # music they are listening to, or their live stream.
+  #   music they are listening to, or their live stream.
   class Activity
-    # Values corresponding to the flags bitmask
+    # Mapping of activity type.
+    TYPES = {
+      playing: 0,
+      streaming: 1,
+      listening: 2,
+      watching: 3,
+      custom_status: 4,
+      competing: 5
+    }.freeze
+
+    # Mapping of activity flags.
     FLAGS = {
       instance: 1 << 0, # this activity is an instanced game session
       join: 1 << 1, # this activity is joinable
@@ -72,56 +82,51 @@ module Discordrb
 
     # @!visibility private
     def initialize(data, bot)
-      @name = data['name']
-      @type = data['type']
-      @url = data['url']
-      @application_id = data['application_id']
-      @details = data['details']
-      @state = data['state']
-      @instance = data['instance']
-      @flags = data['flags'] || 0
-      @created_at = Time.at(data['created_at'].to_i)
+      @name = data[:name]
+      @type = data[:type]
+      @url = data[:url]
+      @application_id = data[:application_id]
+      @details = data[:details]
+      @state = data[:state]
+      @instance = data[:instance]
+      @flags = data[:flags] || 0
+      @created_at = Time.at(data[:created_at].to_i)
 
-      @timestamps = Timestamps.new(data['timestamps']) if data['timestamps']
-      @secrets = Secrets.new(data['secrets']) if data['secrets']
-      @assets = Assets.new(data['assets'], @application_id) if data['assets']
-      @party = Party.new(data['party']) if data['party']
-      @emoji = Emoji.new(data['emoji'], bot, nil) if data['emoji']
+      @timestamps = Timestamps.new(data[:timestamps]) if data[:timestamps]
+      @secrets = Secrets.new(data[:secrets]) if data[:secrets]
+      @assets = Assets.new(data[:assets], @application_id) if data[:assets]
+      @party = Party.new(data[:party]) if data[:party]
+      @emoji = Emoji.new(data[:emoji], bot, nil) if data[:emoji]
     end
 
     # @return [true, false] Whether or not the `join` flag is set for this activity
     def join?
-      flag_set? :join
+      @flags.anybits?(FLAGS[:join])
     end
 
     # @return [true, false] Whether or not the `spectate` flag is set for this activity
     def spectate?
-      flag_set? :spectate
+      @flags.anybits?(FLAGS[:spectate])
     end
 
     # @return [true, false] Whether or not the `join_request` flag is set for this activity
     def join_request?
-      flag_set? :join_request
+      @flags.anybits?(FLAGS[:join_request])
     end
 
     # @return [true, false] Whether or not the `sync` flag is set for this activity
     def sync?
-      flag_set? :sync
+      @flags.anybits?(FLAGS[:sync])
     end
 
     # @return [true, false] Whether or not the `play` flag is set for this activity
     def play?
-      flag_set? :play
+      @flags.anybits?(FLAGS[:play])
     end
 
     # @return [true, false] Whether or not the `instance` flag is set for this activity
     def instance?
-      @instance || flag_set?(:instance)
-    end
-
-    # @!visibility private
-    def flag_set?(sym)
-      !@flags.nobits?(FLAGS[sym])
+      @instance || @flags.anybits?(FLAGS[:play])
     end
 
     # Timestamps for the start and end of instanced activities
@@ -134,8 +139,8 @@ module Discordrb
 
       # @!visibility private
       def initialize(data)
-        @start = Time.at(data['start'] / 1000) if data['start']
-        @end = Time.at(data['end'] / 1000) if data['end']
+        @start = Time.at(data[:start] / 1000) if data[:start]
+        @end = Time.at(data[:end] / 1000) if data[:end]
       end
     end
 
@@ -152,9 +157,9 @@ module Discordrb
 
       # @!visibility private
       def initialize(data)
-        @join = data['join']
-        @spectate = data['spectate']
-        @match = data['match']
+        @join = data[:join]
+        @spectate = data[:spectate]
+        @match = data[:match]
       end
     end
 
@@ -178,24 +183,24 @@ module Discordrb
       # @!visibility private
       def initialize(data, application_id)
         @application_id = application_id
-        @large_image_id = data['large_image']
-        @large_text = data['large_text']
-        @small_image_id = data['small_image']
-        @small_text = data['small_text']
+        @large_image_id = data[:large_image]
+        @large_text = data[:large_text]
+        @small_image_id = data[:small_image]
+        @small_text = data[:small_text]
       end
 
       # Utility function to get an Asset's large image URL.
       # @param format [String, nil] If `nil`, the URL will default to `webp`. You can otherwise specify one of `webp`, `jpg`, or `png`.
       # @return [String] the URL to the large image asset.
       def large_image_url(format = 'webp')
-        API.asset_url(@application_id, @large_image_id, format)
+        Discordrb::Assets[:application_asset, @application_id, @large_image_id, format] if @large_image_id
       end
 
       # Utility function to get an Asset's large image URL.
       # @param format [String, nil] If `nil`, the URL will default to `webp`. You can otherwise specify one of `webp`, `jpg`, or `png`.
       # @return [String] the URL to the small image asset.
       def small_image_url(format = 'webp')
-        API.asset_url(@application_id, @small_image_id, format)
+        Discordrb::Assets[:application_asset, @application_id, @small_image_id, format] if @small_image_id
       end
     end
 
@@ -212,8 +217,8 @@ module Discordrb
 
       # @!visibility private
       def initialize(data)
-        @id = data['id']
-        @current_size, @max_size = data['size']
+        @id = data[:id]
+        @current_size, @max_size = data[:size]
       end
     end
   end

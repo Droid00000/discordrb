@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'websocket-client-simple'
-require 'socket'
 require 'json'
+require 'socket'
 
 require 'discordrb/websocket'
 require 'discordrb/voice/opcodes'
@@ -187,15 +186,15 @@ module Discordrb::Voice
     end
 
     # Send a connection init packet (op 0)
-    # @param server_id [Integer] The ID of the server to connect to
+    # @param guild_id [Integer] The ID of the guild to connect to
     # @param bot_user_id [Integer] The ID of the bot that is connecting
     # @param session_id [String] The voice session ID
     # @param token [String] The Discord authentication token
-    def send_init(server_id, bot_user_id, session_id, token)
+    def send_init(guild_id, bot_user_id, session_id, token)
       send_opcode(
         Opcodes::IDENTIFY,
         {
-          server_id: server_id,
+          server_id: guild_id,
           user_id: bot_user_id,
           session_id: session_id,
           token: token
@@ -224,7 +223,7 @@ module Discordrb::Voice
     # Send a heartbeat (op 3), has to be done every @heartbeat_interval seconds or the connection will terminate
     def send_heartbeat
       millis = Time.now.strftime('%s%L').to_i
-      @bot.debug("Sending voice heartbeat at #{millis}")
+      Discordrb::LOGGER.debug("Sending voice heartbeat at #{millis}")
 
       send_opcode(
         Opcodes::HEARTBEAT,
@@ -238,7 +237,7 @@ module Discordrb::Voice
     # Send a speaking packet (op 5). This determines the green circle around the avatar in the voice channel
     # @param value [true, false, Integer] Whether or not the bot should be speaking, can also be a bitmask denoting audio type.
     def send_speaking(value)
-      @bot.debug("Speaking: #{value}")
+      Discordrb::LOGGER.debug("Speaking: #{value}")
       send_opcode(
         Opcodes::SPEAKING,
         {
@@ -249,7 +248,7 @@ module Discordrb::Voice
     end
 
     def send_opcode(opcode, data)
-      @bot.debug("Sending voice opcode #{opcode} with data: #{data}")
+      Discordrb::LOGGER.debug("Sending voice opcode #{opcode} with data: #{data}")
       @client.send({
         op: opcode,
         d: data
@@ -258,17 +257,17 @@ module Discordrb::Voice
 
     # Event handlers; public for websocket-simple to work correctly
     # @!visibility private
-    def websocket_open
+    def notify_open
       # Give the current thread a name ('Voice Web Socket Internal')
       Thread.current[:discordrb_name] = 'vws-i'
 
       # Send the init packet
-      send_init(@channel.server.id, @bot.profile.id, @session, @token)
+      send_init(@channel.guild.id, @bot.profile.id, @session, @token)
     end
 
     # @!visibility private
-    def websocket_message(msg)
-      @bot.debug("Received VWS message! #{msg}")
+    def notify_message(msg)
+      Discordrb::LOGGER.debug("Received VWS message! #{msg}")
       packet = JSON.parse(msg)
 
       @seq = packet['seq'] if packet['seq']
@@ -323,16 +322,16 @@ module Discordrb::Voice
         init_ws
       end
 
-      @bot.debug('Started websocket initialization, now waiting for UDP discovery reply')
+      Discordrb::LOGGER.debug('Started websocket initialization, now waiting for UDP discovery reply')
 
       # Now wait for opcode 2 and the resulting UDP reply packet
       ip, port = @udp.receive_discovery_reply
-      @bot.debug("UDP discovery reply received! #{ip} #{port}")
+      Discordrb::LOGGER.debug("UDP discovery reply received! #{ip} #{port}")
 
       # Send UDP init packet with received UDP data
       send_udp_connection(ip, port, @udp_mode)
 
-      @bot.debug('Waiting for op 4 now')
+      Discordrb::LOGGER.debug('Waiting for op 4 now')
 
       # Wait for op 4, then finish
       sleep 0.05 until @ready
@@ -340,7 +339,23 @@ module Discordrb::Voice
 
     # Disconnects the websocket and kills the thread
     def destroy
+      @client&.close(code: 1000)
       @heartbeat_running = false
+    end
+
+    # @!visibility private
+    def notify_close(code:, reason:)
+      Discordrb::LOGGER.warn("The voice-websocket has closed (code: #{code}, reason: \"#{reason}\").")
+    end
+
+    # @!visibility private
+    def notify_error
+      DisDiscordrb::LOGGER.warn('The voice-websocket has unexpectedly closed.')
+    end
+
+    # @!visibility private
+    def url
+      "wss://#{@endpoint}/?v=#{VOICE_GATEWAY_VERSION}"
     end
 
     private
@@ -359,19 +374,13 @@ module Discordrb::Voice
     end
 
     def init_ws
-      host = "wss://#{@endpoint}/?v=#{VOICE_GATEWAY_VERSION}"
-      @bot.debug("Connecting VWS to host: #{host}")
+      Discordrb::LOGGER.debug("Connecting VWS to host: #{url}")
 
       # Connect the WS
-      @client = Discordrb::WebSocket.new(
-        host,
-        method(:websocket_open),
-        method(:websocket_message),
-        proc { |e| Discordrb::LOGGER.error "VWS error: #{e}" },
-        proc { |e| Discordrb::LOGGER.warn "VWS close: #{e}" }
-      )
+      @client = Discordrb::WebSocket.new(self, :none, false)
+      @client.connect
 
-      @bot.debug('VWS connected')
+      Discordrb::LOGGER.debug('VWS connected')
 
       # Block any further execution
       heartbeat_loop
