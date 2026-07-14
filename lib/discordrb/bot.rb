@@ -76,20 +76,13 @@ module Discordrb
     # Makes a new bot with the given authentication data. It will be ready to be added event handlers to and can
     # eventually be run with {#run}.
     #
-    # As support for logging in using username and password has been removed in version 3.0.0, only a token login is
-    # possible. Be sure to specify the `type` parameter as `:user` if you're logging in as a user.
-    #
     # Simply creating a bot won't be enough to start sending messages etc. with, only a limited set of methods can
     # be used after logging in. If you want to do something when the bot has connected successfully, either do it in the
     # {#ready} event, or use the {#run} method with the :async parameter and do the processing after that.
     # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
-    # @param token [String] The token that should be used to log in. If your bot is a bot account, you have to specify
-    #   this. If you're logging in as a user, make sure to also set the account type to :user so discordrb doesn't think
-    #   you're trying to log in as a bot.
-    # @param client_id [Integer] If you're logging in as a bot, the bot's client ID. This is optional, and may be fetched
-    #   from the API by calling {Bot#bot_application} (see {Application}).
-    # @param type [Symbol] This parameter lets you manually overwrite the account type. This needs to be set when
-    #   logging in as a user, otherwise discordrb will treat you as a bot account. Valid values are `:user` and `:bot`.
+    # @param token [String] The token that should be used to log in.
+    # @param client_id [Integer] The bot's client ID. This is optional, and may be fetched from the API by calling
+    #   {Bot#bot_application} (see {Application}).
     # @param name [String] Your bot's name. This will be sent to Discord with any API requests, who will use this to
     #   trace the source of excessive API requests; it's recommended to set this to something if you make bots that many
     #   people will host on their servers separately.
@@ -115,11 +108,9 @@ module Discordrb
     #   exactly all the intents specified in the bitwise value.
     # @see Discordrb::INTENTS
     def initialize(
-      log_mode: :normal,
-      token: nil, client_id: nil,
-      type: nil, name: '', fancy_log: false, suppress_ready: false, parse_self: false,
-      shard_id: nil, num_shards: nil, redact_token: true, ignore_bots: false,
-      compress_mode: :large, intents: :all
+      log_mode: :normal, token: nil, client_id: nil, name: '', fancy_log: false,
+      suppress_ready: false, parse_self: false, shard_id: nil, num_shards: nil,
+      redact_token: true, ignore_bots: false, compress_mode: :large, intents: :all
     )
       LOGGER.mode = log_mode
       LOGGER.token = token if redact_token
@@ -128,15 +119,12 @@ module Discordrb
 
       @client_id = client_id
 
-      @type = type || :bot
       @name = name
 
       @shard_key = num_shards ? [shard_id, num_shards] : nil
 
       LOGGER.fancy = fancy_log
       @prevent_ready = suppress_ready
-
-      @compress_mode = compress_mode
 
       raise 'Token string is empty or nil' if token.nil? || token.empty?
 
@@ -151,8 +139,8 @@ module Discordrb
                    calculate_intents(intents)
                  end
 
-      @token = process_token(@type, token)
-      @gateway = Gateway.new(self, @token, @shard_key, @compress_mode, @intents)
+      @token = "Bot #{token.delete_prefix('Bot ')}"
+      @gateway = Gateway.new(self, @token, @shard_key, compress_mode, @intents)
 
       init_cache
 
@@ -208,6 +196,8 @@ module Discordrb
           emoji = server.emojis[id]
           return emoji if emoji
         end
+
+        nil
       else
         hash = {}
         @servers.each_value do |server|
@@ -223,7 +213,7 @@ module Discordrb
 
     # Finds an emoji by its name.
     # @param name [String] The emoji name that should be resolved.
-    # @return [GlobalEmoji, nil] the emoji identified by the name, or `nil` if it couldn't be found.
+    # @return [Emoji, nil] the emoji identified by the name, or `nil` if it couldn't be found.
     def find_emoji(name)
       LOGGER.out("Resolving emoji #{name}")
       emoji.find { |element| element.name == name }
@@ -311,13 +301,6 @@ module Discordrb
     # @return [true, false] whether or not the bot is currently connected to Discord.
     def connected?
       @gateway.open?
-    end
-
-    # Makes the bot join an invite to a server.
-    # @param invite [String, Invite] The invite to join. For possible formats see {#resolve_invite_code}.
-    def accept_invite(invite)
-      resolved = invite(invite).code
-      API::Invite.accept(token, resolved)
     end
 
     # Creates an OAuth invite URL that can be used to invite this bot to a particular server.
@@ -449,7 +432,10 @@ module Discordrb
     # @param nonce [String, nil] A optional nonce in order to verify that a message was sent. Maximum of twenty-five characters.
     # @param enforce_nonce [true, false] Whether the nonce should be enforced and used for message de-duplication.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.
+    # @return [Message] The message that was sent.
     def send_temporary_message(channel, content, timeout, tts = false, embeds = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0, nonce = nil, enforce_nonce = false, poll = nil)
+      message = send_message(channel, content, tts, embeds, attachments, allowed_mentions, message_reference, components, flags, nonce, enforce_nonce, poll)
+
       Thread.new do
         Thread.current[:discordrb_name] = "#{@current_thread}-temp-msg"
 
@@ -458,43 +444,25 @@ module Discordrb
         message.delete
       end
 
-      nil
+      message
     end
 
     # Sends a file to a channel. If it is an image, it will automatically be embedded.
     # @note This executes in a blocking way, so if you're sending long files, be wary of delays.
     # @param channel [Channel, String, Integer] The channel, or its ID, to send something to.
     # @param file [File] The file that should be sent.
-    # @param caption [string] The caption for the file.
-    # @param tts [true, false] Whether or not this file's caption should be sent using Discord text-to-speech.
-    # @param filename [String] Overrides the filename of the uploaded file
-    # @param spoiler [true, false] Whether or not this file should appear as a spoiler.
+    # @param caption [string, nil] The description of the file.
+    # @param tts [true, false, nil] Whether or not this file's caption should be sent using Discord text-to-speech.
+    # @param filename [String, nil] Overrides the filename of the uploaded file.
+    # @param spoiler [true, false, nil] Whether or not this file should appear as a spoiler.
     # @example Send a file from disk
     #   bot.send_file(83281822225530880, File.open('rubytaco.png', 'r'))
     def send_file(channel, file, caption: nil, tts: false, filename: nil, spoiler: nil)
-      if file.respond_to?(:read)
-        if spoiler
-          filename ||= File.basename(file.path)
-          filename = "SPOILER_#{filename}" unless filename.start_with? 'SPOILER_'
-        end
-        # https://github.com/rest-client/rest-client/blob/v2.0.2/lib/restclient/payload.rb#L160
-        file.define_singleton_method(:original_filename) { filename } if filename
-        file.define_singleton_method(:path) { filename } if filename
-      end
+      # https://github.com/rest-client/rest-client/blob/v2.0.2/lib/restclient/payload.rb#L160
+      file.define_singleton_method(:original_filename) { filename } if filename && file.respond_to?(:read)
 
-      channel = channel.resolve_id
-      response = API::Channel.upload_file(token, channel, file, caption: caption, tts: tts)
+      response = API::Channel.send_attachment(token, channel.resolve_id, file, description: caption, tts:, spoiler:)
       Message.new(JSON.parse(response), self)
-    end
-
-    # Creates a new application to do OAuth authorization with. This allows you to use OAuth to authorize users using
-    # Discord. For information how to use this, see the docs: https://discord.com/developers/docs/topics/oauth2
-    # @param name [String] What your application should be called.
-    # @param redirect_uris [Array<String>] URIs that Discord should redirect your users to after authorizing.
-    # @return [Array(String, String)] your applications' client ID and client secret to be used in OAuth authorization.
-    def create_oauth_application(name, redirect_uris)
-      response = JSON.parse(API.create_oauth_application(@token, name, redirect_uris))
-      [response['id'], response['secret']]
     end
 
     # Changes information about your OAuth application
@@ -794,13 +762,6 @@ module Discordrb
       raise_event(HeartbeatEvent.new(self))
     end
 
-    # Makes the bot leave any groups with no recipients remaining
-    def prune_empty_groups
-      @channels.each_value do |channel|
-        channel.leave_group if channel.group? && channel.recipients.empty?
-      end
-    end
-
     # Get all application commands.
     # @param server_id [String, Integer, nil] The ID of the server to get the commands from. Global if `nil`.
     # @return [Array<ApplicationCommand>]
@@ -937,7 +898,9 @@ module Discordrb
     # @return [Array<Emoji>] Returns an array of emoji objects.
     def application_emojis
       response = API::Application.list_application_emojis(@token, profile.id)
-      JSON.parse(response)['items'].map { |emoji| Emoji.new(emoji, self) }
+      JSON.parse(response)['items'].collect do |emoji|
+        Emoji.new(emoji.tap { |item| item['_application'] = true }, self, nil)
+      end
     end
 
     # Fetches a single application emoji from its ID.
@@ -945,7 +908,7 @@ module Discordrb
     # @return [Emoji] The application emoji.
     def application_emoji(emoji_id)
       response = API::Application.get_application_emoji(@token, profile.id, emoji_id.resolve_id)
-      Emoji.new(JSON.parse(response), self)
+      Emoji.new(JSON.parse(response).tap { |item| item['_application'] = true }, self)
     end
 
     # Creates a new custom emoji that can be used by this application.
@@ -955,7 +918,7 @@ module Discordrb
     def create_application_emoji(name:, image:)
       image = image.respond_to?(:read) ? Discordrb.encode64(image) : image
       response = API::Application.create_application_emoji(@token, profile.id, name, image)
-      Emoji.new(JSON.parse(response), self)
+      Emoji.new(JSON.parse(response).tap { |item| item['_application'] = true }, self)
     end
 
     # Edits an existing application emoji.
@@ -964,7 +927,7 @@ module Discordrb
     # @return [Emoji] Returns the updated emoji object on success.
     def edit_application_emoji(emoji_id, name:)
       response = API::Application.edit_application_emoji(@token, profile.id, emoji_id.resolve_id, name)
-      Emoji.new(JSON.parse(response), self)
+      Emoji.new(JSON.parse(response).tap { |item| item['_application'] = true }, self)
     end
 
     # Deletes an existing application emoji.
@@ -1015,9 +978,7 @@ module Discordrb
 
       member_is_new = false
 
-      if server.member_cached?(user_id)
-        member = server.member(user_id)
-      else
+      unless (member = server.member(user_id, false))
         # If the member is not cached yet, it means that it just came online from not being cached at all
         # due to large_threshold. Fortunately, Discord sends the entire member object in this case, and
         # not just a part of it - we can just cache this member directly
@@ -1102,12 +1063,12 @@ module Discordrb
       channel = data.is_a?(Discordrb::Channel) ? data : Channel.new(data, self)
       server = channel.server
 
-      # The last message ID of a forum channel is the most recent post
-      channel.parent.process_last_message_id(channel.id) if channel.parent&.forum? || channel.parent&.media?
+      # The last message ID of a thread-only channel is the most recent post
+      channel.parent.process_last_entity_id(channel.id) if channel.parent&.thread_only?
 
       # Handle normal and private channels separately
       if server
-        server.add_channel(channel)
+        server.cache_channel(channel)
         @channels[channel.id] = channel
       elsif channel.private?
         @pm_channels[channel.recipient.id] = channel
@@ -1145,7 +1106,7 @@ module Discordrb
       server = self.server(server_id)
 
       member = Member.new(data, server, self)
-      server.add_member(member)
+      server.cache_member(member, increment: true)
     end
 
     # Internal handler for GUILD_MEMBER_UPDATE
@@ -1196,7 +1157,7 @@ module Discordrb
       if (role = server&.role(data['role']['id'].to_i))
         role.update_data(data['role'])
       else
-        server&.add_role(Role.new(data['role'], self, server))
+        server&.cache_role(Role.new(data['role'], self, server))
       end
     end
 
@@ -1210,9 +1171,7 @@ module Discordrb
 
     # Internal handler for GUILD_EMOJIS_UPDATE
     def update_guild_emoji(data)
-      server_id = data['guild_id'].to_i
-      server = @servers[server_id]
-      server&.update_emoji_data(data)
+      @servers[data['guild_id'].to_i]&.__send__(:process_emojis, data['emojis'])
     end
 
     # Internal handler for GUILD_SCHEDULED_EVENT_CREATE and GUILD_SCHEDULED_EVENT_UPDATE
@@ -1260,14 +1219,6 @@ module Discordrb
     ##       ##     ## ##    ##   ##  ##  ####
     ##       ##     ## ##    ##   ##  ##   ###
     ########  #######   ######   #### ##    ##
-
-    def process_token(type, token)
-      # Remove the "Bot " prefix if it exists
-      token = token[4..] if token.start_with? 'Bot '
-
-      token = "Bot #{token}" unless type == :user
-      token
-    end
 
     def handle_dispatch(type, data)
       # Check whether there are still unavailable servers and there have been more than 10 seconds since READY
@@ -1324,7 +1275,7 @@ module Discordrb
       when :GUILD_MEMBERS_CHUNK
         id = data['guild_id'].to_i
         server = server(id)
-        server.process_chunk(data['members'], data['chunk_index'], data['chunk_count'])
+        server.process_chunk(data['members'], data['chunk_index'], data['chunk_count'], data['nonce'], data['not_found'], data['presences'])
       when :USER_UPDATE
         @profile = Profile.new(data, self)
       when :INVITE_CREATE
@@ -1367,7 +1318,7 @@ module Discordrb
           raise_event(ChannelCreateEvent.new(message.channel, self))
         end
 
-        message.channel.process_last_message_id(message.id)
+        message.channel.process_last_entity_id(message.id)
 
         event = MessageEvent.new(message, self)
         raise_event(event)

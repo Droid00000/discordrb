@@ -155,7 +155,7 @@ module Discordrb
     # @param location [String, nil] The new location of the scheduled event.
     # @param start_time [Time] The new start time of the scheduled event.
     # @param end_time [Time] The new end time of the scheduled event.
-    # @param description [String, nil] The new 1-100 character description of the scheduled event.
+    # @param description [String, nil] The new 1-1000 character description of the scheduled event.
     # @param entity_type [Integer, Symbol] The new entity type of the scheduled event.
     # @param status [Integer, Symbol] The new status of the scheduled event.
     # @param cover [File, #read] The new cover image of the scheduled event.
@@ -175,7 +175,7 @@ module Discordrb
         scheduled_end_time: end_time == :undef ? end_time : end_time&.iso8601,
         scheduled_start_time: start_time == :undef ? start_time : start_time&.iso8601,
         description: description,
-        entity_type: entity_type == :undef ? entity_type : ENTITY_TYPES[type] || type,
+        entity_type: entity_type == :undef ? entity_type : ENTITY_TYPES[entity_type] || entity_type,
         status: status == :undef ? status : STATUSES[status] || status,
         image: cover.respond_to?(:read) ? Discordrb.encode64(cover) : cover,
         recurrence_rule: recurrence_rule == :undef ? recurrence_rule : recurrence_rule&.to_h,
@@ -188,7 +188,7 @@ module Discordrb
         raise 'A `frequency` must be provided' unless builder.frequency?
         raise 'A `start_time` must be provided' unless builder.start_time?
 
-        builder[:recurrence_rule] = builder.to_h
+        data[:recurrence_rule] = builder.to_h
       end
 
       update_data(JSON.parse(API::Server.update_scheduled_event(@bot.token, @server_id, @id, **data)))
@@ -471,7 +471,7 @@ module Discordrb
 
         # Set the specific days for a specific week to recur on.
         # @param week [Integer] The week of the month (1-5) to recur on.
-        # @param day [Integer, Symbol] The specific day of the week to recur on, e.g. `:april`.
+        # @param day [Integer, Symbol] The specific day to recur on, e.g. `:friday`.
         # @return [void]
         def by_n_weekday(week:, day:)
           (@by_n_weekday ||= []) << { n: week, day: WEEKDAYS[day] || day }

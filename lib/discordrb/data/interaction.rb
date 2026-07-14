@@ -627,21 +627,6 @@ module Discordrb
         attachment: 11
       }.freeze
 
-      # Channel types that can be provided to #channel
-      CHANNEL_TYPES = {
-        text: 0,
-        dm: 1,
-        voice: 2,
-        group_dm: 3,
-        category: 4,
-        news: 5,
-        store: 6,
-        news_thread: 10,
-        public_thread: 11,
-        private_thread: 12,
-        stage: 13
-      }.freeze
-
       # @return [Array<Hash>]
       attr_reader :options
 
@@ -731,10 +716,10 @@ module Discordrb
       # @param name [String, Symbol] The name of the argument.
       # @param description [String] A description of the argument.
       # @param required [true, false] Whether this option must be provided.
-      # @param types [Array<Symbol, Integer>] See {CHANNEL_TYPES}
+      # @param types [Array<Symbol, Integer>] See {Channel::TYPES}
       # @return (see #option)
       def channel(name, description, required: nil, types: nil)
-        types = types&.collect { |type| type.is_a?(Numeric) ? type : CHANNEL_TYPES[type] }
+        types = types&.collect { |type| type.is_a?(Numeric) ? type : Channel::TYPES[type] }
         option(TYPES[:channel], name, description, required: required, channel_types: types)
       end
 
@@ -769,9 +754,11 @@ module Discordrb
       # @param name [String, Symbol] The name of the argument.
       # @param description [String] A description of the argument.
       # @param required [true, false] Whether this option must be provided.
+      # @param types [Array<String, Symbol>] The file extensions or file groups to
+      #   restrict the option to. This restriction is **only** a client-side check.
       # @return (see #option)
-      def attachment(name, description, required: nil)
-        option(TYPES[:attachment], name, description, required: required)
+      def attachment(name, description, required: nil, types: nil)
+        option(TYPES[:attachment], name, description, required: required, file_types: types)
       end
 
       # @!visibility private
@@ -785,15 +772,16 @@ module Discordrb
       # @param max_length [Integer] A maximum length for string option value.
       # @param channel_types [Array<Integer>] Channel types that can be provides for channel options.
       # @param autocomplete [true, false] Whether this option can dynamically show options.
-      # @return Hash
+      # @param file_types [Array<String, Symbol>] The file types to restrict this option to in the client.
+      # @return [Hash]
       def option(type, name, description, required: nil, choices: nil, options: nil, min_value: nil, max_value: nil,
-                 min_length: nil, max_length: nil, channel_types: nil, autocomplete: nil)
+                 min_length: nil, max_length: nil, channel_types: nil, autocomplete: nil, file_types: nil)
         opt = { type: type, name: name, description: description }
         choices = choices.map { |option_name, value| { name: option_name, value: value } } if choices
 
         opt.merge!({ required: required, choices: choices, options: options, min_value: min_value,
                      max_value: max_value, min_length: min_length, max_length: max_length,
-                     channel_types: channel_types, autocomplete: autocomplete }.compact)
+                     channel_types: channel_types, autocomplete: autocomplete, file_types: file_types }.compact)
 
         @options << opt
         opt

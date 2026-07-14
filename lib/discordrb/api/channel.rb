@@ -124,15 +124,22 @@ module Discordrb::API::Channel
     raise
   end
 
-  # Send a file as a message to a channel
-  # https://discord.com/developers/docs/resources/channel#upload-file
+  # @deprecated Please migrate to using {.send_attachment}.
   def upload_file(token, channel_id, file, caption: nil, tts: false)
+    send_attachment(token, channel_id, file, tts: tts, description: caption)
+  end
+
+  # Send a message to a channel. In the future, this will be obselete as
+  #   {.create_message} will eventually support passing these attributes per-file.
+  def send_attachment(token, channel_id, file, tts: nil, description: nil, spoiler: nil)
+    body = { id: 0, description: description, is_spoiler: spoiler }.compact
+
     Discordrb::API.request(
       :channels_cid_messages_mid,
       channel_id,
       :post,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/messages",
-      { file: file, content: caption, tts: tts },
+      { 'files[0]' => file, payload_json: { tts: tts, attachments: [body] }.to_json },
       Authorization: token
     )
   end
@@ -287,6 +294,21 @@ module Discordrb::API::Channel
     )
   end
 
+  # Create or replace a permission overwrite in a channel.
+  # https://discord.com/developers/docs/resources/channel#edit-channel-permissions
+  def update_permission_overwrite(token, channel_id, overwrite_id, type:, allow: :undef, deny: :undef, reason: nil)
+    Discordrb::API.request(
+      :channels_cid_permissions_oid,
+      channel_id,
+      :put,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/permissions/#{overwrite_id}",
+      { type:, allow:, deny: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
   # Get a channel's invite list
   # https://discord.com/developers/docs/resources/channel#get-channel-invites
   def invites(token, channel_id)
@@ -299,7 +321,7 @@ module Discordrb::API::Channel
     )
   end
 
-  # Create an instant invite from a server or a channel id
+  # @deprecated Please migrate to using {.create_invite!}
   # https://discord.com/developers/docs/resources/channel#create-channel-invite
   def create_invite(token, channel_id, max_age = 0, max_uses = 0, temporary = false, unique = false, reason = nil)
     Discordrb::API.request(
@@ -311,6 +333,30 @@ module Discordrb::API::Channel
       Authorization: token,
       content_type: :json,
       'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Create an invite for the channel.
+  # https://discord.com/developers/docs/resources/channel#create-channel-invite
+  def create_invite!(token, channel_id, flags: :undef, max_age: :undef, max_uses: :undef, temporary: :undef, unique: :undef, target_type: :undef, target_user_id: :undef, target_application_id: :undef, target_users_file: :undef, role_ids: :undef, reason: nil)
+    body = { flags:, max_age:, max_uses:, temporary:, unique:, target_type:, target_user_id:, target_application_id:, role_ids: }.reject { |_, value| value == :undef }
+
+    headers = { 'X-Audit-Log-Reason': reason, Authorization: token }
+    headers[:content_type] = :json if target_users_file == :undef || !target_users_file
+
+    body = if target_users_file != :undef && target_users_file
+             { target_users_file:, payload_json: body.to_json }
+           else
+             body.to_json
+           end
+
+    Discordrb::API.request(
+      :channels_cid_invites,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/invites",
+      body,
+      headers
     )
   end
 
@@ -337,6 +383,21 @@ module Discordrb::API::Channel
       "#{Discordrb::API.api_base}/channels/#{channel_id}/typing",
       nil,
       Authorization: token
+    )
+  end
+
+  # Update the status of a voice channel.
+  # https://discord.com/developers/docs/resources/channel#set-voice-channel-status
+  def set_voice_channel_status(token, channel_id, status, reason: nil)
+    Discordrb::API.request(
+      :channels_cid_voice_status,
+      channel_id,
+      :put,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/voice-status",
+      { status: }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
     )
   end
 
@@ -375,6 +436,61 @@ module Discordrb::API::Channel
       channel_id,
       :delete,
       "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/pins/#{message_id}",
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Fetch a pre-exisiting stage instance.
+  # https://discord.com/developers/docs/resources/stage-instance#get-stage-instance
+  def get_stage_instance(token, channel_id)
+    Discordrb::API.request(
+      :stage_instances_cid,
+      channel_id,
+      :get,
+      "#{Discordrb::API.api_base}/stage-instances/#{channel_id}",
+      Authorization: token
+    )
+  end
+
+  # Create a stage instance in a stage channel.
+  # https://discord.com/developers/docs/resources/stage-instance#create-stage-instance
+  def create_stage_instance(token, channel_id, topic: :undef, send_start_notification: :undef, guild_scheduled_event_id: :undef, privacy_level: :undef, reason: nil)
+    Discordrb::API.request(
+      :stage_instances,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/stage-instances",
+      { channel_id:, topic:, send_start_notification:, guild_scheduled_event_id:, privacy_level: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Update a pre-exisiting stage instance.
+  # https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance
+  def update_stage_instance(token, channel_id, topic: :undef, privacy_level: :undef, reason: nil)
+    Discordrb::API.request(
+      :stage_instances_cid,
+      channel_id,
+      :patch,
+      "#{Discordrb::API.api_base}/stage-instances/#{channel_id}",
+      { topic:, privacy_level: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
+  # Delete a pre-exisiting stage instance.
+  # https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance
+  def delete_stage_instance(token, channel_id, reason: nil)
+    Discordrb::API.request(
+      :stage_instances_cid,
+      channel_id,
+      :delete,
+      "#{Discordrb::API.api_base}/stage-instances/#{channel_id}",
       Authorization: token,
       'X-Audit-Log-Reason': reason
     )
@@ -445,20 +561,6 @@ module Discordrb::API::Channel
     )
   end
 
-  # Leave a group channel.
-  # @deprecated Discord no longer supports bots in group DMs, this endpoint was repurposed and no longer works as implemented here.
-  # https://discord.com/developers/docs/resources/channel#deleteclose-channel
-  def leave_group(token, group_channel_id)
-    Discordrb::API.request(
-      :channels_cid,
-      nil,
-      :delete,
-      "#{Discordrb::API.api_base}/channels/#{group_channel_id}",
-      Authorization: token,
-      content_type: :json
-    )
-  end
-
   # Create a webhook
   # https://discord.com/developers/docs/resources/webhook#create-webhook
   def create_webhook(token, channel_id, name, avatar = nil, reason = nil)
@@ -515,6 +617,21 @@ module Discordrb::API::Channel
     )
   end
 
+  # Start a thread based off a channel message.
+  # https://discord.com/developers/docs/resources/channel#start-thread-with-message
+  def start_thread_with_message!(token, channel_id, message_id, name:, auto_archive_duration: :undef, rate_limit_per_user: :undef, reason: nil)
+    Discordrb::API.request(
+      :channels_cid_messages_mid_threads,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/messages/#{message_id}/threads",
+      { name:, auto_archive_duration:, rate_limit_per_user: }.reject { |_, value| value == :undef }.to_json,
+      Authorization: token,
+      content_type: :json,
+      'X-Audit-Log-Reason': reason
+    )
+  end
+
   # Start a thread without an associated message.
   # https://discord.com/developers/docs/resources/channel#start-thread-without-message
   def start_thread_without_message(token, channel_id, name, auto_archive_duration, type = 11)
@@ -526,6 +643,21 @@ module Discordrb::API::Channel
       { name: name, auto_archive_duration: auto_archive_duration, type: type },
       Authorization: token,
       content_type: :json
+    )
+  end
+
+  # Start a thread without an associated message.
+  # https://discord.com/developers/docs/resources/channel#start-thread-without-message
+  def start_thread_without_message!(token, channel_id, name:, type:, auto_archive_duration: :undef, rate_limit_per_user: :undef, reason: nil)
+    Discordrb::API.request(
+      :channels_cid_threads,
+      channel_id,
+      :post,
+      "#{Discordrb::API.api_base}/channels/#{channel_id}/threads",
+      { name:, type:, auto_archive_duration:, rate_limit_per_user: }.reject { |_, value| value == :undef }.to_json,
+      content_type: :json,
+      Authorization: token,
+      'X-Audit-Log-Reason': reason
     )
   end
 

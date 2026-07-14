@@ -88,31 +88,11 @@ module Discordrb
       end
     end
 
-    # This class is used internally as a wrapper to a Role object that allows easy writing of permission data.
-    class RoleWriter
-      # @!visibility private
-      def initialize(role, token)
-        @role = role
-        @token = token
-      end
-
-      # Write the specified permission data to the role, without updating the permission cache
-      # @param bits [Integer] The packed permissions to write.
-      def write(bits)
-        @role.send(:packed=, bits, false)
-      end
-
-      # The inspect method is overridden, in this case to prevent the token being leaked
-      def inspect
-        "<RoleWriter role=#{@role} token=...>"
-      end
-    end
-
     # @!visibility private
     def initialize(data, bot, server = nil)
       @bot = bot
       @server = server
-      @permissions = Permissions.new(data['permissions'].to_i, RoleWriter.new(self, @bot.token))
+      @permissions = Permissions.new(data['permissions'].to_i)
       @name = data['name']
       @id = data['id'].to_i
 
@@ -145,30 +125,10 @@ module Discordrb
     # @return [Array<Member>] an array of members who have this role.
     # @note This requests a member chunk if it hasn't for the server before, which may be slow initially
     def members
-      @server.members.select { |m| m.role? self }
+      @server.members.select { |member| member.role?(self) }
     end
 
     alias_method :users, :members
-
-    # Updates the data cache from a hash containing data
-    # @note For internal use only
-    # @!visibility private
-    def update_data(new_data)
-      @name = new_data['name']
-      @hoist = new_data['hoist']
-      @icon = new_data['icon']
-      @unicode_emoji = new_data['unicode_emoji']
-      @position = new_data['position']
-      @mentionable = new_data['mentionable']
-      @flags = new_data['flags']
-      colours = new_data['colors']
-      @managed = new_data['managed']
-      @permissions.bits = new_data['permissions'].to_i
-      @colour = ColourRGB.new(colours['primary_color'])
-      @tags = Tags.new(new_data['tags']) if new_data['tags']
-      @tertiary_colour = colours['tertiary_color'] ? ColourRGB.new(colours['tertiary_color']) : nil
-      @secondary_colour = colours['secondary_color'] ? ColourRGB.new(colours['secondary_color']) : nil
-    end
 
     # Sets the role name to something new
     # @param name [String, nil] The name that should be set.
@@ -260,31 +220,6 @@ module Discordrb
     alias_method :secondary_color=, :secondary_colour=
     alias_method :tertiary_color=, :tertiary_colour=
 
-    # Changes this role's permissions to a fixed bitfield. This allows setting multiple permissions at once with just
-    # one API call.
-    #
-    # Information on how this bitfield is structured can be found at
-    # https://discord.com/developers/docs/topics/permissions.
-    # @example Remove all permissions from a role
-    #   role.packed = 0
-    # @param permissions [Integer, nil] A bitfield with the desired permissions value.
-    # @param _update_perms [true, false] Whether the internal data should also be updated. This should always be true
-    #   when calling externally. This is deprecated and no longer functional. Permissions data is always updated.
-    def packed=(permissions, _update_perms = true)
-      modify(permissions: permissions)
-    end
-
-    # Moves this role above another role in the list.
-    # @param other [Role, String, Integer, nil] The role, or its ID, above which this role should be moved. If it is `nil`,
-    #   the role will be moved above the @everyone role.
-    # @return [Integer] the new position of this role
-    # @deprecated Please migrate to using {#move} with the `above` or `below` KWARGS.
-    def sort_above(other = nil)
-      other ? move(above: other) : move(bottom: true)
-    end
-
-    alias_method :move_above, :sort_above
-
     # Deletes this role. This cannot be undone without recreating the role!
     # @param reason [String] the reason for this role's deletion
     def delete(reason = nil)
@@ -345,34 +280,6 @@ module Discordrb
       @position
     end
 
-    # A rich interface designed to make working with role colours simple.
-    # @param primary [ColourRGB, Integer, nil] The new primary/base colour of this role, or nil to clear the primary colour.
-    # @param secondary [ColourRGB, Integer, nil] The new secondary colour of this role, or nil to clear the secondary colour.
-    # @param tertiary [ColourRGB, Integer,nil] The new tertiary colour of this role, or nil to clear the tertiary colour.
-    # @param holographic [true, false] Whether to apply or remove the holographic style to the role colour, overriding any other
-    #   arguments that were passed. Using this argument is recommended over passing individual colours.
-    # @param reason [String, nil] The audit log reason to show for updating the role's colours.
-    def update_colours(primary: :undef, secondary: :undef, tertiary: :undef, holographic: :undef, reason: nil)
-      colours = {
-        color: (primary == :undef ? @colour : primary)&.to_i,
-        tertiary_color: (tertiary == :undef ? @tertiary_colour : tertiary)&.to_i,
-        secondary_color: (secondary == :undef ? @secondary_colour : secondary)&.to_i
-      }
-
-      holographic_colours = {
-        color: 11_127_295,
-        tertiary_color: 16_761_760,
-        secondary_color: 16_759_788
-      }
-
-      # Only set the tertiary_color to `nil` if holographic is explicitly set to false.
-      (colours[:tertiary_color] = nil) if holographic.is_a?(FalseClass)
-
-      modify(reason: reason, **(holographic ? holographic_colours : colours))
-    end
-
-    alias_method :update_colors, :update_colours
-
     # Check if this role is less than another role in the hierarchy.
     # @param other [Role] The other role that you want to compare to this one.
     # @return [true, false] Whether or not this role is less than the other role in the hierarchy.
@@ -429,9 +336,9 @@ module Discordrb
     # @param colour [ColourRGB, Integer, nil] The new primary colour of the role. Can also be passed as `color:`.
     # @param secondary_colour [ColourRGB, Integer, nil] The new secondary colour of the role. Can also be passed as `secondary_color:`.
     # @param tertiary_colour [ColourRGB, Integer, nil] The new tertiary colour of the role. Can also be passed as `tertiary_color:`.
-    # @param permissions [String, Integer, nil] The new permissions to set for the role.
+    # @param permissions [String, Integer, Permissions, nil] The new permissions to set for the role.
     # @param reason [String, nil] The reason to show in the server's audit log for modifying the role.
-    # @yieldparam builder [Permissions] An optional permissions builder. Arguments passed to the method overwrite builder data.
+    # @yieldparam builder [Permissions] An optional permissions builder. Ignored when the `permissions:` argument is passed.
     # @return [nil]
     def modify(
       name: :undef, mentionable: :undef, hoist: :undef, unicode_emoji: :undef, icon: :undef,
@@ -461,6 +368,8 @@ module Discordrb
         permissions = builder.bits
       end
 
+      permissions = permissions.bits if permissions.is_a?(Permissions)
+
       data = {
         name: name,
         mentionable: mentionable,
@@ -487,9 +396,27 @@ module Discordrb
       nil
     end
 
-    # The inspect method is overwritten to give more useful output.
+    # @!visibility private
     def inspect
-      "<Role name=#{@name} permissions=#{@permissions.inspect} hoist=#{@hoist} colour=#{@colour.inspect} server=#{@server.inspect} position=#{@position} mentionable=#{@mentionable} unicode_emoji=#{@unicode_emoji} flags=#{@flags}>"
+      "<Role name=#{@name} hoist=#{@hoist} mentionable=#{@mentionable} flags=#{@flags}>"
+    end
+
+    # @!visibility private
+    def update_data(new_data)
+      @name = new_data['name']
+      @hoist = new_data['hoist']
+      @icon = new_data['icon']
+      @unicode_emoji = new_data['unicode_emoji']
+      @position = new_data['position']
+      @mentionable = new_data['mentionable']
+      @flags = new_data['flags']
+      colours = new_data['colors']
+      @managed = new_data['managed']
+      @permissions.bits = new_data['permissions'].to_i
+      @colour = ColourRGB.new(colours['primary_color'])
+      @tags = Tags.new(new_data['tags']) if new_data['tags']
+      @tertiary_colour = colours['tertiary_color'] ? ColourRGB.new(colours['tertiary_color']) : nil
+      @secondary_colour = colours['secondary_color'] ? ColourRGB.new(colours['secondary_color']) : nil
     end
   end
 end

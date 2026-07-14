@@ -39,20 +39,20 @@ module Discordrb
     # @param reason [String, nil] The reason to show in the audit log for modifying the tag.
     # @return [nil]
     def modify(name: :undef, emoji: :undef, moderated: :undef, reason: nil)
-      data = {
+      new_data = {
         name: name,
         moderated: moderated,
         **(Emoji.build_emoji_hash(emoji) if emoji != :undef)
       }.reject { |_, value| value == :undef }
 
-      @channel.update_tags(to_h.merge(data), reason)
+      @channel.update_forum_tags(to_h.merge!(new_data), reason)
     end
 
     # Permenantly delete the channel tag.
     # @param reason [String, nil] The reason to show in the audit log for deleting the tag.
     # @return [nil]
     def delete(reason: nil)
-      @channel.update_tags({ id: @id, d: true }, reason)
+      @channel.update_forum_tags({ id: @id, d: true }, reason)
     end
 
     # @!visibility private

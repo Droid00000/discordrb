@@ -147,6 +147,9 @@ module Discordrb
     # Unknown Emoji
     UnknownEmoji = Code(10_014)
 
+    # Unknown Ban
+    UnknownBan = Code(10_026)
+
     # Bots cannot use this endpoint
     EndpointNotForBots = Code(20_001)
 
@@ -242,5 +245,8 @@ module Discordrb
 
     # Reaction Blocked
     ReactionBlocked = Code(90_001)
+
+    # Unknown stage instance
+    UnknownStageInstance = Code(10_067)
   end
 end
