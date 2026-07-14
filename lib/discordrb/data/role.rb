@@ -1,230 +1,189 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # A Discord role that contains permissions and applies to certain users
+  # A Role that can be granted to a member.
   class Role
-    include IDObject
-
-    # @return [Permissions] this role's permissions.
-    attr_reader :permissions
-
-    # @return [String] this role's name ("new role" if it hasn't been changed)
-    attr_reader :name
-
-    # @return [Server] the server this role belongs to
-    attr_reader :server
-
-    # @return [true, false] whether or not this role should be displayed separately from other users
-    attr_reader :hoist
-    alias_method :hoist?, :hoist
-
-    # @return [true, false] whether or not this role is managed by an integration or a bot
-    attr_reader :managed
-    alias_method :managed?, :managed
-
-    # @return [true, false] whether this role can be mentioned using a role mention
-    attr_reader :mentionable
-    alias_method :mentionable?, :mentionable
-
-    # @return [ColourRGB] the primary colour of this role.
-    attr_reader :colour
-    alias_method :color, :colour
-
-    # @return [Integer] the position of this role in the hierarchy
-    attr_reader :position
-
-    # @return [String, nil] The icon hash for this role.
-    attr_reader :icon
-
-    # @return [Tags, nil] The role tags.
-    attr_reader :tags
-
-    # @return [Integer] The flags for this role.
-    attr_reader :flags
-
-    # @return [String, nil] The unicode emoji of this role, or nil.
-    attr_reader :unicode_emoji
-
-    # @return [ColourRGB, nil] the secondary colour of this role.
-    attr_reader :secondary_colour
-    alias_method :secondary_color, :secondary_colour
-
-    # @return [ColourRGB, nil] the tertiary colour of this role.
-    attr_reader :tertiary_colour
-    alias_method :tertiary_color, :tertiary_colour
-
-    # Wrapper for the role tags
-    class Tags
-      # @return [Integer, nil] The ID of the bot this role belongs to
-      attr_reader :bot_id
-
-      # @return [Integer, nil] The ID of the integration this role belongs to
-      attr_reader :integration_id
-
-      # @return [true, false] Whether this is the guild's Booster role
-      attr_reader :premium_subscriber
-      alias_method :premium_subscriber?, :premium_subscriber
-
-      # @return [Integer, nil] The id of this role's subscription sku and listing
-      attr_reader :subscription_listing_id
-
-      # @return [true, false] Whether this role is available for purchase
-      attr_reader :available_for_purchase
-      alias_method :available_for_purchase?, :available_for_purchase
-
-      # @return [true, false] Whether this role is a guild's linked role
-      attr_reader :guild_connections
-      alias_method :guild_connections?, :guild_connections
-      alias_method :server_connections?, :guild_connections
-
-      # @!visibility private
-      def initialize(data)
-        @bot_id = data['bot_id']&.resolve_id
-        @integration_id = data['integration_id']&.resolve_id
-        @premium_subscriber = data.key?('premium_subscriber')
-        @subscription_listing_id = data['subscription_listing_id']&.resolve_id
-        @available_for_purchase = data.key?('available_for_purchase')
-        @guild_connections = data.key?('guild_connections')
-      end
-    end
+    include Snowflake
 
     # @!visibility private
-    def initialize(data, bot, server = nil)
+    PREDICATES = %i[
+      managed
+      hoisted
+      mentionable
+      connections
+      premium_subscriber
+      available_for_purchase
+    ].freeze
+
+    # @return [String] the name of the role.
+    attr_reader :name
+
+    # @return [String, nil] the CDN hash for the role's custom icon.
+    attr_reader :icon
+
+    # @return [Integer] the flags for the role.
+    attr_reader :flags
+
+    # @return [ColourRGB] the primary color of the role.
+    attr_reader :color
+
+    # @return [Integer] the ID of the guild that the role originates from.
+    attr_reader :guild_id
+
+    # @return [Integer] the sorting position of the role. Not always unique.
+    attr_reader :position
+
+    # @return [Permissions] the permissions granted to members who have the role.
+    attr_reader :permissions
+
+    # @return [String, nil] the unicode emoji for the role's icon.
+    attr_reader :unicode_emoji
+
+    # @return [ColourRGB, nil] the third color for the role's gradident.
+    attr_reader :tertiary_color
+
+    # @return [ColourRGB, nil] the second color for the role's gradident.
+    attr_reader :secondary_color
+
+    # @return [Integer, nil] the ID of the bot the auto-generated role is for.
+    attr_reader :bot_id
+
+    # @return [Integer, nil] the ID of the integration that the role belongs to.
+    attr_reader :integration_id
+
+    # @return [Integer, nil] the id ID of the role’s subscription sku and listing.
+    attr_reader :subscription_listing_id
+
+    alias_method :colour, :color
+    alias_method :tertiary_colour, :tertiary_color
+    alias_method :secondary_colour, :secondary_color
+
+    # @!visibility private
+    def initialize(data, guild, bot)
       @bot = bot
-      @server = server
-      @permissions = Permissions.new(data['permissions'].to_i)
-      @name = data['name']
-      @id = data['id'].to_i
-
-      @position = data['position']
-
-      @hoist = data['hoist']
-      @mentionable = data['mentionable']
-      @managed = data['managed']
-
-      colours = data['colors']
-      @colour = ColourRGB.new(colours['primary_color'])
-
-      @icon = data['icon']
-
-      @tags = Tags.new(data['tags']) if data['tags']
-
-      @flags = data['flags']
-
-      @unicode_emoji = data['unicode_emoji']
-
-      @tertiary_colour = ColourRGB.new(colours['tertiary_color']) if colours['tertiary_color']
-      @secondary_colour = ColourRGB.new(colours['secondary_color']) if colours['secondary_color']
+      @guild = guild
+      @id = data[:id].to_i
+      @guild_id = guild&.id || data[:guild_id]&.to_i
+      update_data(data)
     end
 
-    # @return [String] a string that will mention this role, if it is mentionable.
+    # @!attribute [r] managed?
+    #   @return [true, false] whether the role is managed by an integration, such as the Twitch integration.
+    # @!attribute [r] hoisted?
+    #   @return [true, false] whether members with the role should be shown seperately in the members list.
+    # @!attribute [r] mentionable?
+    #   @return [true, false] whether the role can be mentioned by anyone.
+    # @!attribute [r] connections?
+    #   @return [true, false] whether the role is a linked role for the guild.
+    # @!attribute premium_subscriber?
+    #   @return [true, false] whether the role is the auto-generated booster role for the guild.
+    # @!attribute available_for_purchase?
+    #   @return [true, false] whether the role is available for purchase in the guild's creator store page.
+    PREDICATES.each do |name|
+      define_method("#{name}?") { instance_variable_get("@#{name}") }
+    end
+
+    # Get a string that will mention the role.
+    # @return [String] A string that will mention the role.
     def mention
       "<@&#{@id}>"
     end
 
-    # @return [Array<Member>] an array of members who have this role.
-    # @note This requests a member chunk if it hasn't for the server before, which may be slow initially
+    # Get the guild that the role is associated with.
+    # @return [Guild, nil] The guild that the role belongs to.
+    def guild
+      @guild ||= (@bot.guild(@guild_id) if @guild_id)
+    end
+
+    # Get the guild members that currenrly have the role.
+    # @return [Array<Member>] The members who currently have the role.
     def members
-      @server.members.select { |member| member.role?(self) }
+      guild.members.select { |member| member.role?(@id) }
     end
 
-    alias_method :users, :members
+    # Modify the properties of the role.
+    # @param name [String, nil] The new name of the role; between 1-100 characters.
+    # @param unicode_emoji [String, nil] The standard unicode emoji to set for the role's icon.
+    # @param display_icon [File, String, Emoji, nil] The custom icon or unicode emoji to set for the role.
+    # @param permissions [Permissions, Integer, String, nil] The permissions to set for the role.
+    # @param icon [File, #read, nil] The custom icon to set for the role. Must be a file-like object.
+    # @param hoisted [true, false, nil] Whether or not the role should be shown separately in the member's list.
+    # @param mentionable [true, false, nil] Whether or not any guild member can mention the role in messages.
+    # @param colour [Integer, ColourRGB, nil] The primary colour to set for the role.
+    # @param tertiary_colour [Integer, ColourRGB, nil] The tertiary colour to set for the role.
+    # @param secondary_colour [Integer, ColourRGB, nil] The secondary colour to set for the role.
+    # @param reason [String, nil] the reason to show in the guild's audit log for updating the role.
+    # @yieldparam builder [Permissions] An optional permissions builder. Ignored when `permissions:` is passed.
+    # @note The American spelling can be used instead of the British spelling for all of the colour parameters.
+    # @return [nil]
+    def modify(
+      name: :undef, hoisted: :undef, mentionable: :undef, icon: :undef,
+      unicode_emoji: :undef, display_icon: :undef, colour: :undef, color: :undef,
+      secondary_colour: :undef, secondary_color: :undef, tertiary_colour: :undef,
+      tertiary_color: :undef, permissions: :undef, reason: nil
+    )
+      if display_icon != :undef
+        if icon != :undef || unicode_emoji != :undef
+          raise ArgumentError, "'display_icon' is mutually exclusive with 'icon' and 'unicode_emoji'"
+        end
 
-    # Sets the role name to something new
-    # @param name [String, nil] The name that should be set.
-    def name=(name)
-      modify(name: name)
-    end
+        if display_icon.nil?
+          icon = nil
+          unicode_emoji = nil
+        elsif display_icon.is_a?(String)
+          icon = nil
+          unicode_emoji = display_icon
+        elsif display_icon.respond_to?(:read)
+          icon = display_icon
+          unicode_emoji = nil
+        elsif display_icon.is_a?(Discordrb::Emoji)
+          if display_icon.id
+            request = Faraday.get(display_icon.url(format: 'png', size: 4096))
+            icon = request.success? ? StringIO.new(request.body, 'rb') : :undef
+            unicode_emoji = nil if request.success?
+          elsif display_icon.name
+            icon = nil
+            unicode_emoji = icon.name
+          end
+        end
+      end
 
-    # Changes whether or not this role is displayed at the top of the user list
-    # @param hoist [true, false] The value it should be changed to
-    def hoist=(hoist)
-      modify(hoist: hoist)
-    end
+      if block_given? && permissions == :undef
+        yield((builder = Permissions.new(@permissions.bits)))
+        permissions = builder.bits
+      end
 
-    # Changes whether or not this role can be mentioned
-    # @param mentionable [true, false] The value it should be changed to
-    def mentionable=(mentionable)
-      modify(mentionable: mentionable)
-    end
+      permissions = if permissions.is_a?(Array)
+                      Permissions.bits(permissions)
+                    elsif permissions.respond_to?(:bits)
+                      permissions.bits
+                    else
+                      permissions
+                    end
 
-    # Sets the primary role colour to something new.
-    # @param colour [ColourRGB, Integer, nil] The new colour.
-    def colour=(colour)
-      modify(colour: colour)
-    end
+      data = {
+        name: name,
+        mentionable: mentionable,
+        hoist: hoisted,
+        unicode_emoji: unicode_emoji,
+        icon: icon.respond_to?(:read) ? Discordrb.encode64(icon) : icon,
+        permissions: permissions == :undef ? permissions : permissions&.to_s
+      }
 
-    # Sets the secondary role colour to something new.
-    # @param colour [ColourRGB, Integer, nil] The new secondary colour.
-    def secondary_colour=(colour)
-      modify(secondary_colour: colour)
-    end
+      color = (colour == :undef ? color : colour)
+      tertiary = (tertiary_colour == :undef ? tertiary_color : tertiary_colour)
+      secondary = (secondary_colour == :undef ? secondary_color : secondary_colour)
 
-    # Sets the tertiary role colour to something new.
-    # @param colour [ColourRGB, Integer, nil] The new tertiary colour.
-    def tertiary_colour=(colour)
-      modify(tertiary_colour: colour)
-    end
+      if color != :undef || secondary != :undef || tertiary != :undef
+        data[:colors] = {
+          primary_color: (color == :undef ? @color : color)&.to_i,
+          tertiary_color: (tertiary == :undef ? @tertiary_color : tertiary)&.to_i,
+          secondary_color: (secondary == :undef ? @secondary_color : secondary)&.to_i
+        }
+      end
 
-    # Sets whether the role colour should be a holographic style.
-    # @param holographic [true, false] whether the role colour should be a holographic style.
-    def holographic=(holographic)
-      update_colours(holographic: holographic)
-    end
-
-    # Upload a role icon for servers with the ROLE_ICONS feature.
-    # @param file [File, nil] File like object that responds to #read, or nil.
-    def icon=(file)
-      modify(icon: file)
-    end
-
-    # Set a role icon to a unicode emoji for servers with the ROLE_ICONS feature.
-    # @param emoji [String, nil] The new unicode emoji for this role, or nil.
-    def unicode_emoji=(emoji)
-      modify(unicode_emoji: emoji)
-    end
-
-    # @param format ['webp', 'png', 'jpeg']
-    # @return [String] URL to the icon on Discord's CDN.
-    def icon_url(format = 'webp')
-      API.role_icon_url(@id, @icon, format) if @icon
-    end
-
-    # Get the icon that a role has displayed.
-    # @return [String, nil] Icon URL, the unicode emoji, or nil if this role doesn't have any icon.
-    # @note A role can have a unicode emoji, and an icon, but only the icon will be shown in the UI.
-    def display_icon
-      icon_url || unicode_emoji
-    end
-
-    # Set the icon this role is displaying.
-    # @param icon [File, String, nil] File like object that responds to #read, unicode emoji, or nil.
-    # @note Setting the icon to nil will remove the unicode emoji **and** the custom icon.
-    def display_icon=(icon)
-      modify(display_icon: icon)
-    end
-
-    # Whether or not the role is of the holographic style.
-    # @return [true, false]
-    def holographic?
-      !@tertiary_colour.nil?
-    end
-
-    # Whether or not the role has a two-point gradient.
-    # @return [true, false]
-    def gradient?
-      !@secondary_colour.nil? && @tertiary_colour.nil?
-    end
-
-    alias_method :color=, :colour=
-    alias_method :secondary_color=, :secondary_colour=
-    alias_method :tertiary_color=, :tertiary_colour=
-
-    # Deletes this role. This cannot be undone without recreating the role!
-    # @param reason [String] the reason for this role's deletion
-    def delete(reason = nil)
-      API::Server.delete_role(@bot.token, @server.id, @id, reason)
-      @server.delete_role(@id)
+      update_data(@bot.http.modify_guild_role(@guild_id, @id, **data, reason: reason))
+      nil
     end
 
     # Move the position of this role in the roles list.
@@ -247,17 +206,17 @@ module Discordrb
         raise ArgumentError, "'bottom', 'above', and 'below' are mutually exclusive"
       end
 
-      if (above || below) && !(target = @server.role(above || below))
+      if (above || below) && !(target = guild.role(above || below))
         raise ArgumentError, "The given 'above' or 'below' options are not valid"
       end
 
-      if (below && target&.id == @server.id) || (@id == target&.id)
+      if (below && target&.id == @guild_id) || (@id == target&.id)
         raise ArgumentError, 'The target role that was provded is not valid'
       end
 
-      roles = @server.roles.sort
+      roles = guild.roles(sorted: true)
 
-      # Make sure we remove the current role.
+      # Ensure we remove the current role.
       myself = roles.rindex(@id).tap { |index| roles.delete_at(index) }
 
       index = if bottom
@@ -276,46 +235,18 @@ module Discordrb
         { id: role.resolve_id, position: new_position }
       end
 
-      @server.update_role_positions(roles, reason: reason)
+      guild.update_role_positions(roles, reason: reason)
       @position
     end
 
-    # Check if this role is less than another role in the hierarchy.
-    # @param other [Role] The other role that you want to compare to this one.
-    # @return [true, false] Whether or not this role is less than the other role in the hierarchy.
-    def <(other)
-      # rubocop:disable Style/NumericPredicate
-      self.<=>(other) < 0
-    end
-
-    # Check if this role is greater than another role in the hierarchy.
-    # @param other [Role] The other role that you want to compare to this one.
-    # @return [true, false] Whether or not this role is greater than the other role in the hierarchy.
-    def >(other)
-      self.<=>(other) > 0
-      # rubocop:enable Style/NumericPredicate
-    end
-
-    # Check if this role is less than or equal to another role in the hierarchy.
-    # @param other [Role] The other role that you want to against to this one.
-    # @return [true, false] Whether or not this role is less than or equal to the other role in the hierarchy.
-    def <=(other)
-      self.<=>(other) <= 0
-    end
-
-    # Check if this role is greater than or equal to another role in the hierarchy.
-    # @param other [Role] The other role that you want to compare against this one.
-    # @return [true, false] Whether or not this role is greater than or equal to the other role in the hierarchy.
-    def >=(other)
-      self.<=>(other) >= 0
-    end
+    # @!group Comparison Operators
 
     # Compare the role against another role based on its position.
     # @param other [Role] The role to compare the current role against.
     # @return [0, -1, 1, nil] An integer representing the ordering of the
     #   roles, or `nil` if the other entity is not able to be compared to the role.
     def <=>(other)
-      return unless other.is_a?(Role) && @server == other.server
+      return unless other.is_a?(Role) && @guild_id == other.guild_id
 
       if @id == other.id
         0
@@ -326,97 +257,88 @@ module Discordrb
       end
     end
 
-    # Modify the properties of the role.
-    # @param name [String, nil] The new 1-100 character name of the role.
-    # @param mentionable [true, false, nil] Whether or not anyone should be able to ping the role.
-    # @param hoist [true, false, nil] Whether or not members who have the role should be shown seperately in the sidebar.
-    # @param unicode_emoji [String, nil] The new unicode emoji to set as the role's icon.
-    # @param icon [#read, File, nil] The new custom icon of the role. Must be a file-like object that responds to `#read`.
-    # @param display_icon [String, #read, File, nil] The new display icon of the role. Mutually exclusive with `icon:` and `unicode_emoji:`.
-    # @param colour [ColourRGB, Integer, nil] The new primary colour of the role. Can also be passed as `color:`.
-    # @param secondary_colour [ColourRGB, Integer, nil] The new secondary colour of the role. Can also be passed as `secondary_color:`.
-    # @param tertiary_colour [ColourRGB, Integer, nil] The new tertiary colour of the role. Can also be passed as `tertiary_color:`.
-    # @param permissions [String, Integer, Permissions, nil] The new permissions to set for the role.
-    # @param reason [String, nil] The reason to show in the server's audit log for modifying the role.
-    # @yieldparam builder [Permissions] An optional permissions builder. Ignored when the `permissions:` argument is passed.
+    # Check if the role is less than another role in the hierarchy.
+    # @param other [Role] The other role that you want to compare to this one.
+    # @return [true, false] Whether or not the role is less than the other role in the hierarchy.
+    def <(other)
+      self.<=>(other) < 0
+    end
+
+    # Check if the role is greater than another role in the hierarchy.
+    # @param other [Role] The other role that you want to compare to this one.
+    # @return [true, false] Whether or not the role is greater than the other role in the hierarchy.
+    def >(other)
+      self.<=>(other) > 0
+    end
+
+    # Check if the role is less than or equal to another role in the hierarchy.
+    # @param other [Role] The other role that you want to compare against this one.
+    # @return [true, false] Whether or not the role is less than or equal to the other role in the hierarchy.
+    def <=(other)
+      self.<=>(other) <= 0
+    end
+
+    # Check if the role is greater than or equal to another role in the hierarchy.
+    # @param other [Role] The other role that you want to compare against this one.
+    # @return [true, false] Whether or not the role is greater than or equal to the other role in the hierarchy.
+    def >=(other)
+      self.<=>(other) >= 0
+    end
+
+    # @!endgroup Comparison Operators
+
+    # Get the icon that the role will display in the client.
+    # @return [String, nil] The icon URL, the unicode emoji, or nil if the role doesn't have an icon.
+    # @note A role can have a unicode emoji and an icon, but only the custom icon will be displayed in the client.
+    def display_icon
+      icon_url || unicode_emoji
+    end
+
+    # Utility method to get a role's custom icon URL.
+    # @param format [String] The extension to return the URL in. Can be one of `webp`, `jpg`, or `png`.
+    # @param size [Integer, nil] The size of the image. You can specify any number from 0-4096 that's a power of two to override this.
+    # @return [String, nil] The URL to the role's icon, or `nil` if the role doesn't have a custom icon set.
+    def icon_url(format: 'webp', size: nil)
+      Assets[:role_icon, @id, @icon, format, size:] if @icon
+    end
+
+    # Deletes the role. This cannot be undone without recreating the role.
+    # @param reason [String] The reason to show in the guild's audit log for deleting the role.
     # @return [nil]
-    def modify(
-      name: :undef, mentionable: :undef, hoist: :undef, unicode_emoji: :undef, icon: :undef,
-      display_icon: :undef, color: :undef, colour: :undef, secondary_color: :undef,
-      secondary_colour: :undef, tertiary_color: :undef, tertiary_colour: :undef,
-      permissions: :undef, reason: nil
-    )
-      if display_icon != :undef
-        if icon != :undef || unicode_emoji != :undef
-          raise ArgumentError, "'display_icon' is mutually exclusive with 'icon' and 'unicode_emoji'"
-        end
-
-        if display_icon.nil?
-          icon = nil
-          unicode_emoji = nil
-        elsif display_icon.is_a?(String)
-          icon = nil
-          unicode_emoji = display_icon
-        elsif display_icon.respond_to?(:read)
-          icon = display_icon
-          unicode_emoji = nil
-        end
-      end
-
-      if block_given? && permissions == :undef
-        yield((builder = Permissions.new(@permissions.bits)))
-        permissions = builder.bits
-      end
-
-      permissions = permissions.bits if permissions.is_a?(Permissions)
-
-      data = {
-        name: name,
-        mentionable: mentionable,
-        hoist: hoist,
-        unicode_emoji: unicode_emoji,
-        icon: icon.respond_to?(:read) ? Discordrb.encode64(icon) : icon,
-        permissions: permissions == :undef ? permissions : permissions&.to_s,
-        reason: reason
-      }
-
-      color = (colour == :undef ? color : colour)
-      tertiary = (tertiary_colour == :undef ? tertiary_color : tertiary_colour)
-      secondary = (secondary_colour == :undef ? secondary_color : secondary_colour)
-
-      if color != :undef || secondary != :undef || tertiary != :undef
-        data[:colors] = {
-          primary_color: (color == :undef ? @colour : color)&.to_i,
-          tertiary_color: (tertiary == :undef ? @tertiary_colour : tertiary)&.to_i,
-          secondary_color: (secondary == :undef ? @secondary_colour : secondary)&.to_i
-        }
-      end
-
-      update_data(JSON.parse(API::Server.update_role!(@bot.token, @server.id, @id, **data)))
+    def delete(reason: nil)
+      @bot.http.delete_guild_role(@guild_id, @id, reason: reason)
+      @guild&.delete_role(@id)
       nil
     end
 
     # @!visibility private
     def inspect
-      "<Role name=#{@name} hoist=#{@hoist} mentionable=#{@mentionable} flags=#{@flags}>"
+      "<Role id=#{@id} guild_id=#{@guild_id} name=\"#{@name}\">"
     end
 
     # @!visibility private
     def update_data(new_data)
-      @name = new_data['name']
-      @hoist = new_data['hoist']
-      @icon = new_data['icon']
-      @unicode_emoji = new_data['unicode_emoji']
-      @position = new_data['position']
-      @mentionable = new_data['mentionable']
-      @flags = new_data['flags']
-      colours = new_data['colors']
-      @managed = new_data['managed']
-      @permissions.bits = new_data['permissions'].to_i
-      @colour = ColourRGB.new(colours['primary_color'])
-      @tags = Tags.new(new_data['tags']) if new_data['tags']
-      @tertiary_colour = colours['tertiary_color'] ? ColourRGB.new(colours['tertiary_color']) : nil
-      @secondary_colour = colours['secondary_color'] ? ColourRGB.new(colours['secondary_color']) : nil
+      @name = new_data[:name]
+      @hoisted = new_data[:hoist]
+      @icon = new_data[:icon]
+      @unicode_emoji = new_data[:unicode_emoji]
+      @position = new_data[:position]
+      @mentionable = new_data[:mentionable]
+      @flags = new_data[:flags] || 0
+      colors = new_data[:colors]
+      @managed = new_data[:managed]
+      @color = ColourRGB.new(colors[:primary_color])
+      @permissions = Permissions.new(new_data[:permissions].to_i)
+      @tertiary_color = colors[:tertiary_color] ? ColourRGB.new(colors[:tertiary_color]) : nil
+      @secondary_color = colors[:secondary_color] ? ColourRGB.new(colors[:secondary_color]) : nil
+
+      tags = new_data[:tags]
+      @bot_id = tags&.[](:bot_id)&.to_i
+      @integration_id = tags&.[](:integration_id)&.to_i
+      @premium_subscriber = tags&.key?(:premium_subscriber) || false
+      @subscription_listing_id = tags&.[](:subscription_listing_id)&.to_i
+      @available_for_purchase = tags&.key?(:available_for_purchase) || false
+      @connections = tags&.key?(:guild_connections) || false
     end
   end
 end

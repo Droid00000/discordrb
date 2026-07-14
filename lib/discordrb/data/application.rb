@@ -3,16 +3,16 @@
 module Discordrb
   # Information about a bot's associated application.
   class Application
-    include IDObject
+    include Snowflake
 
     # Map of application flags.
     FLAGS = {
       automod_rule_badge: 1 << 6,
       approved_presence_intent: 1 << 12,
       limited_presence_intent: 1 << 13,
-      approved_server_members_intent: 1 << 14,
-      limited_server_members_intent: 1 << 15,
-      pending_server_limit_verification: 1 << 16,
+      approved_guild_members_intent: 1 << 14,
+      limited_guild_members_intent: 1 << 15,
+      pending_guild_limit_verification: 1 << 16,
       embedded: 1 << 17,
       approved_message_content_intent: 1 << 18,
       limited_message_content_intent: 1 << 19,
@@ -22,7 +22,7 @@ module Discordrb
     # @return [String] the application's name.
     attr_reader :name
 
-    # @return [String] the application's description, or an empty string if the application doesn't have a description.
+    # @return [String, nil] the application's description.
     attr_reader :description
 
     # @return [Array<String>] the application's origins permitted to use RPC.
@@ -34,15 +34,15 @@ module Discordrb
     # @return [User, nil] the user that owns the application, or nil if the application belongs to a team.
     attr_reader :owner
 
-    # @return [String, nil] the ID of the application's icon. Can be used to generate an icon URL.
+    # @return [String, nil] the hash of the application's icon. Can be used to generate an icon URL.
     # @see #icon_url
-    attr_reader :icon_id
+    attr_reader :icon
 
-    # @return [true, false] if users other than the bot owner can add the bot to servers.
+    # @return [true, false] if users other than the bot owner can add the bot to guilds.
     attr_reader :public
     alias_method :public?, :public
 
-    # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join servers.
+    # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join guilds.
     attr_reader :requires_code_grant
     alias_method :requires_code_grant?, :requires_code_grant
 
@@ -58,8 +58,8 @@ module Discordrb
     # @return [Team, nil] the team that owns the application, or `nil` if the application isn't owned by a team.
     attr_reader :team
 
-    # @return [Integer, nil] the ID of the server that is associated with the application.
-    attr_reader :server_id
+    # @return [Integer, nil] the ID of the guild that is associated with the application.
+    attr_reader :guild_id
 
     # @return [String, nil] the URL slug that links to the application's game store page.
     attr_reader :slug
@@ -67,13 +67,13 @@ module Discordrb
     # @return [Integer, nil] the game SKU ID if the application is a game sold on Discord.
     attr_reader :primary_sku_id
 
-    # @return [String, nil] the ID of the application's default rich presence invite cover image.
+    # @return [String, nil] the hash of the application's default rich presence invite cover image.
     #   Can be used to generate a cover image URL.
     # @see #cover_image_url
-    attr_reader :cover_image_id
+    attr_reader :cover_image
 
-    # @return [Integer] the approximate amount of server's the application has been added to.
-    attr_reader :server_install_count
+    # @return [Integer] the approximate amount of guilds the application has been added to.
+    attr_reader :guild_install_count
 
     # @return [Integer] the approximate amount of users that have installed the application with the
     #   `application.commands` oauth scope.
@@ -110,15 +110,15 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @id = data['id'].to_i
+      @id = data[:id].to_i
       update_data(data)
     end
 
-    # Get the server associated with the application.
-    # @return [Server, nil] This will be `nil` if the bot does not have an associated server set.
-    # @raise [Discordrb::Errors::NoPermission] This can happen when the bot is not in the associated server.
-    def server
-      @bot.server(@server_id) if @server_id
+    # Get the guild associated with the application.
+    # @return [Guild, nil] This will be `nil` if the bot does not have an associated guild set.
+    # @raise [Discordrb::Errors::NoPermission] This can happen when the bot is not in the associated guild.
+    def guild
+      @bot.guild(@guild_id) if @guild_id
     end
 
     # Utility method to get a application's icon URL.
@@ -126,7 +126,7 @@ module Discordrb
     # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] The URL of the icon image (`nil` if no image is set).
     def icon_url(format: 'webp', size: 4096)
-      API.app_icon_url(@id, @icon_id, format, size) if @icon_id
+      Assets[:application_icon, @id, @icon, format, size:] if @icon
     end
 
     # Utility method to get a application's cover image URL.
@@ -134,7 +134,7 @@ module Discordrb
     # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] The URL of the cover image (`nil` if no cover is set).
     def cover_image_url(format: 'webp', size: 4096)
-      API.app_cover_url(@id, @cover_image_id, format, size) if @cover_image_id
+      Assets[:application_cover, @id, @cover_image, format, size:] if @cover_image
     end
 
     # Delete an integration types config for the application.
@@ -175,9 +175,9 @@ module Discordrb
       @integration_types[1]
     end
 
-    # Get the integration types config for when the application has been installed in a server.
-    # @return [InstallParams, nil] The defaults install params for when the application is installed in a server.
-    def server_integration_type
+    # Get the integration types config for when the application has been installed in a guild.
+    # @return [InstallParams, nil] The defaults install params for when the application is installed in a guild.
+    def guild_integration_type
       @integration_types[0]
     end
 
@@ -228,21 +228,21 @@ module Discordrb
         data[:flags] = ((@flags & ~to_flags.call(remove_flags)) | to_flags.call(add_flags))
       end
 
-      update_data(JSON.parse(API::Application.update_current_application(@bot.token, **data)))
+      update_data(@bot.http.modify_current_application(**data))
       nil
     end
 
     # @!method automod_rule_badge?
-    #   @return [true, false] whether or not the application has at least 100 automod rules across all of its servers.
+    #   @return [true, false] whether or not the application has at least 100 automod rules across all of its guilds.
     # @!method approved_presence_intent?
-    #   @return [true, false] whether or not the application has reached more than 10,000 unique users and has access to the server presences intent.
+    #   @return [true, false] whether or not the application has reached more than 10,000 unique users and has access to the guild presences intent.
     # @!method limited_presence_intent?
-    #   @return [true, false] whether or not the application has reached less than 10,000 unique users and has access to the server presences intent.
-    # @!method approved_server_members_intent?
-    #   @return [true, false] whether or not the application has reached more than 10,000 unique users and has access to the server members intent.
-    # @!method limited_server_members_intent?
-    #   @return [true, false] whether or not the application has reached less than 10,000 unique users and has access to the server members intent.
-    # @!method pending_server_limit_verification?
+    #   @return [true, false] whether or not the application has reached less than 10,000 unique users and has access to the guild presences intent.
+    # @!method approved_guild_members_intent?
+    #   @return [true, false] whether or not the application has reached more than 10,000 unique users and has access to the guild members intent.
+    # @!method limited_guild_members_intent?
+    #   @return [true, false] whether or not the application has reached less than 10,000 unique users and has access to the guild members intent.
+    # @!method pending_guild_limit_verification?
     #   @return [true, false] whether or not the application has underwent unusual growth that is preventing it from being verified.
     # @!method embedded?
     #   @return [true, false] whether or not the application is embedded within the Discord application (currently unavailable publicly).
@@ -264,10 +264,10 @@ module Discordrb
       approved_presence_intent? || limited_presence_intent?
     end
 
-    # Check if the application has the server members intent toggled on its dashboard.
-    # @return [true, false] Whether or not the application has access to the server members intent.
-    def server_members_intent?
-      approved_server_members_intent? || limited_server_members_intent?
+    # Check if the application has the guild members intent toggled on its dashboard.
+    # @return [true, false] Whether or not the application has access to the guild members intent.
+    def guild_members_intent?
+      approved_guild_members_intent? || limited_guild_members_intent?
     end
 
     # Check if the application has the message content intent toggled on its dashboard.
@@ -285,40 +285,40 @@ module Discordrb
 
     # @!visibility private
     def update_data(new_data)
-      @name = new_data['name']
-      @description = new_data['description']
-      @icon_id = new_data['icon']
-      @rpc_origins = new_data['rpc_origins'] || []
-      @flags = new_data['flags_new'].to_i
-      @owner = new_data['owner'] ? @bot.ensure_user(new_data['owner']) : nil
+      @name = new_data[:name]
+      @description = new_data[:description] == '' ? nil : data[:description]
+      @icon = new_data[:icon]
+      @rpc_origins = new_data[:rpc_origins] || []
+      @flags = new_data[:flags_new].to_i
+      @owner = new_data[:owner] ? @bot.ensure_user(new_data[:owner]) : nil
 
-      @public = new_data['bot_public']
-      @requires_code_grant = new_data['bot_require_code_grant']
-      @terms_of_service_url = new_data['terms_of_service_url']
-      @privacy_policy_url = new_data['privacy_policy_url']
-      @verify_key = new_data['verify_key']
-      @team = new_data['team'] ? Team.new(new_data['team'], @bot) : nil
+      @public = new_data[:bot_public]
+      @requires_code_grant = new_data[:bot_require_code_grant]
+      @terms_of_service_url = new_data[:terms_of_service_url]
+      @privacy_policy_url = new_data[:privacy_policy_url]
+      @verify_key = new_data[:verify_key]
+      @team = new_data[:team] ? Team.new(new_data[:team], @bot) : nil
 
-      @server_id = new_data['guild_id']&.to_i
-      @cover_image_id = new_data['cover_image']
-      @slug = new_data['slug']
-      @primary_sku_id = new_data['primary_sku_id']&.to_i
-      @server_install_count = new_data['approximate_guild_count'] || 0
-      @user_install_count = new_data['approximate_user_install_count'] || 0
-      @user_authorization_count = new_data['approximate_user_authorization_count'] || 0
+      @guild_id = new_data[:guild_id]&.to_i
+      @cover_image = new_data[:cover_image]
+      @slug = new_data[:slug]
+      @primary_sku_id = new_data[:primary_sku_id]&.to_i
+      @guild_install_count = new_data[:approximate_guild_count] || 0
+      @user_install_count = new_data[:approximate_user_install_count] || 0
+      @user_authorization_count = new_data[:approximate_user_authorization_count] || 0
 
-      @redirect_uris = new_data['redirect_uris'] || []
-      @interactions_endpoint_url = new_data['interactions_endpoint_url']
-      @role_connections_verification_url = new_data['role_connections_verification_url']
-      @webhook_events_url = new_data['event_webhooks_url']
-      @webhook_events_status = new_data['event_webhooks_status'] || 1
+      @redirect_uris = new_data[:redirect_uris] || []
+      @interactions_endpoint_url = new_data[:interactions_endpoint_url]
+      @role_connections_verification_url = new_data[:role_connections_verification_url]
+      @webhook_events_url = new_data[:event_webhooks_url]
+      @webhook_events_status = new_data[:event_webhooks_status] || 1
 
-      @webhook_event_types = new_data['event_webhooks_types'] || []
-      @tags = new_data['tags'] || []
-      @custom_install_url = new_data['custom_install_url']
+      @webhook_event_types = new_data[:event_webhooks_types] || []
+      @tags = new_data[:tags] || []
+      @custom_install_url = new_data[:custom_install_url]
 
-      @integration_types = (new_data['integration_types_config'] || {}).to_h do |key, value|
-        [key.to_i, InstallParams.new(value['oauth2_install_params'] || {}, @bot)]
+      @integration_types = (new_data[:integration_types_config] || {}).to_h do |key, value|
+        [key.name.to_i, InstallParams.new(value[:oauth2_install_params] || {}, @bot)]
       end
     end
 

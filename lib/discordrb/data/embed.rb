@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # An Embed object that is contained in a message
-  # A freshly generated embed object will not appear in a message object
-  # unless grabbed from its ID in a channel.
+  # An embed associated with a message.
   class Embed
-    # @return [String] the URL this embed object is based on.
+    # @return [String] the URL the embed object is based on.
     attr_reader :url
 
     # @return [String, nil] the title of the embed object. `nil` if there is not a title
@@ -27,7 +25,7 @@ module Discordrb
     # @return [Time, nil] the timestamp of the embed object. `nil` if there is not a timestamp
     attr_reader :timestamp
 
-    # @return [String, nil] the color of the embed object. `nil` if there is not a color
+    # @return [ColourRGB, nil] the color of the embed object. `nil` if there is not a color
     attr_reader :color
     alias_method :colour, :color
 
@@ -49,45 +47,47 @@ module Discordrb
     # @return [EmbedAuthor, nil] the author of the embed object. `nil` if there is not an author
     attr_reader :author
 
-    # @return [Array<EmbedField>, nil] the fields of the embed object. `nil` if there are no fields
+    # @return [Array<EmbedField>] the fields of the embed object.
     attr_reader :fields
 
     # @!visibility private
-    def initialize(data, message)
-      @message = message
-
-      @url = data['url']
-      @title = data['title']
-      @flags = data['flags'] || 0
-      @type = data['type'].to_sym
-      @description = data['description']
-      @timestamp = Time.parse(data['timestamp']) if data['timestamp']
-      @color = data['color']
-      @footer = EmbedFooter.new(data['footer'], self) if data['footer']
-      @image = EmbedImage.new(data['image'], self) if data['image']
-      @video = EmbedVideo.new(data['video'], self) if data['video']
-      @provider = EmbedProvider.new(data['provider'], self) if data['provider']
-      @thumbnail = EmbedThumbnail.new(data['thumbnail'], self) if data['thumbnail']
-      @author = EmbedAuthor.new(data['author'], self) if data['author']
-      @fields = data['fields']&.map { |field| EmbedField.new(field, self) }
+    def initialize(data, bot)
+      @bot = bot
+      @url = data[:url]
+      @title = data[:title]
+      @flags = data[:flags] || 0
+      @type = data[:type].to_sym
+      @description = data[:description]
+      @timestamp = Time.iso8601(data[:timestamp]) if data[:timestamp]
+      @color = ColourRGB.new(data[:color]) if data[:color]
+      @footer = EmbedFooter.new(data[:footer], @bot) if data[:footer]
+      @image = EmbedImage.new(data[:image], @bot) if data[:image]
+      @video = EmbedVideo.new(data[:video], @bot) if data[:video]
+      @provider = EmbedProvider.new(data[:provider], @bot) if data[:provider]
+      @thumbnail = EmbedThumbnail.new(data[:thumbnail], @bot) if data[:thumbnail]
+      @author = EmbedAuthor.new(data[:author], @bot) if data[:author]
+      @fields = data[:fields]&.map { |field| EmbedField.new(field, @bot) } || []
     end
 
-    # @return [Message, nil] the message this embed object is contained in.
-    def message
-      @message unless @message.is_a?(Snapshot)
-    end
-
-    # @return [Snapshot, nil] the message snapshot this embed object is contained in.
-    def snapshot
-      @message unless @message.is_a?(Message)
+    # @!visibility private
+    def to_h
+      {
+        title: @title,
+        description: @description,
+        url: @url,
+        timestamp: @timestamp&.iso8601,
+        color: @color&.to_i,
+        image: @image ? { url: @image.url } : nil,
+        thumbnail: @thumbnail ? { url: @thumbnail.url } : nil,
+        fields: @fields.any? ? @fields.map(&:to_h) : nil,
+        footer: @footer&.to_h,
+        author: @author&.to_h
+      }.compact
     end
   end
 
-  # An Embed footer for the embed object.
+  # A footer for an embed.
   class EmbedFooter
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the footer text.
     attr_reader :text
 
@@ -98,20 +98,21 @@ module Discordrb
     attr_reader :proxy_icon_url
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
+    def initialize(data, bot)
+      @bot = bot
+      @text = data[:text]
+      @icon_url = data[:icon_url]
+      @proxy_icon_url = data[:proxy_icon_url]
+    end
 
-      @text = data['text']
-      @icon_url = data['icon_url']
-      @proxy_icon_url = data['proxy_icon_url']
+    # @!visibility private
+    def to_h
+      { text: @text, icon_url: @icon_url }.compact
     end
   end
 
-  # An Embed image for the embed object.
+  # An image for an embed.
   class EmbedImage
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the source URL of the image.
     attr_reader :url
 
@@ -140,26 +141,22 @@ module Discordrb
     attr_reader :placeholder_version
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
-
-      @url = data['url']
-      @proxy_url = data['proxy_url']
-      @width = data['width']
-      @height = data['height']
-      @flags = data['flags'] || 0
-      @description = data['description']
-      @content_type = data['content_type']
-      @placeholder = data['placeholder']
-      @placeholder_version = data['placeholder_version']
+    def initialize(data, bot)
+      @bot = bot
+      @url = data[:url]
+      @proxy_url = data[:proxy_url]
+      @width = data[:width]
+      @height = data[:height]
+      @flags = data[:flags] || 0
+      @description = data[:description]
+      @content_type = data[:content_type]
+      @placeholder = data[:placeholder]
+      @placeholder_version = data[:placeholder_version]
     end
   end
 
-  # An Embed video for the embed object
+  # A video for an embed.
   class EmbedVideo
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the source URL of the video.
     attr_reader :url
 
@@ -188,55 +185,46 @@ module Discordrb
     attr_reader :placeholder_version
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
-
-      @url = data['url']
-      @proxy_url = data['proxy_url']
-      @width = data['width']
-      @height = data['height']
-      @flags = data['flags'] || 0
-      @description = data['description']
-      @content_type = data['content_type']
-      @placeholder = data['placeholder']
-      @placeholder_version = data['placeholder_version']
+    def initialize(data, bot)
+      @bot = bot
+      @url = data[:url]
+      @proxy_url = data[:proxy_url]
+      @width = data[:width]
+      @height = data[:height]
+      @flags = data[:flags] || 0
+      @description = data[:description]
+      @content_type = data[:content_type]
+      @placeholder = data[:placeholder]
+      @placeholder_version = data[:placeholder_version]
     end
   end
 
-  # An Embed thumbnail for the embed object
+  # A thumbnail for an embed.
   class EmbedThumbnail
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
-    # @return [String] the CDN URL this thumbnail can be downloaded at.
+    # @return [String] the CDN URL the thumbnail can be downloaded at.
     attr_reader :url
 
-    # @return [String] the thumbnail's proxy URL - I'm not sure what exactly this does, but I think it has something to
-    #   do with CDNs.
+    # @return [String] the thumbnail's proxy URL.
     attr_reader :proxy_url
 
-    # @return [Integer] the width of this thumbnail file, in pixels.
+    # @return [Integer] the width of the thumbnail's file, in pixels.
     attr_reader :width
 
-    # @return [Integer] the height of this thumbnail file, in pixels.
+    # @return [Integer] the height of the thumbnail's file, in pixels.
     attr_reader :height
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
-
-      @url = data['url']
-      @proxy_url = data['proxy_url']
-      @width = data['width']
-      @height = data['height']
+    def initialize(data, bot)
+      @bot = bot
+      @url = data[:url]
+      @proxy_url = data[:proxy_url]
+      @width = data[:width]
+      @height = data[:height]
     end
   end
 
-  # An Embed provider for the embed object
+  # A provider for an embed.
   class EmbedProvider
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the provider's name.
     attr_reader :name
 
@@ -244,19 +232,15 @@ module Discordrb
     attr_reader :url
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
-
-      @name = data['name']
-      @url = data['url']
+    def initialize(data, bot)
+      @bot = bot
+      @name = data[:name]
+      @url = data[:url]
     end
   end
 
-  # An Embed author for the embed object
+  # An author for an embed.
   class EmbedAuthor
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the author's name.
     attr_reader :name
 
@@ -270,37 +254,42 @@ module Discordrb
     attr_reader :proxy_icon_url
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
+    def initialize(data, bot)
+      @bot = bot
+      @name = data[:name]
+      @url = data[:url]
+      @icon_url = data[:icon_url]
+      @proxy_icon_url = data[:proxy_icon_url]
+    end
 
-      @name = data['name']
-      @url = data['url']
-      @icon_url = data['icon_url']
-      @proxy_icon_url = data['proxy_icon_url']
+    # @!visibility private
+    def to_h
+      { name: @name, icon_url: @icon_url }.compact
     end
   end
 
-  # An Embed field for the embed object
+  # A field for an embed.
   class EmbedField
-    # @return [Embed] the embed object this is based on.
-    attr_reader :embed
-
     # @return [String] the field's name.
     attr_reader :name
 
     # @return [String] the field's value.
     attr_reader :value
 
-    # @return [true, false] whether this field is inline.
+    # @return [true, false] whether the field is displayed inline.
     attr_reader :inline
 
     # @!visibility private
-    def initialize(data, embed)
-      @embed = embed
+    def initialize(data, bot)
+      @bot = bot
+      @name = data[:name]
+      @value = data[:value]
+      @inline = data[:inline]
+    end
 
-      @name = data['name']
-      @value = data['value']
-      @inline = data['inline']
+    # @!visibility private
+    def to_h
+      { name: @name, value: @value, inline: @inline }.compact
     end
   end
 end

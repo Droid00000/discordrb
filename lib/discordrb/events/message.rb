@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
 require 'discordrb/data'
 
 module Discordrb::Events
@@ -9,55 +8,10 @@ module Discordrb::Events
     # @return [Channel] the channel in which this event occurred
     attr_reader :channel
 
-    # Sends a message to the channel this message was sent in, right now. It is usually preferable to use {#<<} instead
-    # because it avoids rate limiting problems
-    # @param content [String] The message to send to the channel
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
-    # @param components [View, Array<Hash>, nil] A collection of components to attach to the message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    # @return [Discordrb::Message] the message that was sent
-    def send_message(content, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0)
-      channel.send_message(content, tts, embed, attachments, allowed_mentions, message_reference, components, flags)
-    end
-
-    # The same as {#send_message}, but yields a {Webhooks::Embed} for easy building of embedded content inside a block.
-    # @see Channel#send_embed
-    # @param message [String] The message that should be sent along with the embed. If this is the empty string, only the embed will be shown.
-    # @param embed [Discordrb::Webhooks::Embed, nil] The embed to start the building process with, or nil if one should be created anew.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param message_reference [Message, String, Integer, nil] The message, or message ID, to reply to if any.
-    # @param components [View, Array<Hash>, nil] A collection of components to attach to the message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    # @yield [embed] Yields the embed to allow for easy building inside a block.
-    # @yieldparam embed [Discordrb::Webhooks::Embed] The embed from the parameters, or a new one.
-    # @return [Message] The resulting message.
-    def send_embed(message = '', embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil, flags = 0, &block)
-      channel.send_embed(message, embed, attachments, tts, allowed_mentions, message_reference, components, flags, &block)
-    end
-
-    # Sends a temporary message to the channel this message was sent in, right now.
-    # @param content [String] The content to send. Should not be longer than 2000 characters or it will result in an error.
-    # @param timeout [Float] The amount of time in seconds after which the message sent will be deleted.
-    # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
-    # @param embed [Hash, Discordrb::Webhooks::Embed, nil] The rich embed to append to this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`
-    # @param allowed_mentions [Hash, Discordrb::AllowedMentions, false, nil] Mentions that are allowed to ping on this message. `false` disables all pings
-    # @param components [View, Array<Hash>, nil] A collection of components to attach to the message.
-    # @param flags [Integer] Flags for this message. Currently only SUPPRESS_EMBEDS (1 << 2), SUPPRESS_NOTIFICATIONS (1 << 12), and IS_COMPONENTS_V2 (1 << 15) can be set.
-    def send_temporary_message(content, timeout, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, components = nil, flags = 0)
-      channel.send_temporary_message(content, timeout, tts, embed, attachments, allowed_mentions, components, flags)
-    end
-
     # Sends a message to the channel this message was sent in, right now.
-    # @see Channel#send_message!
-    def send_message!(...)
-      channel.send_message!(...)
+    # @see Channel#send_message
+    def send_message(...)
+      channel.send_message(...)
     end
 
     # Adds a string to be sent after the event has finished execution. Avoids problems with rate limiting because only
@@ -92,10 +46,6 @@ module Discordrb::Events
 
     alias_method :send, :send_message
     alias_method :respond, :send_message
-    alias_method :send_temp, :send_temporary_message
-
-    alias_method :send!, :send_message!
-    alias_method :respond!, :send_message!
   end
 
   # Event raised when a text message is sent to a channel
@@ -131,10 +81,10 @@ module Discordrb::Events
     #   @see Message#timestamp
     delegate :author, :channel, :content, :timestamp, to: :message
 
-    # @!attribute [r] server
-    #   @return [Server, nil] the server where this message was sent, or nil if it was sent in PM.
-    #   @see Channel#server
-    delegate :server, to: :channel
+    # @!attribute [r] guild
+    #   @return [Guild, nil] the guild where this message was sent, or nil if it was sent in a DM channel.
+    #   @see Channel#guild
+    delegate :guild, to: :channel
 
     # @!visibility private
     def initialize(message, bot)
@@ -158,7 +108,7 @@ module Discordrb::Events
     # @example Send a file from disk
     #   event.send_file(File.open('rubytaco.png', 'r'))
     def send_file(file, caption: nil, filename: nil, spoiler: nil)
-      @message.channel.send_file(file, caption: caption, filename: filename, spoiler: spoiler)
+      send_message(attachments: [{ file:, filename:, is_spoiler: spoiler, description: caption }])
     end
 
     # Attaches a file to the message event and converts the message into
@@ -183,14 +133,14 @@ module Discordrb::Events
     end
 
     # @return [true, false] whether or not this message was sent by the bot itself
-    def from_bot?
+    def current_bot?
       @message.user.id == @bot.profile.id
     end
 
-    # Utility method to get the voice bot for the current server
-    # @return [VoiceBot, nil] the voice bot connected to this message's server, or nil if there is none connected
+    # Utility method to get the voice bot for the current guild
+    # @return [VoiceBot, nil] the voice bot connected to this message's guild, or nil if there is none connected
     def voice
-      @bot.voice(@message.channel.server.id)
+      @bot.voice(@message.channel.guild.id)
     end
 
     alias_method :user, :author
@@ -273,14 +223,14 @@ module Discordrb::Events
         matches_all(@attributes[:after], event.timestamp) { |a, e| a > e },
         matches_all(@attributes[:before], event.timestamp) { |a, e| a < e },
         matches_all(@attributes[:private], event.channel.private?) { |a, e| !e == !a },
-        matches_all(@attributes[:server], event.server) { |a, e| a&.resolve_id == e&.resolve_id }
+        matches_all(@attributes[:guild], event.guild) { |a, e| a&.resolve_id == e&.resolve_id }
       ].reduce(true, &:&)
     end
 
     # @see EventHandler#after_call
     def after_call(event)
       if event.file.nil?
-        event.send_message(event.saved_message) unless event.saved_message.empty?
+        event.send_message(content: event.saved_message) unless event.saved_message.empty?
       else
         event.send_file(event.file, caption: event.saved_message, filename: event.filename, spoiler: event.file_spoiler)
       end
@@ -290,7 +240,7 @@ module Discordrb::Events
   # Event raised when the current bot is mentioned in a message.
   class MentionEvent < MessageEvent
     # @return [true, false] whether this mention event was raised
-    #   due to a mention of the bot's auto-generated server role.
+    #   due to a mention of the bot's auto-generated role.
     attr_reader :role_mention
     alias_method :role_mention?, :role_mention
 
@@ -322,7 +272,7 @@ module Discordrb::Events
     end
   end
 
-  # @see Discordrb::EventContainer#pm
+  # @see Discordrb::EventContainer#direct_message
   class PrivateMessageEvent < MessageEvent; end
 
   # Event handler for {PrivateMessageEvent}
@@ -335,14 +285,14 @@ module Discordrb::Events
     # @return [Integer] the ID associated with this event
     attr_reader :id
 
-    # @return [Server, nil] the server associated with this event
-    attr_reader :server
+    # @return [Guild, nil] the guild associated with this event
+    attr_reader :guild
 
     # @!visibility private
     def initialize(data, bot)
-      @id = data['id'].to_i
-      @channel = bot.channel(data['channel_id'].to_i)
-      @server = @channel.server
+      @id = data[:id].to_i
+      @channel = bot.channel(data[:channel_id].to_i)
+      @guild = @channel.guild
       @saved_message = ''
       @bot = bot
     end
@@ -369,7 +319,7 @@ module Discordrb::Events
             a == e
           end
         end,
-        matches_all(@attributes[:server], event.server) do |a, e|
+        matches_all(@attributes[:guild], event.guild) do |a, e|
           a&.resolve_id == e&.resolve_id
         end
       ].reduce(true, &:&)

@@ -1,225 +1,258 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-require 'discordrb/data'
-
 module Discordrb::Events
-  # Raised when a channel is created
-  class ChannelCreateEvent < Event
-    # @return [Channel] the channel in question.
+  # Generic superclass for channel events.
+  class ChannelEvent < Event
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
+
+    # @return [Channel] the channel associated with the event.
+    # @note Due to a Discord limitation, when a thread is deleted,
+    #   only the following methods will be available: {Snowflake#id id},
+    #   {Channel#parent parent}, {Channel#guild guild}, and {Channel#type type}.
     attr_reader :channel
 
-    # @!attribute [r] type
-    #   @return [Integer] the channel's type (0: text, 1: private, 2: voice, 3: group).
-    #   @see Channel#type
-    # @!attribute [r] topic
-    #   @return [String] the channel's topic.
-    #   @see Channel#topic
-    # @!attribute [r] position
-    #   @return [Integer] the position of the channel in the channels list.
-    #   @see Channel#position
-    # @!attribute [r] name
-    #   @return [String] the channel's name
-    #   @see Channel#name
-    # @!attribute [r] id
-    #   @return [Integer] the channel's unique ID.
-    #   @see Channel#id
-    # @!attribute [r] server
-    #   @return [Server] the server the channel belongs to.
-    #   @see Channel#server
-    delegate :name, :server, :type, :owner_id, :recipients, :topic, :user_limit, :position, :permission_overwrites, to: :channel
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @channel = data.is_a?(Discordrb::Channel) ? data : bot.channel(data['id'].to_i)
+      @guild = bot.guild(data[:guild_id])
+      @channel = bot.channel(data[:id].to_i)
     end
   end
 
-  # Event handler for ChannelCreateEvent
-  class ChannelCreateEventHandler < EventHandler
-    def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ChannelCreateEvent
+  # Raised whenever a channel is created.
+  class ChannelCreateEvent < ChannelEvent; end
 
-      [
-        matches_all(@attributes[:type], event.type) do |a, e|
-          a == if a.is_a? String
-                 e.name
-               else
-                 e
-               end
-        end,
-        matches_all(@attributes[:name], event.name) do |a, e|
-          a == if a.is_a? String
-                 e.to_s
-               else
-                 e
-               end
-        end
-      ].reduce(true, &:&)
-    end
-  end
+  # Raised whenever a channel is updated.
+  class ChannelUpdateEvent < ChannelEvent; end
 
-  # Raised when a channel is deleted
-  class ChannelDeleteEvent < Event
-    # @return [Integer] the channel's type (0: text, 1: private, 2: voice, 3: group).
-    attr_reader :type
-
-    # @return [String] the channel's topic
-    attr_reader :topic
-
-    # @return [Integer] the position of the channel on the list
-    attr_reader :position
-
-    # @return [String] the channel's name
-    attr_reader :name
-
-    # @return [Integer] the channel's ID
-    attr_reader :id
-
-    # @return [Server] the channel's server
-    attr_reader :server
-
-    # @return [Integer, nil] the channel's owner ID if this is a group channel
-    attr_reader :owner_id
-
+  # Raised whenever a channel is deleted.
+  class ChannelDeleteEvent < ChannelEvent
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-
-      @type = data['type']
-      @topic = data['topic']
-      @position = data['position']
-      @name = data['name']
-      @is_private = data['is_private']
-      @id = data['id'].to_i
-      @server = bot.server(data['guild_id'].to_i) if data['guild_id']
-      @owner_id = bot.user(data['owner_id']) if @type == 3
+      @guild = bot.guild(data[:guild_id])
+      @channel = Discordrb::Channel.new(data, @bot)
     end
   end
 
-  # Event handler for ChannelDeleteEvent
-  class ChannelDeleteEventHandler < EventHandler
-    def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ChannelDeleteEvent
-
-      [
-        matches_all(@attributes[:type], event.type) do |a, e|
-          a == if a.is_a? String
-                 e.name
-               else
-                 e
-               end
-        end,
-        matches_all(@attributes[:name], event.name) do |a, e|
-          a == if a.is_a? String
-                 e.to_s
-               else
-                 e
-               end
-        end
-      ].reduce(true, &:&)
-    end
-  end
-
-  # Generic subclass for recipient events (add/remove)
-  class ChannelRecipientEvent < Event
-    # @return [Channel] the channel in question.
-    attr_reader :channel
-
-    delegate :name, :server, :type, :owner_id, :recipients, :topic, :user_limit, :position, :permission_overwrites, to: :channel
-
-    # @return [Recipient] the recipient that was added/removed from the group
-    attr_reader :recipient
-
-    delegate :id, to: :recipient
-
+  # Generic event handler for channel events.
+  class ChannelEventHandler < EventHandler
     # @!visibility private
-    def initialize(data, bot)
-      @bot = bot
-
-      @channel = bot.channel(data['channel_id'].to_i)
-      recipient = data['user']
-      recipient_user = bot.ensure_user(recipient)
-      @recipient = Discordrb::Recipient.new(recipient_user, @channel, bot)
-    end
-  end
-
-  # Generic event handler for channel recipient events
-  class ChannelRecipientEventHandler < EventHandler
-    def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? ChannelRecipientEvent
-
-      [
-        matches_all(@attributes[:owner_id], event.owner_id) do |a, e|
-          a.resolve_id == e.resolve_id
-        end,
-        matches_all(@attributes[:id], event.id) do |a, e|
-          a.resolve_id == e.resolve_id
-        end,
-        matches_all(@attributes[:name], event.name) do |a, e|
-          a == if a.is_a? String
-                 e.to_s
-               else
-                 e
-               end
-        end
-      ]
-    end
-  end
-
-  # Raised when a message is pinned or unpinned.
-  class ChannelPinsUpdateEvent < Event
-    # @return [Time, nil] Time at which the most recent pinned message was pinned.
-    attr_reader :last_pin_timestamp
-
-    # @return [Channel] The channel this event originates from.
-    attr_reader :channel
-
-    # @return [Server, nil] The server this event originates from.
-    attr_reader :server
-
-    # @!visibility private
-    def initialize(data, bot)
-      @bot = bot
-
-      @server = bot.server(data['guild_id']) if data['guild_id']
-      @channel = bot.channel(data['channel_id'])
-      @last_pin_timestamp = Time.iso8601(data['last_pin_timestamp']) if data['last_pin_timestamp']
-    end
-  end
-
-  # Event handler for ChannelPinsUpdateEvent.
-  class ChannelPinsUpdateEventHandler < EventHandler
     def matches?(event)
       # Check for the proper event type.
-      return false unless event.is_a? ChannelPinsUpdateEvent
+      return false unless event.is_a?(ChannelEvent)
 
       [
-        matches_all(@attributes[:server], event.server) { |a, e| a.resolve_id == e&.id },
-        matches_all(@attributes[:channel], event.channel) { |a, e| a.resolve_id == e.id }
+        matches_all(@attributes[:id], event.channel) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:name], event.channel) do |a, e|
+          case a
+          when Regexp
+            e.name ? a.match?(e.name) : false
+          when String
+            a == e.name
+          end
+        end,
+
+        matches_all(@attributes[:topic], event.channel) do |a, e|
+          case a
+          when Regexp
+            e.topic ? a.match?(e.name) : false
+          when String
+            a == e.topic
+          end
+        end,
+
+        matches_all(@attributes[:type], event.channel) do |a, e|
+          case a
+          when :thread
+            e.thread?
+          when Symbol, String
+            Discordrb::Channel::TYPES[a.to_sym] == e.type
+          else
+            a == e.type
+          end
+        end,
+
+        matches_all(@attributes[:locked], event.channel) do |a, e|
+          case a
+          when TrueClass
+            e.thread? ? (e.locked? == true) : false
+          when FalseClass
+            e.thread? ? (e.locked? == false) : false
+          end
+        end,
+
+        matches_all(@attributes[:archived], event.channel) do |a, e|
+          case a
+          when TrueClass
+            e.thread? ? (e.archived? == true) : false
+          when FalseClass
+            e.thread? ? (e.archived? == false) : false
+          end
+        end,
+
+        matches_all(@attributes[:parent], event.channel.parent_id) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:auto_archive_duration], event.channel) do |a, e|
+          e.thread? ? e.auto_archive_duration == a.to_i : false
+        end
       ].reduce(true, &:&)
     end
   end
 
-  # Raised when a user is added to a private channel
-  class ChannelRecipientAddEvent < ChannelRecipientEvent; end
+  # Event handler for CHANNEL_CREATE and THREAD_CREATE events.
+  class ChannelCreateEventHandler < ChannelEventHandler; end
 
-  # Event handler for ChannelRecipientAddEvent
-  class ChannelRecipientAddEventHandler < ChannelRecipientEventHandler; end
+  # Event handler for CHANNEL_UPDATE and THREAD_UPDATE events.
+  class ChannelUpdateEventHandler < ChannelEventHandler; end
 
-  # Raised when a recipient that isn't the bot leaves or is kicked from a group channel
-  class ChannelRecipientRemoveEvent < ChannelRecipientEvent; end
+  # Event handler for CHANNEL_DELETE and THREAD_DELETE events.
+  class ChannelDeleteEventHandler < ChannelEventHandler; end
 
-  # Event handler for ChannelRecipientRemoveEvent
-  class ChannelRecipientRemoveEventHandler < ChannelRecipientEventHandler; end
+  # Raised whenever a message is pinned or un-pinned in a channel.
+  class ChannelPinsUpdateEvent < Event
+    # @return [Guild, nil] the guild associated with the
+    #   event. Will be `nil` when a message is pinned in a DM
+    #   channel with the current bot account.
+    attr_reader :guild
 
-  # Raised when a channel is updated (e.g. topic changes)
-  class ChannelUpdateEvent < ChannelCreateEvent; end
+    # @return [Channel] the channel associated with the event.
+    attr_reader :channel
 
-  # Event handler for ChannelUpdateEvent
-  class ChannelUpdateEventHandler < ChannelCreateEventHandler; end
+    # @return [Time, nil] the time at when the last pinned message
+    #   was pinned in the channel.
+    attr_reader :last_message_pinned_at
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @guild = bot.guild(data[:guild_id]) if data[:guild_id]
+      @channel = bot.channel(data[:channel_id]) if data[:channel_id]
+      @last_message_pinned_at = Time.iso8601(data[:last_pin_timestamp]) if data[:last_pin_timestamp]
+    end
+  end
+
+  # Event handler for CHANNEL_PINS_UPDATE events.
+  class ChannelPinsUpdateEventHandler < EventHandler
+    # @!visibility private
+    def matches?(event)
+      # Check for the proper event type.
+      return false unless event.is_a?(ChannelPinsUpdateEvent)
+
+      [
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:channel], event.channel) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end
+      ].reduce(true, &:&)
+    end
+  end
+
+  # Raised whenever the start time of a voice channel is updated.
+  class VoiceChannelStartTimeUpdateEvent < Event
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
+
+    # @return [Channel] the channel associated with the event.
+    attr_reader :channel
+
+    # @return [Time, nil] the new start time of the voice channel.
+    attr_reader :start_time
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @channel = bot.channel(data[:id])
+      @guild = @channel.guild
+      @start_time = Time.at(data[:voice_start_time]) if data[:voice_start_time]
+    end
+  end
+
+  # Event handler for VOICE_CHANNEL_START_TIME_UPDATE events.
+  class VoiceChannelStartTimeUpdateEventHandler < EventHandler
+    # @!visibility private
+    def matches?(event)
+      # Check for the proper event type.
+      return false unless event.is_a?(VoiceChannelStartTimeUpdateEvent)
+
+      [
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:channel], event.channel) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:after], event.start_time) do |a, e|
+          (e > a) if e
+        end,
+
+        matches_all(@attributes[:before], event.start_time) do |a, e|
+          (e < a) if e
+        end
+      ].reduce(true, &:&)
+    end
+  end
+
+  # Raised whenever the status of a voice channel is updated.
+  class VoiceChannelStatusUpdateEvent < Event
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
+
+    # @return [String, nil] the status of the voice channel.
+    attr_reader :status
+
+    # @return [Channel] the channel associated with the event.
+    attr_reader :channel
+
+    # @!visibility private
+    def initialize(data, bot)
+      @bot = bot
+      @guild = bot.guild(data[:guild_id])
+      @channel = bot.channel(data[:id].to_i)
+      @status = data[:status] == '' ? nil : data[:status]
+    end
+  end
+
+  # Event handler for VOICE_CHANNEL_STATUS_UPDATE events.
+  class VoiceChannelStatusUpdateEventHandler < EventHandler
+    # @!visibility private
+    def matches?(event)
+      # Check for the proper event type.
+      return false unless event.is_a?(VoiceChannelStatusUpdateEvent)
+
+      [
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:status], event.status) do |a, e|
+          case a
+          when Regexp
+            a.match?(e) if e
+          else
+            a == e
+          end
+        end,
+
+        matches_all(@attributes[:channel], event.channel) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end
+      ].reduce(true, &:&)
+    end
+  end
 end

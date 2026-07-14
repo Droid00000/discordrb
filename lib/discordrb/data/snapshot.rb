@@ -15,11 +15,11 @@ module Discordrb
     # @return [Array<Attachment>] the files attached to the message snapshot.
     attr_reader :attachments
 
-    # @return [Time] the time at which the message snapshot was created.
-    attr_reader :created_at
-
     # @return [Time, nil] the time at which the message snapshot was edited.
     attr_reader :edited_at
+
+    # @return [Time] the time at when the snapshot's source message was created.
+    attr_reader :creation_time
 
     # @return [Integer] the flags that have been set on the message snapshot.
     attr_reader :flags
@@ -30,19 +30,23 @@ module Discordrb
     # @return [Array<Component>] the interaction components associated with the message snapshot.
     attr_reader :components
 
+    # @return [Array<Sticker::Item>] the stickers included in the message snapshot.
+    attr_reader :stickers
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @type = data['type']
-      @flags = data['flags'] || 0
-      @content = data['content']
-      @mention_roles = data['mention_roles']&.map(&:resolve_id) || []
-      @embeds = data['embeds']&.map { |embed| Embed.new(embed, self) } || []
-      @attachments = data['attachments']&.map { |file| Attachment.new(file, self, @bot) } || []
-      @created_at = data['timestamp'] ? Time.parse(data['timestamp']) : nil
-      @edited_at = data['edited_timestamp'] ? Time.parse(data['edited_timestamp']) : nil
-      @mentions = data['mentions']&.map { |mention| @bot.ensure_user(mention) } || []
-      @components = data['components']&.map { |component| Components.from_data(component, @bot) } || []
+      @type = data[:type]
+      @flags = data[:flags] || 0
+      @content = data[:content]
+      @mention_roles = data[:mention_roles]&.map(&:resolve_id) || []
+      @embeds = data[:embeds]&.map { |embed| Embed.new(embed, @bot) } || []
+      @attachments = data[:attachments]&.map { |file| Attachment.new(file, self, @bot) } || []
+      @creation_time = data[:timestamp] ? Time.iso8601(data[:timestamp]) : nil
+      @edited_at = data[:edited_timestamp] ? Time.iso8601(data[:edited_timestamp]) : nil
+      @mentions = data[:mentions]&.map { |mention| @bot.ensure_user(mention) } || []
+      @components = data[:components]&.map { |component| Components.from_data(component, @bot) } || []
+      @stickers = (data[:sticker_items] || data[:stickers])&.map { |item| Sticker::Item.new(item, @bot) } || []
     end
 
     # Check whether the message snapshot has been edited.
@@ -51,31 +55,62 @@ module Discordrb
       !@edited_at.nil?
     end
 
-    # Check whether the message snapshot contains any custom emojis.
-    # @return [true, false]  whether or not any emoji were used in the snapshot.
-    def emojis?
-      emojis.any?
+    # Get the custom emojis that were used in the message snapshot.
+    # @return [Array<Emoji>] The custom emojis that were used in the message snapshot.
+    def emojis
+      return (@emojis || []) if @emojis || !@content || @content.empty?
+
+      @emojis = []
+
+      @content.scan(/<(a?):(\w{2,32}):(\d{15,32})>/) do |type, name, e_id|
+        e_id = e_id.to_i
+        animated = (type == 'a')
+        @emojis << (@bot.emoji(e_id) || Emoji.new({ id: e_id, name:, animated: }))
+      end
+
+      @emojis
     end
 
-    # Get the custom emojis that were used in the message snapshot.
-    # @return [Array<Emoji>] the emojis used in the message snapshot.
-    def emojis
-      return [] if @content.nil? || @content.empty?
+    # Get the formatted timestamps contained in the message snapshot..
+    # @return [Array<TimestampMarkdown>] The formatted timestamps in the message snapshot.
+    def timestamps
+      return (@fmt_timestamps || []) if @fmt_timestamps || !@content || @content.empty?
 
-      @emojis ||= @bot.parse_mentions(@content).select { |parsed| parsed.is_a?(Emoji) }
+      @fmt_timestamps = []
+
+      @content.scan(/<t:(-?\d{1,13})(?::(t|T|d|D|f|F|s|S|R))?>/) do |time, specifier|
+        # If it's not between these values, Discord won't show it, so don't even bother.
+        if (time = time.to_i).between?(-8_640_000_000_000, 8_640_000_000_000)
+          @fmt_timestamps << TimestampMarkdown.new(Time.at(time), specifier)
+        end
+      end
+
+      @fmt_timestamps
     end
 
     # Get the roles that were mentioned in the message snapshot.
     # @return [Array<Role>] the roles that were mentioned in the message snapshot.
-    # @note this can only resolve roles in servers that the bot has access to via {Bot#servers}.
+    # @note this can only resolve roles in guilds that the bot has access to via {Bot#guilds}.
     def role_mentions
       return [] if @mention_roles.empty?
 
       return @role_mentions if @role_mentions
 
-      roles = @bot.servers.values.flat_map(&:roles)
+      found = nil
 
-      @role_mentions = @mention_roles.filter_map { |id| roles.find { |r| r.id == id } }
+      @role_mentions = @mention_roles.filter_map do |role_id|
+        if found
+          found.role(role_id)
+        else
+          @bot.guilds.each do |guild|
+            role = guild.role(role_id)
+            next unless role
+
+            found = guild
+            break role
+          end
+        end
+      end
     end
 
     # Get the buttons that were used in the message snapshot.

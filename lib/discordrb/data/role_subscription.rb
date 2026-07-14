@@ -20,10 +20,10 @@ module Discordrb
     def initialize(data, message, bot)
       @bot = bot
       @message = message
-      @renewal = data['is_renewal']
-      @tier_name = data['tier_name']
-      @listing_id = data['role_subscription_listing_id']&.to_i
-      @total_months_subscribed = data['total_months_subscribed']
+      @renewal = data[:is_renewal]
+      @tier_name = data[:tier_name]
+      @listing_id = data[:role_subscription_listing_id]&.to_i
+      @total_months_subscribed = data[:total_months_subscribed]
     end
 
     # Check if this role subscription is a new purchase.
@@ -35,7 +35,7 @@ module Discordrb
     # Get the role associated with the notification for this subscription.
     # @return [Role, nil] the role that's associated with this subscription.
     def role
-      @message.server.roles.find { |role| role.tags&.subscription_listing_id == @listing_id }
+      @message.guild.roles.find { |role| role.tags&.subscription_listing_id == @listing_id }
     end
   end
 end

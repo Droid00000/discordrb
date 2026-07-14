@@ -3,7 +3,7 @@
 module Discordrb
   # Metadata about a role's linked connection.
   class RoleConnectionMetadata
-    # Map of connection types.
+    # Mapping of connection types.
     TYPES = {
       integer_less_than_or_equal: 1,
       integer_greater_than_or_equal: 2,
@@ -36,30 +36,30 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @key = data['key']
-      @name = data['name']
-      @type = data['type']
-      @description = data['description']
-      @name_localizations = data['name_localizations'] || {}
-      @description_localizations = data['description_localizations'] || {}
+      @key = data[:key]
+      @name = data[:name]
+      @type = data[:type]
+      @description = data[:description]
+      @name_localizations = data[:name_localizations] || {}
+      @description_localizations = data[:description_localizations] || {}
     end
 
     # @!method integer_less_than_or_equal?
-    #   @return [true, false] whether the numeric metadata value is less than or equivalent to the server's configured numeric value.
+    #   @return [true, false] whether the numeric metadata value is less than or equivalent to the guild's configured numeric value.
     # @!method integer_greater_than_or_equal?
-    #   @return [true, false] whether the numeric metadata value is greater than or equivalent to the server's configured numeric value.
+    #   @return [true, false] whether the numeric metadata value is greater than or equivalent to the guild's configured numeric value.
     # @!method integer_equal?
-    #   @return [true, false] whether the numeric metadata value is equivalent to the server's configured numeric value.
+    #   @return [true, false] whether the numeric metadata value is equivalent to the guild's configured numeric value.
     # @!method integer_not_equal?
-    #   @return [true, false] whether the numeric metadata value is not equivalent to the server's configured numeric value.
+    #   @return [true, false] whether the numeric metadata value is not equivalent to the guild's configured numeric value.
     # @!method datetime_less_than_or_equal?
-    #   @return [true, false] whether the ISO8601 date is less than or equivalent to the server's configured number of days before a date.
+    #   @return [true, false] whether the ISO8601 date is less than or equivalent to the guild's configured number of days before a date.
     # @!method datetime_greater_than_or_equal?
-    #   @return [true, false] whether the ISO8601 date is greater than or equivalent to the server's configured number of days before a date.
+    #   @return [true, false] whether the ISO8601 date is greater than or equivalent to the guild's configured number of days before a date.
     # @!method boolean_equal?
-    #   @return [true, false] whether the boolean metadata value is equivalent to the server's configured boolean value.
+    #   @return [true, false] whether the boolean metadata value is equivalent to the guild's configured boolean value.
     # @!method boolean_not_equal?
-    #   @return [true, false] whether the boolean metadata value is not equivalent to the server's configured boolean value.
+    #   @return [true, false] whether the boolean metadata value is not equivalent to the guild's configured boolean value.
     TYPES.each do |name, value|
       define_method("#{name}?") do
         @type == value

@@ -3,7 +3,7 @@
 module Discordrb
   # A forum or media tag that can be applied to threads.
   class ChannelTag
-    include IDObject
+    include Snowflake
 
     # @return [String] the 1-20 character name of the channel tag.
     attr_reader :name
@@ -13,23 +13,20 @@ module Discordrb
 
     # @return [true, false] whether or not the channel tag is moderated.
     attr_reader :moderated
-    alias_method :moderated?, :moderated
+    alias moderated? moderated
 
     # @!visibility private
     def initialize(data, channel, bot)
       @bot = bot
       @channel = channel
-      @id = data['id'].to_i
-      @name = data['name']
-      @moderated = data['moderated']
-      @emoji_id = data['emoji_id']&.to_i
-      @emoji_name = Emoji.new({ 'name' => data['emoji_name'] }, @bot) if data['emoji_name']
+      @id = data[:id].to_i
+      update_data(data)
     end
 
     # Get the emoji of the channel tag.
     # @return [Emoji, nil] the emoji of the channel tag, or `nil` if no emoji has been set.
     def emoji
-      @emoji_id ? @channel.server.emojis[@emoji_id] : @emoji_name
+      @emoji_id ? @channel.guild.emoji(@emoji_id) : @emoji_name
     end
 
     # Modify the properties of the channel tag.
@@ -42,7 +39,7 @@ module Discordrb
       new_data = {
         name: name,
         moderated: moderated,
-        **(Emoji.build_emoji_hash(emoji) if emoji != :undef)
+        **(Emoji.build_hash(emoji) if emoji != :undef)
       }.reject { |_, value| value == :undef }
 
       @channel.update_forum_tags(to_h.merge!(new_data), reason)
@@ -52,7 +49,7 @@ module Discordrb
     # @param reason [String, nil] The reason to show in the audit log for deleting the tag.
     # @return [nil]
     def delete(reason: nil)
-      @channel.update_forum_tags({ id: @id, d: true }, reason)
+      @channel.update_forum_tags({ id: @id, _d: true }, reason)
     end
 
     # @!visibility private
@@ -63,6 +60,30 @@ module Discordrb
         emoji_id: @emoji_id,
         moderated: @moderated,
         emoji_name: @emoji_name&.name
+      }
+    end
+
+    # @!visibility private
+    def inspect
+      "<ChannelTag id=#{@id} name=\"#{@name}\" moderated=#{@moderated}>"
+    end
+
+    # @!visibility private
+    def update_data(new_data)
+      @name = new_data[:name]
+      @moderated = new_data[:moderated]
+      @emoji_id = new_data[:emoji_id]&.to_i
+      @emoji_name = new_data[:emoji_name] ? Emoji.new({ name: new_data[:emoji_name] }, @bot) : nil
+    end
+
+    # @!visibility private
+    def self.build_hash(
+      name:, moderated:, emoji: nil
+    )
+      {
+        name: name,
+        moderated: moderated || false,
+        **Emoji.build_hash(emoji).compact
       }
     end
   end

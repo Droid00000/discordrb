@@ -1,125 +1,89 @@
 # frozen_string_literal: true
 
 module Discordrb::Events
-  # Raised when an invite is created.
+  # Raised whenever an invite is created.
   class InviteCreateEvent < Event
-    # @return [Invite] The invite that was created.
+    # @return [Invite] the invite that was created.
     attr_reader :invite
 
-    # @return [Server, nil] The server the invite was created for.
-    attr_reader :server
+    # @return [Guild] the guild the invite was created for.
+    attr_reader :guild
 
-    # @return [Channel] The channel the invite was created for.
+    # @return [Channel] the channel the invite was created for.
     attr_reader :channel
-
-    # @!attribute [r] code
-    #   @return [String] The code for the created invite.
-    #   @see Invite#code
-    # @!attribute [r] created_at
-    #   @return [Time] The time the invite was created at.
-    #   @see Invite#created_at
-    # @!attribute [r] max_age
-    #   @return [Integer] The maximum age of the created invite.
-    #   @see Invite#max_age
-    # @!attribute [r] max_uses
-    #   @return [Integer] The maximum number of uses before the invite expires.
-    #   @see Invite#max_uses
-    # @!attribute [r] temporary
-    #   @return [true, false] Whether or not this invite grants temporary membership.
-    #   @see Invite#temporary
-    # @!attribute [r] inviter
-    #   @return [User] The user that created the invite.
-    #   @see Invite#inviter
-    delegate :code, :created_at, :max_age, :max_uses, :temporary, :inviter, to: :invite
-
-    alias temporary? temporary
 
     # @!visibility private
     def initialize(data, invite, bot)
       @bot = bot
       @invite = invite
-      @channel = bot.channel(data['channel_id'])
-      @server = bot.server(data['guild_id']) if data['guild_id']
+      @channel = bot.channel(data[:channel_id])
+      @guild = bot.guild(data[:guild_id]) if data[:guild_id]
     end
   end
 
-  # Raised when an invite is deleted.
+  # Raised whenever an invite is deleted.
   class InviteDeleteEvent < Event
-    # @return [Channel] The channel the deleted invite was for.
-    attr_reader :channel
-
-    # @return [Server, nil] The server the deleted invite was for.
-    attr_reader :server
-
-    # @return [String] The code of the deleted invite.
+    # @return [String] the code of the invite that was deleted.
     attr_reader :code
+
+    # @return [Guild] the guild associated with the deleted invite.
+    attr_reader :guild
+
+    # @return [Channel] the channel associated with the deleted invite.
+    attr_reader :channel
 
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @channel = bot.channel(data['channel_id'])
-      @server = bot.server(data['guild_id']) if data['guild_id']
-      @code = data['code']
+      @code = data[:code]
+      @channel = bot.channel(data[:channel_id])
+      @guild = bot.guild(data[:guild_id]) if data[:guild_id]
     end
   end
 
-  # Event handler for InviteCreateEvent.
+  # Event handler for INVITE_CREATE events.
   class InviteCreateEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      return false unless event.is_a? InviteCreateEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(InviteCreateEvent)
 
       [
-        matches_all(@attributes[:server], event.server) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
         end,
+
         matches_all(@attributes[:channel], event.channel) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+          a&.resolve_id == e&.resolve_id
         end,
-        matches_all(@attributes[:temporary], event.temporary?, &:==),
-        matches_all(@attributes[:inviter], event.inviter, &:==)
+
+        matches_all(@attributes[:creator], event.invite.creator) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
+        matches_all(@attributes[:temporary], event.invite.temporary?, &:==)
       ].reduce(true, &:&)
     end
   end
 
-  # Event handler for InviteDeleteEvent
+  # Event handler for INVITE_DELETE events.
   class InviteDeleteEventHandler < EventHandler
+    # @!visibility private
     def matches?(event)
-      return false unless event.is_a? InviteDeleteEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(InviteDeleteEvent)
 
       [
-        matches_all(@attributes[:server], event.server) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+        matches_all(@attributes[:code], event.code) do |a, e|
+          a == e
         end,
+
+        matches_all(@attributes[:guild], event.guild) do |a, e|
+          a&.resolve_id == e&.resolve_id
+        end,
+
         matches_all(@attributes[:channel], event.channel) do |a, e|
-          a == case a
-               when String
-                 e.name
-               when Integer
-                 e.id
-               else
-                 e
-               end
+          a&.resolve_id == e&.resolve_id
         end
       ].reduce(true, &:&)
     end

@@ -1,17 +1,14 @@
 # frozen_string_literal: true
 
-require 'discordrb/data'
-require 'discordrb/events/generic'
-
 module Discordrb::Events
   # Generic superclass for poll events.
   class PollVoteEvent < Event
     # @return [Integer] the ID of the user associated with the event.
     attr_reader :user_id
 
-    # @return [Integer, nil] the ID of the server associated with the
+    # @return [Integer, nil] the ID of the guild associated with the
     #   event.
-    attr_reader :server_id
+    attr_reader :guild_id
 
     # @return [Integer] the ID of the answer associated with the event.
     attr_reader :answer_id
@@ -25,11 +22,11 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @user_id = data['user_id']&.to_i
-      @server_id = data['guild_id']&.to_i
-      @answer_id = data['answer_id']&.to_i
-      @channel_id = data['channel_id']&.to_i
-      @message_id = data['message_id']&.to_i
+      @user_id = data[:user_id]&.to_i
+      @guild_id = data[:guild_id]&.to_i
+      @answer_id = data[:answer_id]&.to_i
+      @channel_id = data[:channel_id]&.to_i
+      @message_id = data[:message_id]&.to_i
     end
 
     # Get the poll associated with the event.
@@ -50,10 +47,10 @@ module Discordrb::Events
       @bot.channel(@channel_id)
     end
 
-    # Get the server that the poll originates from.
-    # @return [Server, nil] The server that the poll originates from.
-    def server
-      @bot.server(@server_id) if @server_id
+    # Get the guild that the poll originates from.
+    # @return [Guild, nil] The guild that the poll originates from.
+    def guild
+      @bot.guild(@guild_id) if @guild_id
     end
 
     # Get the message that the poll originates from.
@@ -67,7 +64,7 @@ module Discordrb::Events
     #   a user if the member cannot be reached, or the poll was created
     #   in a DM channel.
     def user
-      @user ||= (server&.member(@user_id) || @bot.user(@user_id))
+      @user ||= (guild&.member(@user_id) || @bot.user(@user_id))
     end
 
     alias_method :member, :user
@@ -81,12 +78,12 @@ module Discordrb::Events
       return false unless event.is_a?(PollVoteEvent)
 
       [
-        matches_all(@attributes[:answer], event.answer_id) do |a, e|
-          (a.respond_to?(:id) ? a.id : a&.resolve_id) == e
+        matches_all(@attributes[:guild], event.guild_id) do |a, e|
+          a&.resolve_id == e
         end,
 
-        matches_all(@attributes[:server], event.server_id) do |a, e|
-          a&.resolve_id == e
+        matches_all(@attributes[:answer], event.answer_id) do |a, e|
+          (a.respond_to?(:id) ? a.id : a&.resolve_id) == e
         end,
 
         matches_all(@attributes[:message], event.message_id) do |a, e|
@@ -110,9 +107,9 @@ module Discordrb::Events
   # Raised whenever someone removes a poll vote.
   class PollVoteRemoveEvent < PollVoteEvent; end
 
-  # Event handler for the :MESSAGE_POLL_VOTE_ADD event.
+  # Event handler for MESSAGE_POLL_VOTE_ADD events.
   class PollVoteAddEventHandler < PollVoteEventHandler; end
 
-  # Event handler for the :MESSAGE_POLL_VOTE_REMOVE event.
+  # Event handler for MESSAGE_POLL_VOTE_REMOVE events.
   class PollVoteRemoveEventHandler < PollVoteEventHandler; end
 end

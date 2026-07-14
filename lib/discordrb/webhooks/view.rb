@@ -105,7 +105,7 @@ class Discordrb::Webhooks::View
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    # @param default_values [Array<User, Member, Recipient, Integer, String, Hash>, nil] The users to populate in the select menu by default.
+    # @param default_values [Array<User, Member, Integer, String, Hash>, nil] The users to populate in the select menu by default.
     def user_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil, default_values: nil)
       @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :user_select, id: id, default_values: default_values).to_h
     end
@@ -131,7 +131,7 @@ class Discordrb::Webhooks::View
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param disabled [true, false, nil] Grey out the component to make it unusable.
-    # @param default_values [Array<User, Role, Member, Recipient, Hash>, nil] The mentionable entities to populate in the select menu by default.
+    # @param default_values [Array<User, Role, Member, Hash>, nil] The mentionable entities to populate in the select menu by default.
     def mentionable_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, disabled: nil, default_values: nil)
       @components << SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, disabled, select_type: :mentionable_select, id: id, default_values: default_values).to_h
     end
@@ -217,7 +217,7 @@ class Discordrb::Webhooks::View
       if @select_type == :mentionable_select
         default_values&.map do |default_value|
           case default_value
-          when Discordrb::Recipient, Discordrb::User, Discordrb::Member
+          when Discordrb::User, Discordrb::Member
             { id: default_value.id, type: :user }
           when Discordrb::Role
             { id: default_value.id, type: :role }

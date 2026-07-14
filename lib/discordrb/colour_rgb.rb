@@ -2,7 +2,7 @@
 
 module Discordrb
   # A colour (red, green and blue values). Used for role colours. If you prefer the American spelling, the alias
-  # {ColorRGB} is also available.
+  #   {ColorRGB} is also available.
   class ColourRGB
     # @return [Integer] the red part of this colour (0-255).
     attr_reader :red
@@ -25,19 +25,32 @@ module Discordrb
     # @example Initialize a with a hexadecimal string
     #   ColourRGB.new('7289da') #=> ColourRGB
     def initialize(combined)
-      @combined = combined.is_a?(String) ? combined.to_i(16) : combined
+      @combined = combined.is_a?(String) ? combined.delete_prefix('#').to_i(16) : combined
       @red = (@combined >> 16) & 0xFF
       @green = (@combined >> 8) & 0xFF
       @blue = @combined & 0xFF
     end
 
+    # Convert the colour object to its hexadecimal
+    #   representation.
     # @return [String] the colour as a hexadecimal.
     def hex
       @combined.to_s(16)
     end
+
+    alias_method :to_s, :hex
     alias_method :hexadecimal, :hex
+
+    # Check if two colour RGB objects are equivalent.
+    # @param other [Object] The object to compare against for equality.
+    # @return [true, false] Whether or not the two objects are equivalent.
+    def ==(other)
+      other.is_a?(ColourRGB) ? @combined == other.combined : false
+    end
+
+    alias_method :eql?, :==
   end
 
-  # Alias for the class {ColourRGB}
+  # Alias for the {ColourRGB} class.
   ColorRGB = ColourRGB
 end

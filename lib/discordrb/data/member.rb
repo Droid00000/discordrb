@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # Mixin for the attributes members and private members should have
-  module MemberAttributes
-    # Map of server member flags
-    MEMBER_FLAGS = {
+  # A user that joined a guild.
+  class Member
+    include PermissionCalculator
+
+    # Mapping of member flags.
+    FLAGS = {
       rejoined: 1 << 0,
       completed_onboarding: 1 << 1,
       bypassed_verification: 1 << 2,
@@ -14,512 +16,601 @@ module Discordrb
       completed_home_actions: 1 << 6,
       automod_quarantined_username: 1 << 7,
       dm_settings_upsell_acknowledged: 1 << 9,
-      automod_quarantined_server_tag: 1 << 10
+      automod_quarantined_guild_tag: 1 << 10
     }.freeze
 
-    # @return [Time] when this member joined the server.
-    attr_reader :joined_at
+    # @return [User] the user the guild member represents.
+    attr_reader :user
 
-    # @return [Time, nil] when this member boosted this server, `nil` if they haven't.
-    attr_reader :boosting_since
-
-    # @return [String, nil] the nickname this member has, or `nil` if it has none.
-    attr_reader :nick
-    alias_method :nickname, :nick
-
-    # @return [Array<Role>] the roles this member has.
-    attr_reader :roles
-
-    # @return [Server] the server this member is on.
-    attr_reader :server
-
-    # @return [Time] When the user's timeout will expire.
-    attr_reader :communication_disabled_until
-    alias_method :timeout, :communication_disabled_until
-
-    # @return [Integer] the flags set on this member.
+    # @return [Integer] the member flags for the guild member.
     attr_reader :flags
 
-    # @return [true, false] whether the member has not yet passed the server's membership screening requirements.
+    # @return [String, nil] the member's guild specific avatar.
+    attr_reader :avatar
+
+    # @return [String, nil] the member's guild specific banner.
+    attr_reader :banner
+
+    # @return [true, false] whether the member has yet to pass the
+    #   member verification requirements.
     attr_reader :pending
+
+    # @return [String, nil] the member's guild specifc display name.
+    attr_reader :nickname
+
+    # @return [Time, nil] The time at when the member joined the guild.
+    # @note This is only `nil` for "members" that joined via a guest invite.
+    attr_reader :joined_at
+
+    # @return [Collectibles] the guild specific avatar-decoration and nameplate
+    #   that the member has equipped.
+    attr_reader :collectibles
+
+    # @return [Time, nil] the time at when the member starting "boosting" the guild.
+    attr_reader :premium_since
+
     alias_method :pending?, :pending
-
-    # @return [String, nil] the ID of this user's current avatar, can be used to generate a server avatar URL.
-    # @see #server_avatar_url
-    attr_reader :server_avatar_id
-
-    # @return [String, nil] the ID of this user's current server banner, can be used to generate a banner URL.
-    # @see #server_banner_url
-    attr_reader :server_banner_id
-
-    # @return [AvatarDecoration, nil] the user's current server avatar decoration, or nil for no server avatar decoration.
-    attr_reader :server_avatar_decoration
-
-    # @return [Collectibles] the server-specific collectibles that this user has collected.
-    attr_reader :server_collectibles
-
-    # Utility method to get a member's server avatar URL.
-    # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
-    # @return [String, nil] the URL to the avatar image, or nil if the member doesn't have one.
-    def server_avatar_url(format = nil)
-      API::Server.avatar_url(@server_id, @user.id, @server_avatar_id, format) if @server_avatar_id
-    end
-
-    # Utility method to get a member's server banner URL.
-    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the member has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
-    # @return [String, nil] the URL to the banner image, or nil if the member doesn't have one.
-    def server_banner_url(format = nil)
-      API::Server.banner_url(@server_id, @user.id, @server_banner_id, format) if @server_banner_id
-    end
-
-    MEMBER_FLAGS.each do |name, value|
-      define_method("#{name}?") do
-        @flags.anybits?(value)
-      end
-    end
-  end
-
-  # A member is a user on a server. It differs from regular users in that it has roles, voice statuses and things like
-  # that.
-  class Member < DelegateClass(User)
-    # @return [true, false] whether this member is muted server-wide.
-    def mute
-      voice_state_attribute(:mute)
-    end
-
-    # @return [true, false] whether this member is deafened server-wide.
-    def deaf
-      voice_state_attribute(:deaf)
-    end
-
-    # @return [true, false] whether this member has muted themselves.
-    def self_mute
-      voice_state_attribute(:self_mute)
-    end
-
-    # @return [true, false] whether this member has deafened themselves.
-    def self_deaf
-      voice_state_attribute(:self_deaf)
-    end
-
-    # @return [Channel] the voice channel this member is in.
-    def voice_channel
-      voice_state_attribute(:voice_channel)
-    end
-
-    alias_method :muted?, :mute
-    alias_method :deafened?, :deaf
-    alias_method :self_muted?, :self_mute
-    alias_method :self_deafened?, :self_deaf
-
-    include MemberAttributes
+    alias_method :boosting_since, :premium_since
 
     # @!visibility private
-    def initialize(data, server, bot)
+    def initialize(data, guild, bot)
       @bot = bot
-
-      @user = bot.ensure_user(data['user'])
-      super(@user) # Initialize the delegate class
-
-      @server = server
-      @server_id = server&.id || data['guild_id'].to_i
-
-      @role_ids = data['roles']&.map(&:to_i) || []
-
-      @nick = data['nick']
-      @joined_at = data['joined_at'] ? Time.parse(data['joined_at']) : nil
-      @boosting_since = data['premium_since'] ? Time.parse(data['premium_since']) : nil
-      timeout_until = data['communication_disabled_until']
-      @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
-      @permissions = Permissions.new(data['permissions']) if data['permissions']
-      @server_avatar_id = data['avatar']
-      @server_banner_id = data['banner']
-      @flags = data['flags'] || 0
-      @pending = data.key?('pending') ? data['pending'] : false
-      @server_avatar_decoration = process_avatar_decoration(data['avatar_decoration_data'])
-      @server_collectibles = Collectibles.new(data['collectibles'] || {}, @bot)
+      @guild = guild
+      @guild_id = @guild&.id || data[:guild_id]&.to_i
+      @user = @bot.ensure_user(data[:user], true)
+      @flags = data[:flags]
+      @avatar = data[:avatar]
+      @banner = data[:banner]
+      @pending = data[:pending] || false
+      @nickname = data[:nick] == '' ? nil : data[:nick]
+      @joined_at = Time.iso8601(data[:joined_at]) if data[:joined_at]
+      @collectibles = process_collectibles(data)
+      @role_ids = data[:roles]&.map(&:to_i) || []
+      @premium_since = Time.iso8601(data[:premium_since]) if data[:premium_since]
+      timeout_timestamp = data[:communication_disabled_until]
+      @timeout_until = Time.iso8601(timeout_timestamp) if timeout_timestamp
+      @permissions = Permissions.new(data[:permissions].to_i) if data[:permissions]
+      interaction_channel_id = data[:_interaction_channel_id]
+      @interaction_channel_id = interaction_channel_id&.to_i if interaction_channel_id
     end
 
-    # @return [Server] the server this member is on.
-    # @raise [Discordrb::Errors::NoPermission] This can happen when receiving interactions for servers in which the bot is not
-    #   authorized with the `bot` scope.
-    def server
-      return @server if @server
+    #  ##     ##    ###    #### ##    ##
+    #  ###   ###   ## ##    ##  ###   ##
+    #  #### ####  ##   ##   ##  ####  ##
+    #  ## ### ## ##     ##  ##  ## ## ##
+    #  ##     ## #########  ##  ##  ####
+    #  ##     ## ##     ##  ##  ##   ###
+    #  ##     ## ##     ## #### ##    ##
 
-      @server = @bot.server(@server_id)
-      raise Discordrb::Errors::NoPermission, 'The bot does not have access to this server' unless @server
+    # @!group General
 
-      @server
+    # Get the color of the member.
+    # @return [ColourRGB, nil] The color of the member.
+    def color
+      color_role&.color
     end
 
-    # @return [Array<Role>] the roles this member has.
-    # @raise [Discordrb::Errors::NoPermission] This can happen when receiving interactions for servers in which the bot is not
-    #   authorized with the `bot` scope.
+    # Check if the member is a booster.
+    # @return [true, false] If the member is boosting the guild.
+    def premium?
+      !@premium_since.nil?
+    end
+
+    # Get the display name of the member.
+    # @return [String] The member's nickname or the user's name.
+    def display_name
+      @nickname || @user.display_name
+    end
+
+    # Check if the member is the guild owner.
+    # @return [true, false] Whether or not the member is the owner.
+    def owner?
+      @user.resolve_id == guild.owner&.resolve_id
+    end
+
+    # Get the guild the member is a part of.
+    # @return [Guild] The guild that the member is associated with.
+    def guild
+      @guild ||= (@bot.guild(@guild_id) if @guild_id)
+    end
+
+    # Modify the properties of the member.
+    # @param nickname [String, nil] The 1-32 character nickname of the member.
+    # @param flags [Integer, nil] The new guild member flags to set for the member.
+    # @param roles [Array<Role, Integer, String>, nil] The new roles to set for the member.
+    # @param muted [true, false, nil] Whether the member shoule be muted in the voice channel.
+    # @param voice_channel [Channel, Integer, String, nil] The voice channel to move the member to.
+    # @param deafened [true, false, nil] Whether the member should be deafened in the voice channel.
+    # @param timeout_until [Time, nil] The time at when the the member's timeout should expire, or `nil` to clear it.
+    # @param avatar [#read, File, nil] The new guild avatar to set for the current bot. Should be a file-like object.
+    # @param banner [#read, File, nil] The new guild banner to set for the current bot. Should be a file-like object.
+    # @param bio [String, nil] The new 1-300 character guild specific bio to set for the current bot.
+    # @param suppressed [true, false] Whether or not the member should be suppressed in the stage channel.
+    # @param request_to_speak [true, false] Whether or not the current bot is requesting to speak in the stage channel.
+    # @param reason [String, nil] The reason to show in the guild's audit log for modifying the member.
+    # @return [nil]
+    def modify(
+      nickname: :undef, flags: :undef, roles: :undef, muted: :undef, voice_channel: :undef,
+      deafened: :undef, timeout_until: :undef, avatar: :undef, banner: :undef, bio: :undef,
+      suppressed: :undef, request_to_speak: :undef, reason: nil
+    )
+      if timeout_until && timeout_until != :undef && timeout_until > (Time.now + 2_419_200)
+        raise ArgumentError, 'The timeout duration cannot be greater than 28 days in the future'
+      end
+
+      data = {
+        nick: nickname,
+        roles: roles == :undef ? roles : roles&.map(&:resolve_id),
+        mute: muted,
+        deaf: deafened,
+        channel_id: voice_channel == :undef ? voice_channel : voice_channel&.resolve_id,
+        flags: flags,
+        communication_disabled_until: timeout_until == :undef ? timeout_until : timeout_until&.iso8601
+      }
+
+      if @user.current_bot? && (nickname != :undef || avatar != :undef || banner != :undef || bio != :undef)
+        me = {
+          bio: bio,
+          nick: data.delete(:nick),
+          avatar: avatar.respond_to?(:read) ? Discordrb.encode64(avatar) : avatar,
+          banner: banner.respond_to?(:read) ? Discordrb.encode64(banner) : banner
+        }
+
+        update_data(@bot.http.modify_current_guild_member(@guild_id, **me, reason: reason))
+      end
+
+      if suppressed != :undef || request_to_speak != :undef
+        unless self.voice_channel&.stage?
+          raise ArgumentError, 'The member must be connected to a stage channel'
+        end
+
+        stage_data = {
+          suppress: suppressed,
+          channel_id: self.voice_channel.resolve_id
+        }
+
+        if @user.current_bot?
+          stage_data[:request_to_speak_timestamp] = if request_to_speak == true
+                                                      Time.now.iso8601
+                                                    elsif request_to_speak == false
+                                                      nil
+                                                    else
+                                                      :undef
+                                                    end
+
+          @bot.http.modify_current_user_voice_state(@guild_id, **stage_data)
+        elsif suppressed != :undef
+          @bot.http.modify_user_voice_state(@guild_id, @user.id, **stage_data)
+        end
+      end
+
+      return unless data.any? { |_, value| value != :undef }
+
+      update_data(@bot.http.modify_guild_member(@guild_id, @user.id, **data, reason: reason))
+      nil
+    end
+
+    alias_method :colour, :color
+    alias_method :boosting?, :premium?
+
+    # @!endgroup
+
+    #  ######   #######  ##       ########  ######
+    #  ##   ## ##     ## ##       ##       ##
+    #  ##   ## ##     ## ##       ##       ##
+    #  ######  ##     ## ##       ######    ######
+    #  ## ##   ##     ## ##       ##             ##
+    #  ##  ##  ##     ## ##       ##             ##
+    #  ##   ##  #######  ######## ######## ######
+
+    # @!group Roles
+
+    # Get the roles that the member has.
+    # @return [Array<Role>] The roles that the member has.
     def roles
       return @roles if @roles
 
-      update_roles(@role_ids)
-      @roles
+      process_roles(@role_ids)
     end
 
-    # @return [true, false] if this user is a Nitro Booster of this server.
-    def boosting?
-      !@boosting_since.nil?
-    end
-
-    # @return [true, false] whether this member is the server owner.
-    def owner?
-      server.owner == self
-    end
-
-    # @param role [Role, String, Integer] the role to check or its ID.
-    # @return [true, false] whether this member has the specified role.
+    # Check if the member has a specific role.
+    # @param role [Role, Integer, String] The role to check.
+    # @return [true, false] Whether or not the member has the role.
     def role?(role)
-      role = role.resolve_id
-      roles.any?(role)
+      roles.any?(role.resolve_id)
     end
 
-    # @see Member#set_roles
-    def roles=(role)
-      set_roles(role)
-    end
-
-    # Check if the current user has communication disabled.
-    # @return [true, false]
-    def communication_disabled?
-      !@communication_disabled_until.nil? && @communication_disabled_until > Time.now
-    end
-
-    alias_method :timeout?, :communication_disabled?
-
-    # Set a user's timeout duration, or remove it by setting the timeout to `nil`.
-    # @param timeout_until [Time, nil] When the timeout will end.
-    def communication_disabled_until=(timeout_until)
-      raise ArgumentError, 'A time out cannot exceed 28 days' if timeout_until && timeout_until > (Time.now + 2_419_200)
-
-      update_member_data(communication_disabled_until: timeout_until&.iso8601)
-    end
-
-    alias_method :timeout=, :communication_disabled_until=
-
-    # Bulk sets a member's roles.
-    # @param role [Role, Array<Role>] The role(s) to set.
-    # @param reason [String] The reason the user's roles are being changed.
-    def set_roles(role, reason = nil)
-      role_ids = role_id_array(role)
-      update_member_data(roles: role_ids, reason: reason)
-    end
-
-    # Adds and removes roles from a member.
-    # @param add [Role, Array<Role>] The role(s) to add.
-    # @param remove [Role, Array<Role>] The role(s) to remove.
-    # @param reason [String] The reason the user's roles are being changed.
-    # @example Remove the 'Member' role from a user, and add the 'Muted' role to them.
-    #   to_add = server.roles.find {|role| role.name == 'Muted'}
-    #   to_remove = server.roles.find {|role| role.name == 'Member'}
-    #   member.modify_roles(to_add, to_remove)
-    def modify_roles(add, remove, reason = nil)
-      add_role_ids = role_id_array(add)
-      remove_role_ids = role_id_array(remove)
-      old_role_ids = resolve_role_ids
-      new_role_ids = (old_role_ids - remove_role_ids + add_role_ids).uniq
-
-      update_member_data(roles: new_role_ids, reason: reason)
-    end
-
-    # Adds one or more roles to this member.
-    # @param role [Role, Array<Role, String, Integer>, String, Integer] The role(s), or their ID(s), to add.
-    # @param reason [String] The reason the user's roles are being changed.
-    def add_role(role, reason = nil)
-      role_ids = role_id_array(role)
-
-      if role_ids.one?
-        API::Server.add_member_role(@bot.token, @server_id, @user.id, role_ids[0], reason)
-      else
-        old_role_ids = resolve_role_ids
-        new_role_ids = (old_role_ids + role_ids).uniq
-        update_member_data(roles: new_role_ids, reason: reason)
-      end
-    end
-
-    # Removes one or more roles from this member.
-    # @param role [Role, Array<Role>] The role(s) to remove.
-    # @param reason [String] The reason the user's roles are being changed.
-    def remove_role(role, reason = nil)
-      role_ids = role_id_array(role)
-
-      if role_ids.one?
-        API::Server.remove_member_role(@bot.token, @server_id, @user.id, role_ids[0], reason)
-      else
-        old_role_ids = resolve_role_ids
-        new_role_ids = old_role_ids.reject { |i| role_ids.include?(i) }
-        update_member_data(roles: new_role_ids, reason: reason)
-      end
-    end
-
-    # Get the highest role this member has.
-    # @return [Role] The highest role this member has.
-    def highest_role
+    # Get the member's highest role.
+    # @return [Role] The highest role (by hierarchy) that the member has.
+    def top_role
       roles.max
     end
 
-    # Get the role that determines where the member is shown in
-    #   the Discord client's member list.
-    # @return [Role, nil] The role this member is being hoisted with.
+    # Get the role that hoists the member.
+    # @return [Role, nil] The role that hoists the member in the member list.
     def hoist_role
-      roles.select(&:hoist).max
+      roles.select(&:hoisted?).max
     end
 
-    # Get the role that determines the primary colour of the member.
-    # @return [Role, nil] The role this member is basing their colour on.
-    def colour_role
-      roles.select { |role| role.colour.combined.nonzero? }.max
+    # Get the role that determines the member's color.
+    # @return [Role, nil] The role that determines what the member's color is.
+    def color_role
+      roles.select { |role| role.color.to_i.nonzero? }.max
     end
 
-    alias_method :color_role, :colour_role
+    # Add one or more roles to the member.
+    # @param roles [Array<Role, Integer, String>, Role, Integer, String] The roles to add.
+    # @param atomic [true, false, nil] Whether to add the roles without using the cached roles.
+    # @param reason [String, nil] The reason to show in the guild's audit log for adding the roles.
+    # @return [nil]
+    def add_roles(roles, atomic: nil, reason: nil)
+      roles = roles.is_a?(Enumerable) ? roles.map(&:resolve_id) : [roles.resolve_id]
 
-    # Get the primary colour of the member.
-    # @return [ColourRGB, nil] The colour this member has.
-    def colour
-      colour_role&.colour
-    end
-
-    alias_method :color, :colour
-
-    # Get the member's roles sorted by their order in the hierarchy.
-    # @return [Array<Role>] The roles the member has, ordered by hierarchy.
-    def sort_roles
-      roles.sort
-    end
-
-    # Server deafens this member.
-    # @param reason [String, nil] The reason for defeaning this member.
-    def server_deafen(reason: nil)
-      update_member_data(deaf: true, reason: reason)
-    end
-
-    # Server undeafens this member.
-    # @param reason [String, nil] The reason for un-defeaning this member.
-    def server_undeafen(reason: nil)
-      update_member_data(deaf: false, reason: reason)
-    end
-
-    # Server mutes this member.
-    # @param reason [String, nil] The reason for muting this member.
-    def server_mute(reason: nil)
-      update_member_data(mute: true, reason: reason)
-    end
-
-    # Server unmutes this member.
-    # @param reason [String, nil] The reason for un-muting this member.
-    def server_unmute(reason: nil)
-      update_member_data(mute: false, reason: reason)
-    end
-
-    # Bans this member from the server.
-    # @param message_days [Integer] How many days worth of messages sent by the member should be deleted. This parameter is deprecated and will be removed in 4.0.
-    # @param message_seconds [Integer] How many seconds worth of messages sent by the member should be deleted.
-    # @param reason [String] The reason this member is being banned.
-    def ban(message_days = 0, message_seconds: nil, reason: nil)
-      server.ban(@user, message_days, message_seconds: message_seconds, reason: reason)
-    end
-
-    # Unbans this member from the server.
-    # @param reason [String] The reason this member is being unbanned.
-    def unban(reason = nil)
-      server.unban(@user, reason)
-    end
-
-    # Kicks this member from the server.
-    # @param reason [String] The reason this member is being kicked.
-    def kick(reason = nil)
-      server.kick(@user, reason)
-    end
-
-    # @see Member#set_nick
-    def nick=(nick)
-      set_nick(nick)
-    end
-
-    alias_method :nickname=, :nick=
-
-    # Sets or resets this member's nickname. Requires the Change Nickname permission for the bot itself and Manage
-    # Nicknames for other users.
-    # @param nick [String, nil] The string to set the nickname to, or nil if it should be reset.
-    # @param reason [String] The reason the user's nickname is being changed.
-    def set_nick(nick, reason = nil)
-      if @user.current_bot?
-        update_current_member_data(nick: nick, reason: reason)
+      if atomic == false || (atomic.nil? && roles.length > 1)
+        modify(roles: roles.concat(self.roles.map(&:resolve_id)).tap(&:uniq!), reason:)
       else
-        update_member_data(nick: nick, reason: reason)
-      end
-    end
-
-    alias_method :set_nickname, :set_nick
-
-    # @return [String] the name the user displays as (nickname if they have one, global_name if they have one, username otherwise)
-    def display_name
-      nickname || global_name || username
-    end
-
-    # @param format [String, nil] If `nil`, the URL will default to `webp` for static avatars, and will detect if the member has a `gif` avatar. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
-    # @return [String, nil] the avatar that the user has displayed (server avatar if they have one, user avatar if they have one, nil otherwise)
-    def display_avatar_url(format = nil)
-      server_avatar_url(format) || avatar_url(format)
-    end
-
-    # @param format [String, nil] If `nil`, the URL will default to `webp` for static banners, and will detect if the member has a `gif` banner. You can otherwise specify one of `webp`, `jpg`, `png`, or `gif` to override this.
-    # @return [String, nil] the banner that the user has displayed (server banner if they have one, user banner if they have one, nil otherwise)
-    def display_banner_url(format = nil)
-      server_banner_url(format) || banner_url(format)
-    end
-
-    # @return [AvatarDecoration, nil] the avatar decoration that the user displays (server avatar decoration if they have one, user avatar decoration if they have one, nil otherwise)
-    def display_avatar_decoration
-      server_avatar_decoration || avatar_decoration
-    end
-
-    # Set the flags for this member.
-    # @param flags [Integer, nil] The new bitwise value of flags for this member, or nil.
-    def flags=(flags)
-      update_member_data(flags: flags)
-    end
-
-    # Set the server banner for the current bot.
-    # @param banner [File, nil] A file like object that responds to read, or `nil`.
-    def server_banner=(banner)
-      raise 'Can only set a banner for the current bot' unless current_bot?
-
-      update_current_member_data(banner: banner.respond_to?(:read) ? Discordrb.encode64(banner) : banner)
-    end
-
-    # Set the server avatar for the current bot.
-    # @param avatar [File, nil] A file like object that responds to read, or `nil`.
-    def server_avatar=(avatar)
-      raise 'Can only set an avatar for the current bot' unless current_bot?
-
-      update_current_member_data(avatar: avatar.respond_to?(:read) ? Discordrb.encode64(avatar) : avatar)
-    end
-
-    # Set the server bio for the current bot.
-    # @param bio [String, nil] The new server bio for the bot, or nil.
-    def server_bio=(bio)
-      raise 'Can only set a bio for the current bot' unless current_bot?
-
-      update_current_member_data(bio: bio)
-    end
-
-    # Update this member's roles
-    # @note For internal use only.
-    # @!visibility private
-    def update_roles(role_ids)
-      @roles = [server.role(@server_id)]
-      role_ids.each do |id|
-        # It is possible for members to have roles that do not exist
-        # on the server any longer. See https://github.com/discordrb/discordrb/issues/371
-        role = server.role(id)
-        @roles << role if role
-      end
-    end
-
-    # Update this member's nick
-    # @note For internal use only.
-    # @!visibility private
-    def update_nick(nick)
-      @nick = nick
-    end
-
-    # Update this member's boosting timestamp
-    # @note For internal user only.
-    # @!visibility private
-    def update_boosting_since(time)
-      @boosting_since = time
-    end
-
-    # @!visibility private
-    def update_communication_disabled_until(time)
-      time = time ? Time.parse(time) : nil
-      @communication_disabled_until = time
-    end
-
-    # Update this member
-    # @note For internal use only.
-    # @!visibility private
-    def update_data(data)
-      update_roles(data['roles']) if data['roles']
-      @nick = data['nick'] if data.key?('nick')
-      @mute = data['mute'] if data.key?('mute')
-      @deaf = data['deaf'] if data.key?('deaf')
-      @server_avatar_id = data['avatar'] if data.key?('avatar')
-      @server_banner_id = data['banner'] if data.key?('banner')
-      @flags = data['flags'] if data.key?('flags')
-      @pending = data['pending'] if data.key?('pending')
-
-      @joined_at = Time.parse(data['joined_at']) if data['joined_at']
-
-      if data.key?('communication_disabled_until')
-        timeout_until = data['communication_disabled_until']
-        @communication_disabled_until = timeout_until ? Time.parse(timeout_until) : nil
+        roles.each { |id| @bot.http.add_guild_member_role(@guild_id, @user.id, id, reason:) }
       end
 
-      if data.key?('premium_since')
-        @boosting_since = data['premium_since'] ? Time.parse(data['premium_since']) : nil
-      end
-
-      if (user = data['user'])
-        @user.update_global_name(user['global_name']) if user['global_name']
-        @user.avatar_id = user['avatar'] if user.key('avatar')
-        @user.update_avatar_decoration(user['avatar_decoration_data']) if user.key?('avatar_decoration_data')
-        @user.update_collectibles(user['collectibles']) if user.key?('collectibles')
-        @user.update_primary_server(user['primary_guild']) if user.key?('primary_guild')
-      end
-
-      @server_collectibles = Collectibles.new(data['collectibles'] || {}, @bot) if data.key?('collectibles')
-      @server_avatar_decoration = process_avatar_decoration(data['avatar_decoration_data']) if data.key?('avatar_decoration_data')
+      nil
     end
 
-    include PermissionCalculator
+    # Remove one or more roles from the member.
+    # @param roles [Array<Role, Integer, String>, Role, Integer, String] The roles to remove.
+    # @param atomic [true, false, nil] Whether to remove the roles without using the cached roles.
+    # @param reason [String, nil] The reason to show in the guild's audit log for remove the roles.
+    # @return [nil]
+    def remove_roles(roles, atomic: nil, reason: nil)
+      roles = roles.is_a?(Enumerable) ? roles.map(&:resolve_id) : [roles.resolve_id]
 
-    # Overwriting inspect for debug purposes
+      if atomic == false || (atomic.nil? && roles.length > 1)
+        modify(roles: self.roles.reject { |role| roles.include?(role.resolve_id) }, reason:)
+      else
+        roles.each { |id| @bot.http.remove_guild_member_role(@guild_id, @user.id, id, reason:) }
+      end
+
+      nil
+    end
+
+    alias_method :add_role, :add_roles
+    alias_method :highest_role, :top_role
+    alias_method :colour_role, :color_role
+    alias_method :remove_role, :remove_roles
+
+    # @!endgroup
+
+    #     ###     ######   ######  ######## ########  ######
+    #    ## ##   ##    ## ##    ## ##          ##    ##    ##
+    #   ##   ##  ##       ##       ##          ##    ##
+    #  ##     ##  ######   ######  ######      ##     ######
+    #  #########       ##       ## ##          ##          ##
+    #  ##     ## ##    ## ##    ## ##          ##    ##    ##
+    #  ##     ##  ######   ######  ########    ##     ######
+
+    # @!group Assets
+
+    # Get the avatar that the member is displaying.
+    # @return [String] The member's guild avatar if one is set, or their global avatar.
+    def display_avatar_url(format: 'webp', size: nil)
+      avatar_url(format:, size:) || @user.avatar_url(format:, size:)
+    end
+
+    # Get the banner that the member is displaying.
+    # @return [String, nil] The member's guild banner if one is set, or their global banner.
+    def display_banner_url(format: 'webp', size: nil)
+      banner_url(format:, size:) || @user.banner_url(format:, size:)
+    end
+
+    # Get the URL to the member's guild avatar.
+    # @param format [String] The format of the avatar. Can be one of `webp`, `jpg`, `png`, or `gif`.
+    # @param size [Integer, nil] The size of the banner. Can be any real power of two between 0-4096.
+    # @return [String, nil] The URL to the member's guild specific avatar, or `nil` if thay have not set one.
+    def avatar_url(format: 'webp', size: nil)
+      Assets[:guild_member_avatar, @guild_id, @user.id, @avatar, format, size:] if @avatar
+    end
+
+    # Get the URL to the member's guild banner.
+    # @param format [String] The format of the banner. Can be one of `webp`, `jpg`, `png`, or `gif`.
+    # @param size [Integer, nil] The size of the banner. Can be any real power of two between 0-4096.
+    # @return [String, nil] The URL to the member's guild specific banner, or `nil` if thay have not set one.
+    def banner_url(format: 'webp', size: nil)
+      Assets[:guild_member_banner, @guild_id, @user.id, @banner, format, size:] if @banner
+    end
+
+    # @!endgroup
+
+    #  ##     ##  #######  ####  ######  ########
+    #  ##     ## ##     ##  ##  ##    ## ##
+    #  ##     ## ##     ##  ##  ##       ##
+    #  ##     ## ##     ##  ##  ##       ######
+    #   ##   ##  ##     ##  ##  ##       ##
+    #    ## ##   ##     ##  ##  ##    ## ##
+    #     ###     #######  ####  ######  ########
+
+    # @!group Voice
+
+    # Check if the member has requested to speak in the stage.
+    # @return [true, false] Whether the member requested to speak in the stage.
+    def requested_to_speak?
+      !requested_to_speak_at.nil?
+    end
+
+    # Get the voice or stage channel that the member is connected to.
+    # @return [Channel, nil] The voice or stage channel the member is connected to.
+    def voice_channel
+      guild.voice_states[@user.id]&.channel
+    end
+
+    # Get the time at when the member requested to speak in the stage channel.
+    # @return [Time, nil] The time at when the member requested to speak in the stage.
+    def requested_to_speak_at
+      guild.voice_states[@user.id]&.requested_to_speak_at
+    end
+
+    # @!method muted?
+    #   @return [true, false] whether the member has been muted by the guild.
+    # @!method camera?
+    #   @return [true, false] whether the member has enabled their camera/webcam.
+    # @!method deafened?
+    #   @return [true, false] whether the member has been deafened by the guild.
+    # @!method streaming?
+    #   @return [true, false] whether the member is streaming using "Go Live".
+    # @!method suppressed?
+    #   @return [true, false] whether the member cannot talk in the stage channel.
+    # @!method self_muted?
+    #   @return [true, false] whether the member has locally muted themselves.
+    # @!method self_deafened?
+    #   @return [true, false] whether the member has locally deafened themselves.
+    VoiceState::PREDICATES.each do |name|
+      define_method(name) { guild.voice_states[@user.id]&.public_send(name) || false }
+    end
+
+    # @!endgroup
+
+    #  ######## ##          ###     ######    ######
+    #  ##       ##         ## ##   ##    ##  ##    ##
+    #  ##       ##        ##   ##  ##        ##
+    #  ######   ##       ##     ## ##   ####  ######
+    #  ##       ##       ######### ##    ##        ##
+    #  ##       ##       ##     ## ##    ##  ##    ##
+    #  ##       ######## ##     ##  ######    ######
+
+    # @!group Flags
+
+    # @!method rejoined?
+    #   @return [true, false] whether or not the member left the guild and rejoined within 13 days.
+    # @!method completed_onboarding?
+    #   @return [true, false] whether or not the member has completed the onboarding process.
+    # @!method bypassed_verification?
+    #   @return [true, false] whether or not the member has bypassed the membership requirements.
+    # @!method started_onboarding?
+    #   @return [true, false] whether or not the member has started the onboarding process.
+    # @!method guest?
+    #   @return [true, false] whether or not the member is a guest and can only access one voice channel.
+    # @!method started_home_actions?
+    #   @return [true, false] whether or not the member has started the new-member tasks in the server guide.
+    # @!method completed_home_actions?
+    #   @return [true, false] whether or not the member has completed the new-member tasks in the server guide.
+    # @!method automod_quarantined_username?
+    #   @return [true, false] whether or not the member has been quarantined by AutoMod due to their name.
+    # @!method automod_quarantined_guild_tag?
+    #   @return [true, false] whether or not the member has been quarantined by AutoMod due to their guild tag.
+    # @!method dm_settings_upsell_acknowledged?
+    #   @return [true, false] whether or not the member has dismissed the DM settings upsell.
+    FLAGS.each do |name, value|
+      define_method("#{name}?") { @flags.anybits?(value) }
+    end
+
+    # @!endgroup
+
+    #  ##     ##  #######  ########  ######## ########     ###    ######## ####  #######  ##    ##
+    #  ###   ### ##     ## ##     ## ##       ##     ##   ## ##      ##     ##  ##     ## ###   ##
+    #  #### #### ##     ## ##     ## ##       ##     ##  ##   ##     ##     ##  ##     ## ####  ##
+    #  ## ### ## ##     ## ##     ## ######   ########  ##     ##    ##     ##  ##     ## ## ## ##
+    #  ##     ## ##     ## ##     ## ##       ##   ##   #########    ##     ##  ##     ## ##  ####
+    #  ##     ## ##     ## ##     ## ##       ##    ##  ##     ##    ##     ##  ##     ## ##   ###
+    #  ##     ##  #######  ########  ######## ##     ## ##     ##    ##    ####  #######  ##    ##
+
+    # @!group Moderation
+
+    # Ban the member from the guild.
+    # @return [nil]
+    # @see Guild#ban
+    def ban(**)
+      guild.ban(@user.id, **)
+    end
+
+    # Kick the member from the guild.
+    # @return [nil]
+    # @see Guild#kick
+    def kick(**)
+      guild.kick(@user.id, **)
+    end
+
+    # Unban the member from the guild.
+    # @return [nil]
+    # @see Guild#unban
+    def unban(**)
+      guild.unban(@user.id, **)
+    end
+
+    # Get the time at when the member's timeout expires.
+    # @return [Time, nil] When the member's timeout will expire.
+    def timeout_until
+      timeout? ? @timeout_until : nil
+    end
+
+    # Check if the guild member is in timeout.
+    # @return [true, false] Whether or not the member is in timeout.
+    def timeout?
+      !@timeout_until.nil? && @timeout_until > Time.now
+    end
+
+    # Check if the guild member has been quarantined by AutoMod.
+    # @return [true, false] Whether or not the member has been quarantined.
+    def quarantined?
+      automod_quarantined_guild_tag? || automod_quarantined_username?
+    end
+
+    # @!endgroup
+
+    #  ##     ##  ######  ######## ########
+    #  ##     ## ##    ## ##       ##     ##
+    #  ##     ## ##       ##       ##     ##
+    #  ##     ##  ######  ######   ########
+    #  ##     ##       ## ##       ##   ##
+    #  ##     ## ##    ## ##       ##    ##
+    #   #######   ######  ######## ##     ##
+
+    # @!group User Methods
+
+    # @!visibility private
+    names = %i[
+      id
+      hash
+      dnd?
+      idle?
+      mention
+      online?
+      offline?
+      resolve_id
+      dm_channel
+      current_bot?
+      bot_account?
+      creation_time
+      verified_bot?
+      webhook_account?
+    ]
+
+    # @!visibility private
+    def ==(other)
+      @user == other
+    end
+
+    alias_method :eql?, :==
+
+    # Send a message to the current member in the DM channel.
+    # @return [Message] The message that was sent to the current member.
+    # @see User#send_message
+    def send_message(...)
+      @user.send_message(...)
+    end
+
+    # @!method id
+    #   Get the User ID of the member.
+    #   @return [Integer] The user ID of the member.
+    #   @see Snowflake#id
+    #
+    # @!method mention
+    #   Get a string that will mention the member.
+    #   @return [String] A string that will mention the member.
+    #   @see User#mention
+    #
+    # @!method dm_channel
+    #   Get the DM channel between the member and current bot.
+    #   @return [Channel] The DM channel between the member and bot.
+    #   @see User#dm_channel
+    #
+    # @!method current_bot?
+    #   Check if the member is for the current bot account.
+    #   @return [true, false] Whether the member is the current bot.
+    #   @see User#current_bot?
+    #
+    # @!method bot_account?
+    #   Check if the member is a bot account for an application.
+    #   @return [true, false] Whether or not the member is a bot account.
+    #   @see User#bot_account?
+    #
+    # @!method creation_time
+    #   Get the time at when the current member joined Discord.
+    #   @return [Time] The time at when the member made their Discord account.
+    #   @see Snowflake#creation_time
+    #
+    # @!method verified_bot?
+    #   Check if the member is a bot account that has been verified.
+    #   # @return [true, false] Whethero nor the bot account has been verified.
+    #   # @see User#verified_bot
+    names.each do |name|
+      define_method(name) { @user.public_send(name) }
+    end
+
+    # @!endgroup
+
+    #  ####  ###   ## ######## ######## ########  ##    ##    ###    ##        ######
+    #   ##   ###   ##    ##    ##       ##     ## ###   ##   ## ##   ##       ##    ##
+    #   ##   ####  ##    ##    ##       ##     ## ####  ##  ##   ##  ##       ##
+    #   ##   ## ## ##    ##    ######   ########  ## ## ## ##     ## ##        ######
+    #   ##   ##  ####    ##    ##       ##   ##   ##  #### ######### ##             ##
+    #   ##   ##   ###    ##    ##       ##    ##  ##   ### ##     ## ##       ##    ##
+    #  ####  ##    ##    ##    ######## ##     ## ##    ## ##     ## ########  ######
+
+    # @!visibility private
+    def update_data(new_data)
+      process_roles(new_data[:roles]) if new_data[:roles]
+      @user&.update_data(new_data[:user]) if new_data[:user]
+      @flags = new_data[:flags] if new_data[:flags]
+      @nickname = new_data[:nick] if new_data.key?(:nick)
+      @avatar = new_data[:avatar] if new_data.key?(:avatar)
+      @banner = new_data[:banner] if new_data.key?(:banner)
+      @pending = new_data[:pending] if new_data.key?(:pending)
+
+      set_collectibles = new_data.key?(:collectibles)
+      set_avatar_decoration = new_data.key?(:avatar_decoration_data)
+
+      if set_collectibles || set_avatar_decoration
+        collectibles = if set_collectibles
+                         new_data[:collectibles] || {}
+                       else
+                         @collectibles.to_h
+                       end
+
+        avatar_decoration_data = if set_avatar_decoration
+                                   new_data[:avatar_decoration_data]
+                                 else
+                                   collectibles[:avatar_decoration_data]
+                                 end
+
+        process_collectibles({ collectibles:, avatar_decoration_data: })
+      end
+
+      if new_data.key?(:premium_since)
+        premium_timestamp = new_data[:premium_since]
+        @premium_since = premium_timestamp ? Time.iso8601(premium_timestamp) : nil
+      end
+
+      return unless new_data.key?(:communication_disabled_until)
+
+      timeout_timestamp = new_data[:communication_disabled_until]
+      @timeout_until = timeout_timestamp ? Time.iso8601(timeout_timestamp) : nil
+    end
+
+    # @!visibility private
+    def pop_role(id)
+      @roles&.reject! { |role| role.id == id }
+      @role_ids&.reject! { |role_id| role_id == id }
+    end
+
+    # @!visibility private
     def inspect
-      "<Member user=#{@user.inspect} server=#{@server&.inspect || @server_id} joined_at=#{@joined_at} roles=#{@roles&.inspect || @role_ids} voice_channel=#{voice_channel.inspect} mute=#{mute} deaf=#{deaf} self_mute=#{self_mute} self_deaf=#{self_deaf}>"
+      "<Member user_id=#{@user.id} guild_id=#{@guild_id}>"
     end
 
     private
 
-    # Utility method to get a list of role IDs from one role or an array of roles
-    def role_id_array(role)
-      if role.is_a? Array
-        role.map(&:resolve_id)
-      else
-        [role.resolve_id]
-      end
-    end
+    # @!visibility private
+    def process_roles(role_ids)
+      items = role_ids.filter_map { |role| guild.role(role) }
 
-    # Utility method to get data out of this member's voice state
-    def voice_state_attribute(name)
-      voice_state = server.voice_states[@user.id]
-      voice_state&.send name
+      (items << guild.everyone_role) unless items.include?(@guild_id)
+
+      @roles = items
     end
 
     # @!visibility private
-    def resolve_role_ids
-      @roles ? @roles.collect(&:id) : @role_ids
-    end
-
-    # @!visibility private
-    def update_member_data(new_data)
-      update_data(JSON.parse(API::Server.update_member(@bot.token, @server_id, @user.id, **new_data)))
-    end
-
-    # @!visibility private
-    def update_current_member_data(new_data)
-      update_data(JSON.parse(API::Server.update_current_member(@bot.token, @server_id,
-                                                               new_data.key?(:nick) ? new_data[:nick] : :undef,
-                                                               new_data[:reason],
-                                                               new_data.key?(:bio) ? new_data[:bio] : :undef,
-                                                               new_data.key?(:banner) ? new_data[:banner] : :undef,
-                                                               new_data.key?(:avatar) ? new_data[:avatar] : :undef)))
+    def process_collectibles(data)
+      items = data[:collectibles] || {}
+      items[:avatar_decoration_data] = data[:avatar_decoration_data]
+      Collectibles.new(items, @bot)
     end
   end
 end

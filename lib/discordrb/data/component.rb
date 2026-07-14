@@ -4,12 +4,11 @@ module Discordrb
   # Components are interactable interfaces that can be attached to messages.
   module Components
     # @deprecated This alias will be removed in future releases.
-    class View < Webhooks::View
-    end
+    class View < Webhooks::View; end
 
     # @!visibility private
     def self.from_data(data, bot)
-      case data['type']
+      case data[:type]
       when Webhooks::View::COMPONENT_TYPES[:action_row]
         ActionRow.new(data, bot)
       when Webhooks::View::COMPONENT_TYPES[:button]
@@ -58,8 +57,8 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @components = data['components'].filter_map { |component| Components.from_data(component, @bot) }
+        @id = data[:id]
+        @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
 
       # Iterate over each component in the row.
@@ -112,13 +111,13 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @label = data['label']
-        @style = data['style']
-        @custom_id = data['custom_id']
-        @disabled = data['disabled']
-        @url = data['url']
-        @emoji = Emoji.new(data['emoji'], @bot) if data['emoji']
+        @id = data[:id]
+        @label = data[:label]
+        @style = data[:style]
+        @custom_id = data[:custom_id]
+        @disabled = data[:disabled]
+        @url = data[:url]
+        @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
       end
 
       # @!method primary?
@@ -166,10 +165,10 @@ module Discordrb
 
         # @!visibility private
         def initialize(data)
-          @label = data['label']
-          @value = data['value']
-          @description = data['description']
-          @emoji = Emoji.new(data['emoji'], @bot) if data['emoji']
+          @label = data[:label]
+          @value = data[:value]
+          @description = data[:description]
+          @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
         end
       end
 
@@ -197,40 +196,20 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @values = data['values'] || []
-        @custom_id = data['custom_id']
-        @max_values = data['max_values']
-        @min_values = data['min_values']
-        @placeholder = data['placeholder']
-        @options = data['options']&.map { |option| Option.new(option) } || []
+        @id = data[:id]
+        @values = data[:values] || []
+        @custom_id = data[:custom_id]
+        @max_values = data[:max_values]
+        @min_values = data[:min_values]
+        @placeholder = data[:placeholder]
+        @options = data[:options]&.map { |option| Option.new(option) } || []
       end
     end
 
     # A free-form text input bar in a modal.
     class TextInput
-      # @!visibility private
-      PLACEHOLDERS = %i[
-        label
-        min_length
-        max_length
-        required
-        required?
-        placeholder
-      ].freeze
-
-      # @!visibility private
-      SHORT = 1
-
-      # @!visibility private
-      PARAGRAPH = 2
-
       # @return [Integer] the numeric identifier of the text input.
       attr_reader :id
-
-      # @return [Symbol] This is deprecated and not accurate. This will
-      #   be removed in the next major version (4.0.0).
-      attr_reader :style
 
       # @return [String, nil] the value the user typed into the text input.
       attr_reader :value
@@ -241,14 +220,10 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @style = :paragraph
-        @value = data['value']
-        @custom_id = data['custom_id']
+        @id = data[:id]
+        @value = data[:value]
+        @custom_id = data[:custom_id]
       end
-
-      # @!visibility private
-      PLACEHOLDERS.each { |name| define_method(name) { nil } }
     end
 
     # A grouping of components with a contextual accessory.
@@ -265,9 +240,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @accessory = Components.from_data(data['accessory'], @bot)
-        @components = data['components'].filter_map { |component| Components.from_data(component, @bot) }
+        @id = data[:id]
+        @accessory = Components.from_data(data[:accessory], @bot)
+        @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
     end
 
@@ -282,8 +257,8 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @content = data['content']
+        @id = data[:id]
+        @content = data[:content]
       end
     end
 
@@ -306,10 +281,10 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @spoiler = data['spoiler']
-        @description = data['description']
-        @media = MediaItem.new(data['media'], @bot)
+        @id = data[:id]
+        @spoiler = data[:spoiler]
+        @description = data[:description]
+        @media = MediaItem.new(data[:media], @bot)
       end
     end
 
@@ -324,8 +299,8 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @items = data['items'].map { |item| Item.new(item, @bot) }
+        @id = data[:id]
+        @items = data[:items].map { |item| Item.new(item, @bot) }
       end
 
       # A singular media attachment.
@@ -344,9 +319,9 @@ module Discordrb
         # @!visibility private
         def initialize(data, bot)
           @bot = bot
-          @spoiler = data['spoiler']
-          @description = data['description']
-          @media = MediaItem.new(data['media'], @bot)
+          @spoiler = data[:spoiler]
+          @description = data[:description]
+          @media = MediaItem.new(data[:media], @bot)
         end
       end
     end
@@ -367,9 +342,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @divider = data['divider']
-        @spacing = data['spacing']
+        @id = data[:id]
+        @divider = data[:divider]
+        @spacing = data[:spacing]
       end
     end
 
@@ -393,10 +368,10 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @spoiler = data['spoiler']
-        @color = ColourRGB.new(data['accent_color']) if data['accent_color']
-        @components = data['components'].filter_map { |component| Components.from_data(component, @bot) }
+        @id = data[:id]
+        @spoiler = data[:spoiler]
+        @color = ColourRGB.new(data[:accent_color]) if data[:accent_color]
+        @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
 
       # Get the buttons contained within the container.
@@ -436,11 +411,11 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @name = data['name']
-        @size = data['size']
-        @spoiler = data['spoiler']
-        @media = MediaItem.new(data['file'], @bot)
+        @id = data[:id]
+        @name = data[:name]
+        @size = data[:size]
+        @spoiler = data[:spoiler]
+        @media = MediaItem.new(data[:file], @bot)
       end
     end
 
@@ -482,15 +457,15 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @url = data['url']
-        @width = data['width']
-        @flags = data['flags']
-        @height = data['height']
-        @proxy_url = data['proxy_url']
-        @placeholder = data['placeholder']
-        @content_type = data['content_type']
-        @attachment_id = data['attachment_id']&.to_i
-        @placeholder_version = data['placeholder_version']
+        @url = data[:url]
+        @width = data[:width]
+        @flags = data[:flags]
+        @height = data[:height]
+        @proxy_url = data[:proxy_url]
+        @placeholder = data[:placeholder]
+        @content_type = data[:content_type]
+        @attachment_id = data[:attachment_id]&.to_i
+        @placeholder_version = data[:placeholder_version]
       end
 
       # @!method animated?
@@ -513,8 +488,8 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @component = Components.from_data(data['component'], @bot)
+        @id = data[:id]
+        @component = Components.from_data(data[:component], @bot)
       end
     end
 
@@ -532,9 +507,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @custom_id = data['custom_id']
-        @values = data['values'].map(&:to_i)
+        @id = data[:id]
+        @custom_id = data[:custom_id]
+        @values = data[:values].map(&:to_i)
       end
     end
 
@@ -552,9 +527,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @value = data['value']
-        @custom_id = data['custom_id']
+        @id = data[:id]
+        @value = data[:value]
+        @custom_id = data[:custom_id]
       end
     end
 
@@ -572,9 +547,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @values = data['values']
-        @custom_id = data['custom_id']
+        @id = data[:id]
+        @values = data[:values]
+        @custom_id = data[:custom_id]
       end
     end
 
@@ -593,9 +568,9 @@ module Discordrb
       # @!visibility private
       def initialize(data, bot)
         @bot = bot
-        @id = data['id']
-        @value = data['value']
-        @custom_id = data['custom_id']
+        @id = data[:id]
+        @value = data[:value]
+        @custom_id = data[:custom_id]
       end
     end
   end

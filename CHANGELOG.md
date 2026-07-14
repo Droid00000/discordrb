@@ -634,7 +634,7 @@ Thank you to all of our contributors!
 - The default non-streaming game was changed to be `0` instead of `nil` ([#277](https://github.com/discordrb/discordrb/pull/277), thanks @zeyla)
 - A method `Channel#delete_message` was added to support deleting single messages by ID without prior resolution.
 - Permission overwrites can now be deleted from channels ([#268](https://github.com/discordrb/discordrb/pull/268), thanks @greenbigfrog)
-- There is now a utility method `IDObject.synthesise` that creates snowflakes with specific timestamps out of thin air.
+- There is now a utility method `Snowflake.synthesise` that creates snowflakes with specific timestamps out of thin air.
 - Typing events are now respondable, so you can call `#respond` on them for example ([#270](https://github.com/discordrb/discordrb/pull/270), thanks @VxJasonxV)
 - Message authors can now be `User` objects if a `Member` object could not be found or created ([#290](https://github.com/discordrb/discordrb/issues/290))
 - Added two new events, `unknown` ([#288](https://github.com/discordrb/discordrb/issues/288)) and `raw`, that are raised for unknown dispatches and all dispatches, respectively.
@@ -1071,7 +1071,7 @@ puts bot.profile.username
   - You now have finer control over what gets output, using `Discordrb::LOGGER.mode=` which accepts one of `:debug`, `:verbose`, `:normal`, `:quiet`, `:silent`.
 - You can now log in with just a token by setting the email parameter to `:token` and the password to the token you want to log in with.
 - DCA playback now supports `DCA1`.
-- All data classes (now generalized using the `IDObject` mixin) have a `creation_date` parameter that specifies when the object was created.
+- All data classes (now generalized using the `Snowflake` mixin) have a `creation_date` parameter that specifies when the object was created.
 - `Channel#mention` was added that mentions a channel analogous to `User#mention`.
 - The aliases `tag` and `discord_tag` have been added to the discriminator because that's what Discord calls them now.
 

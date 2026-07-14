@@ -1,64 +1,73 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # A reaction to a message.
+  # A reaction on a message.
   class Reaction
-    # Map of reaction types.
+    # Mapping of types.
     TYPES = {
       normal: 0,
       burst: 1
     }.freeze
 
-    # @return [Integer] the total amount of users who have reacted with this reaction (including burst reactions)
-    attr_reader :count
+    # @return [Emoji] the emoji of the reaction.
+    attr_reader :emoji
 
-    # @return [true, false] whether the current bot or user used this reaction
-    attr_reader :me
-    alias_method :me?, :me
+    # @return [Integer] the total number of reactions for the emoji,
+    #   including super reactions and regular reactions.
+    attr_reader :total_count
 
-    # @return [Integer] the ID of the emoji, if it was custom
-    attr_reader :id
-
-    # @return [String] the name or unicode representation of the emoji
-    attr_reader :name
-
-    # @return [true, false] whether the current bot or user used this reaction as a burst reaction
-    attr_reader :me_burst
-    alias_method :me_burst?, :me_burst
-
-    # @return [Array<ColourRGB>] an array of colors used for animations in burst reactions
-    attr_reader :burst_colours
-    alias_method :burst_colors, :burst_colours
-
-    # @return [Integer] the total amount of users who have reacted with this reaction as a burst reaction
+    # @return [Integer] the total number of super reactions for the emoji.
     attr_reader :burst_count
 
-    # @return [Integer] the total amount of users who have reacted with this reaction as a normal reaction
-    attr_reader :normal_count
+    # @return [true, false] whether or not the the bot account has reacted.
+    attr_reader :current_bot
+
+    # @return [Array<ColorRGB>] the colors associated with the super reaction.
+    attr_reader :burst_colors
+
+    # @return [Integer] the total number of non-super reactions for the emoji.
+    attr_reader :standard_count
+
+    alias_method :current_bot?, :current_bot
+    alias_method :burst_colours, :burst_colors
 
     # @!visibility private
-    def initialize(data)
-      @count = data['count']
-      @me = data['me']
-      @id = data['emoji']['id']&.to_i
-      @name = data['emoji']['name']
-      @me_burst = data['me_burst']
-      @burst_colours = data['burst_colors'].map { |b| ColourRGB.new(b.delete('#')) }
-      @burst_count = data['count_details']['burst']
-      @normal_count = data['count_details']['normal']
+    def initialize(data, message, bot)
+      @bot = bot
+      @message = message
+      @current_bot = data[:me]
+      @total_count = data[:count]
+      @emoji = Emoji.new(data[:emoji], @bot)
+      @burst_count = data[:count_details][:burst]
+      @standard_count = data[:count_details][:normal]
+      @burst_colors = data[:burst_colors]&.map { |item| ColourRGB.new(item) } || []
     end
 
-    # Converts this Reaction into a string that can be sent back to Discord in other reaction endpoints.
-    # If ID is present, it will be rendered into the form of `name:id`.
-    # @return [String] the name of this reaction, including the ID if it is a custom emoji
-    def to_s
-      id.nil? ? name : "#{name}:#{id}"
-    end
-
-    # Converts this Reaction into a hash that can be sent back to Discord in other endpoints.
-    # @return [Hash] A hash representation of this reaction's emoji.
+    # @!visibility private
     def to_h
-      id.nil? ? { name: name } : { id: id }
+      emoji.to_h
     end
+
+    # @!visibility private
+    def to_s
+      emoji.to_reaction
+    end
+
+    # Get the users who reacted with the emoji.
+    # @return [Array<User>] The users for the reaction.
+    # @see Message#reacted_with
+    def users(**)
+      @message.reacted_with(emoji: @emoji, **)
+    end
+
+    # Delete the reactions that are associated with the emoji.
+    # @return [nil]
+    # @see Message#delete_reactions
+    def remove(**)
+      @message.remove_reaction(emoji: @emoji, **)
+    end
+
+    alias_method :delete, :remove
+    alias_method :to_reaction, :to_s
   end
 end

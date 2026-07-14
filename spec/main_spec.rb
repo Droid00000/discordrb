@@ -2,8 +2,8 @@
 
 require 'discordrb'
 
-class SimpleIDObject
-  include Discordrb::IDObject
+class SimpleSnowflake
+  include Discordrb::Snowflake
 
   def initialize(id)
     @id = id
@@ -29,18 +29,18 @@ describe Discordrb do
                         ])
   end
 
-  describe Discordrb::IDObject do
+  describe Discordrb::Snowflake do
     describe '#==' do
       it 'should match identical values' do
-        ido = SimpleIDObject.new(123)
-        expect(ido == SimpleIDObject.new(123)).to eq(true)
+        ido = SimpleSnowflake.new(123)
+        expect(ido == SimpleSnowflake.new(123)).to eq(true)
         expect(ido == 123).to eq(true)
         expect(ido == '123').to eq(true)
       end
 
       it 'should not match different values' do
-        ido = SimpleIDObject.new(123)
-        expect(ido == SimpleIDObject.new(124)).to eq(false)
+        ido = SimpleSnowflake.new(123)
+        expect(ido == SimpleSnowflake.new(124)).to eq(false)
         expect(ido == 124).to eq(false)
         expect(ido == '124').to eq(false)
       end
@@ -48,7 +48,7 @@ describe Discordrb do
 
     describe '#creation_time' do
       it 'should return the correct time' do
-        ido = SimpleIDObject.new(175_928_847_299_117_063)
+        ido = SimpleSnowflake.new(175_928_847_299_117_063)
         time = Time.new(2016, 4, 30, 11, 18, 25.796, 0)
         expect(ido.creation_time.utc).to be_within(0.0001).of(time)
       end
@@ -58,12 +58,12 @@ describe Discordrb do
       it 'should match a precalculated time' do
         snowflake = 175_928_847_298_985_984
         time = Time.new(2016, 4, 30, 11, 18, 25.796, 0)
-        expect(Discordrb::IDObject.synthesise(time)).to eq(snowflake)
+        expect(Discordrb::Snowflake.synthesise(time)).to eq(snowflake)
       end
 
       it 'should match #creation_time' do
         time = Time.new(2016, 4, 30, 11, 18, 25.796, 0)
-        ido = SimpleIDObject.new(Discordrb::IDObject.synthesise(time))
+        ido = SimpleSnowflake.new(Discordrb::Snowflake.synthesise(time))
         expect(ido.creation_time).to be_within(0.0001).of(time)
       end
     end

@@ -83,24 +83,24 @@ module Discordrb::Commands
       if arguments.length < @attributes[:min_args]
         response = "Too few arguments for command `#{name}`!"
         response += "\nUsage: `#{@attributes[:usage]}`" if @attributes[:usage]
-        event.respond(response)
+        event.respond(content: response)
         return
       end
       if @attributes[:max_args] >= 0 && arguments.length > @attributes[:max_args]
         response = "Too many arguments for command `#{name}`!"
         response += "\nUsage: `#{@attributes[:usage]}`" if @attributes[:usage]
-        event.respond(response)
+        event.respond(content: response)
         return
       end
       unless @attributes[:chain_usable] && !chained
-        event.respond "Command `#{name}` cannot be used in a command chain!"
+        event.respond(content: "Command `#{name}` cannot be used in a command chain!")
         return
       end
 
       if check_permissions
         rate_limited = event.bot.rate_limited?(@attributes[:bucket], event.author)
         if @attributes[:bucket] && rate_limited
-          event.respond @attributes[:rate_limit_message].gsub('%time%', rate_limited.round(2).to_s) if @attributes[:rate_limit_message]
+          event.respond(content: @attributes[:rate_limit_message].gsub('%time%', rate_limited.round(2).to_s)) if @attributes[:rate_limit_message]
           return
         end
       end
@@ -113,7 +113,7 @@ module Discordrb::Commands
     rescue StandardError => e # Something went wrong inside our @block!
       rescue_value = @attributes[:rescue] || event.bot.attributes[:rescue]
       if rescue_value
-        event.respond(rescue_value.gsub('%exception%', e.message)) if rescue_value.is_a?(String)
+        event.respond(content: rescue_value.gsub('%exception%', e.message)) if rescue_value.is_a?(String)
         rescue_value.call(event, e) if rescue_value.respond_to?(:call)
       end
 
@@ -216,7 +216,7 @@ module Discordrb::Commands
         result += subchain.execute(event)
       end
 
-      event.respond("Your subchains are mismatched! Make sure you don't have any extra #{@attributes[:sub_chain_start]}'s or #{@attributes[:sub_chain_end]}'s") unless b_level.zero?
+      event.respond(content: "Your subchains are mismatched! Make sure you don't have any extra #{@attributes[:sub_chain_start]}'s or #{@attributes[:sub_chain_end]}'s") unless b_level.zero?
 
       @chain = result
 
@@ -277,12 +277,12 @@ module Discordrb::Commands
     # @return [String] the result of the command chain execution.
     def execute(event)
       old_chain = @chain
-      @bot.debug 'Executing bare chain'
+      Discordrb::LOGGER.debug('Executing bare chain')
       result = execute_bare(event)
 
       @chain_args ||= []
 
-      @bot.debug "Found chain args #{@chain_args}, preliminary result #{result}"
+      Discordrb::LOGGER.debug("Found chain args #{@chain_args}, preliminary result #{result}")
 
       @chain_args.each do |arg|
         case arg.first

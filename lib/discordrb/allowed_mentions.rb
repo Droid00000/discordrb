@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'discordrb/id_object'
+require 'discordrb/snowflake'
 
 module Discordrb
   # Builder class for `allowed_mentions` when sending messages.
@@ -31,11 +31,11 @@ module Discordrb
     end
 
     # @!visibility private
-    def to_hash
+    def to_h
       {
         parse: @parse,
-        users: @users&.map { |user| user.is_a?(IDObject) ? user.id : user },
-        roles: @roles&.map { |role| role.is_a?(IDObject) ? role.id : role },
+        users: @users&.map { |user| user.is_a?(Snowflake) ? user.id : user },
+        roles: @roles&.map { |role| role.is_a?(Snowflake) ? role.id : role },
         replied_user: @replied_user
       }.compact
     end

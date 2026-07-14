@@ -9,11 +9,11 @@ describe Discordrb::Permissions do
     masks = Discordrb::Permissions::MASKS
 
     it 'Creates a method indicating if the bit is set' do
-      expect(masks.all? { |name, _| subject.respond_to?(name) }).to eq(true)
+      expect(masks.all? { |name, _| subject.respond_to?("#{name}?") }).to eq(true)
     end
 
     it 'Creates a setter method to toggle each permission' do
-      expect(masks.all? { |name, _| subject.respond_to?("can_#{name}=") }).to eq(true)
+      expect(masks.all? { |name, _| subject.respond_to?("#{name}=") }).to eq(true)
     end
   end
 
@@ -107,7 +107,7 @@ describe Discordrb::Permissions do
 
   describe '.bits' do
     it 'Returns the bitfield for a given list of permissions' do
-      permissions = described_class.bits([:manage_roles, 'use_slash_commands', :speak])
+      permissions = described_class.bits([:manage_roles, 'use_application_commands', :speak])
 
       expect(permissions).to eq(2_418_016_256)
     end

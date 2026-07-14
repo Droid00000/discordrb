@@ -1,13 +1,10 @@
 # frozen_string_literal: true
 
-require 'discordrb/data'
-require 'discordrb/events/generic'
-
 module Discordrb::Events
   # Generic superclass for integration events.
   class IntegrationEvent < Event
-    # @return [Server] the server associated with the event.
-    attr_reader :server
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
 
     # @return [Integration] the integration associated with the event.
     attr_reader :integration
@@ -15,8 +12,8 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @server = bot.server(data['guild_id'].to_i)
-      @integration = Discordrb::Integration.new(data, @bot, @server)
+      @guild = bot.guild(data[:guild_id].to_i)
+      @integration = Discordrb::Integration.new(data, @guild, @bot)
     end
   end
 
@@ -28,8 +25,8 @@ module Discordrb::Events
 
   # Raised whenever an integration is deleted.
   class IntegrationDeleteEvent < Event
-    # @return [Server] the server associated with the event.
-    attr_reader :server
+    # @return [Guild] the guild associated with the event.
+    attr_reader :guild
 
     # @return [Integer] the ID of the integration that was removed.
     attr_reader :integration_id
@@ -40,9 +37,9 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @server = bot.server(data['guild_id'].to_i)
-      @integration_id = data['id'].to_i
-      @application_id = data['application_id']&.to_i
+      @guild = bot.guild(data[:guild_id].to_i)
+      @integration_id = data[:id].to_i
+      @application_id = data[:application_id]&.to_i
     end
   end
 
@@ -54,7 +51,7 @@ module Discordrb::Events
       return false unless event.is_a?(IntegrationEvent)
 
       [
-        matches_all(@attributes[:server], event.server) do |a, e|
+        matches_all(@attributes[:guild], event.guild) do |a, e|
           a&.resolve_id == e&.resolve_id
         end,
 
@@ -83,7 +80,7 @@ module Discordrb::Events
       return false unless event.is_a?(IntegrationDeleteEvent)
 
       [
-        matches_all(@attributes[:server], event.server) do |a, e|
+        matches_all(@attributes[:guild], event.guild) do |a, e|
           a&.resolve_id == e&.resolve_id
         end,
 

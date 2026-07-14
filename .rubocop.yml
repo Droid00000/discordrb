@@ -18,18 +18,9 @@ Layout/LineLength:
 Lint/MissingSuper:
   Enabled: false
 
-# Allow 'Pokémon-style' exception handling
-Lint/RescueException:
-  Enabled: false
-
 # Disable all metrics.
 Metrics:
   Enabled: false
-
-# Allow some common and/or obvious short method params
-Naming/MethodParameterName:
-  AllowedNames:
-    - e
 
 # Ignore `eval` in the examples folder
 Security/Eval:
@@ -61,12 +52,6 @@ Style/OptionalBooleanParameter:
 Style/RedundantArgument:
   Enabled: false
 
-# Prefer |m, e| for the `reduce` block arguments
-Style/SingleLineBlockParams:
-  Methods:
-    - reduce: [m, e]
-    - inject: [m, e]
-
 ###################################
 ## NEW COPS TO MAKE DECISIONS ON ##
 ###################################
@@ -77,9 +62,6 @@ Style/HashSyntax:
   EnforcedShorthandSyntax: either
 
 Style/ArgumentsForwarding:
-  Enabled: false
-
-Performance/StringIdentifierArgument:
   Enabled: false
 
 Style/ComparableClamp:
@@ -94,16 +76,10 @@ Naming/BlockForwarding:
 Style/RedundantSelfAssignmentBranch:
   Enabled: false
 
-Performance/MapCompact:
-  Enabled: false
-
 Gemspec/RequiredRubyVersion:
   Enabled: false
 
 Gemspec/DevelopmentDependencies:
-  Enabled: false
-
-Style/RedundantReturn:
   Enabled: false
 
 Style/RedundantParentheses:
@@ -117,13 +93,26 @@ Layout/EndOfLine:
 Style/ReturnNilInPredicateMethodDefinition:
   Enabled: false
 
-# FIXME: Disabled due to breaking tests, should probably refactor the code instead
-Style/SafeNavigation:
-  Enabled: false
-
 Style/Documentation:
   Enabled: true
 
 Style/IfUnlessModifier:
-    Exclude:
+  Enabled: false
+
+# This is a pain to debug, because local variables that are
+# also methods names take precedence (since handle_dispatch)
+# is a singular method this means that variables even for un-related
+# branches would set a value to `nil`. 
+Style/RedundantSelf:
+  Enabled: false
+
+Style/NumericPredicate:
+  Exclude:
     - lib/discordrb/data/role.rb
+
+Style/SafeNavigationChainLength:
+  Enabled: false
+
+Naming/MethodName:
+  Exclude:
+    - lib/discordrb.rb

@@ -79,12 +79,11 @@ class Discordrb::Webhooks::Modal
     }.freeze
 
     # Create a label component.
-    # @param label [String, nil] The label of the label component. This
-    #   field should always be passed, and will be required in 4.0.
+    # @param label [String, nil] The label of the label component.
     # @param id [Integer, nil] The unique 32-bit ID of the label component.
     # @param description [String, nil] The description of the label component.
     # @yieldparam builder [LabelBuilder] Yields the initialized label component.
-    def initialize(label: nil, id: nil, description: nil)
+    def initialize(label:, id: nil, description: nil)
       @id = id
       @label = label
       @description = description
@@ -101,11 +100,8 @@ class Discordrb::Webhooks::Modal
     # @param max_length [Integer, nil] The maximum input length for a text input, min 1, max 4000.
     # @param required [true, false, nil] Whether this component is required to be filled, default true.
     # @param value [String, nil] A pre-filled value for this component, max 4000 characters.
-    # @param placeholder [String, nil] Custom placeholder text if the input is empty, max 100 characters
-    # @param label [String, nil] This parameter is deprecated and will be removed soon. Please pass this argument to {LabelBuilder#initialize} instead.
-    def text_input(style:, custom_id:, id: nil, min_length: nil, max_length: nil, required: nil, value: nil, placeholder: nil, label: nil)
-      @label = label unless label.nil?
-
+    # @param placeholder [String, nil] Custom placeholder text if the input is empty, max 100 characters.
+    def text_input(style:, custom_id:, id: nil, min_length: nil, max_length: nil, required: nil, value: nil, placeholder: nil)
       @component = {
         id: id,
         style: TEXT_INPUT_STYLES[style] || style,
@@ -147,7 +143,7 @@ class Discordrb::Webhooks::Modal
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param required [true, false, nil] Whether a value must be selected for the component.
-    # @param default_values [Array<User, Member, Recipient, Integer, String, Hash>, nil] The users to populate in the select menu by default.
+    # @param default_values [Array<User, Member, Integer, String, Hash>, nil] The users to populate in the select menu by default.
     def user_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, required: nil, default_values: nil)
       @component = Discordrb::Webhooks::View::SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, nil, select_type: :user_select, id: id, required: required, default_values: default_values).to_h
     end
@@ -173,7 +169,7 @@ class Discordrb::Webhooks::Modal
     # @param min_values [Integer, nil] The minimum amount of values a user must select.
     # @param max_values [Integer, nil] The maximum amount of values a user can select.
     # @param required [true, false, nil] Whether a value must be selected for the component.
-    # @param default_values [Array<User, Role, Member, Recipient, Hash>, nil] The mentionable entities to populate in the select menu by default.
+    # @param default_values [Array<User, Role, Member, Hash>, nil] The mentionable entities to populate in the select menu by default.
     def mentionable_select(custom_id:, id: nil, placeholder: nil, min_values: nil, max_values: nil, required: nil, default_values: nil)
       @component = Discordrb::Webhooks::View::SelectMenuBuilder.new(custom_id, [], placeholder, min_values, max_values, nil, select_type: :mentionable_select, id: id, required: required, default_values: default_values).to_h
     end
@@ -277,10 +273,4 @@ class Discordrb::Webhooks::Modal
   def text_display(...)
     @components << Discordrb::Webhooks::View::TextDisplayBuilder.new(...)
   end
-
-  # @deprecated Please use {#label} instead.
-  alias_method :row, :label
-
-  # @deprecated This alias will be removed in future releases.
-  RowBuilder = LabelBuilder
 end

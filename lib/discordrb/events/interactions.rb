@@ -1,26 +1,23 @@
 # frozen_string_literal: true
 
-require 'discordrb/events/generic'
-require 'discordrb/data'
-
 module Discordrb::Events
   # Generic subclass for interaction events
   class InteractionCreateEvent < Event
     # Struct to allow accessing data via [] or methods.
     Resolved = Struct.new('Resolved', :channels, :members, :messages, :roles, :users, :attachments) # rubocop:disable Lint/StructNewOverride
 
-    # @return [Interaction] The interaction for this event.
+    # @return [Interaction] The interaction for the event.
     attr_reader :interaction
 
     # @!attribute [r] type
     #   @return [Integer]
     #   @see Interaction#type
-    # @!attribute [r] server
-    #   @return [Server, nil]
-    #   @see Interaction#server
-    # @!attribute [r] server_id
+    # @!attribute [r] guild
+    #   @return [Guild, nil]
+    #   @see Interaction#guild
+    # @!attribute [r] guild_id
     #   @return [Integer]
-    #   @see Interaction#server_id
+    #   @see Interaction#guild_id
     # @!attribute [r] channel
     #   @return [Channel]
     #   @see Interaction#channel
@@ -39,10 +36,16 @@ module Discordrb::Events
     # @!attribute [r] user_integration?
     #   @return [true, false]
     #   @see Interaction#user_integration?
-    # @!attribute [r] server_integration?
+    # @!attribute [r] guild_integration?
     #   @return [true, false]
-    #   @see Interaction#server_integration?
-    delegate :type, :server, :server_id, :channel, :channel_id, :user, :user_locale, :context, :user_integration?, :server_integration?, to: :interaction
+    #   @see Interaction#guild_integration?
+    # @!attribute [r] guild_features
+    #   @return [Array<Symbol>]
+    #   @see Interaction#guild_features
+    # @!attribute [r] max_attachment_size
+    #   @return [Integer]
+    #   @see Interaction#max_attachment_size
+    delegate :type, :guild, :guild_id, :channel, :channel_id, :user, :user_locale, :context, :user_integration?, :guild_integration?, :guild_features, :max_attachment_size, to: :interaction
 
     # @!visibility private
     def initialize(data, bot)
@@ -109,31 +112,32 @@ module Discordrb::Events
 
     # @!visibility private
     def process_resolved(resolved_data)
-      resolved_data['users']&.each do |id, data|
-        @resolved[:users][id.to_i] = @bot.ensure_user(data)
+      resolved_data[:users]&.each_value do |data|
+        @resolved[:users][data[:id].to_i] = @bot.ensure_user(data)
       end
 
-      resolved_data['roles']&.each do |id, data|
-        @resolved[:roles][id.to_i] = Discordrb::Role.new(data, @bot)
+      resolved_data[:roles]&.each_value do |data|
+        data[:guild_id] = @interaction.guild_id
+        @resolved[:roles][data[:id].to_i] = Discordrb::Role.new(data, nil, @bot)
       end
 
-      resolved_data['channels']&.each do |id, data|
-        data['guild_id'] = @interaction.server_id
-        @resolved[:channels][id.to_i] = Discordrb::Channel.new(data, @bot)
+      resolved_data[:channels]&.each_value do |data|
+        data[:guild_id] = @interaction.guild_id
+        @resolved[:channels][data[:id].to_i] = Discordrb::Channel.new(data, @bot)
       end
 
-      resolved_data['members']&.each do |id, data|
-        data['user'] = resolved_data['users'][id]
-        data['guild_id'] = @interaction.server_id
-        @resolved[:members][id.to_i] = Discordrb::Member.new(data, nil, @bot)
+      resolved_data[:messages]&.each_value do |data|
+        @resolved[:messages][data[:id].to_i] = Discordrb::Message.new(data, @bot)
       end
 
-      resolved_data['messages']&.each do |id, data|
-        @resolved[:messages][id.to_i] = Discordrb::Message.new(data, @bot)
+      resolved_data[:members]&.each do |id, data|
+        data[:user] = resolved_data[:users][id]
+        data[:guild_id] = @interaction.guild_id
+        @resolved[:members][data[:user][:id].to_i] = Discordrb::Member.new(data, nil, @bot)
       end
 
-      resolved_data['attachments']&.each do |id, data|
-        @resolved[:attachments][id.to_i] = Discordrb::Attachment.new(data, nil, @bot)
+      resolved_data[:attachments]&.each_value do |data|
+        @resolved[:attachments][data[:id].to_i] = Discordrb::Attachment.new(data, nil, @bot)
       end
     end
   end
@@ -142,9 +146,14 @@ module Discordrb::Events
   class InteractionCreateEventHandler < EventHandler
     # @!visibility private
     def matches?(event)
-      return false unless event.is_a? InteractionCreateEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(InteractionCreateEvent)
 
       [
+        matches_all(@attributes[:user], event.user) do |a, e|
+          a.resolve_id == e.id
+        end,
+
         matches_all(@attributes[:type], event.type) do |a, e|
           case a
           when String, Symbol
@@ -154,16 +163,12 @@ module Discordrb::Events
           end
         end,
 
-        matches_all(@attributes[:server], event.interaction) do |a, e|
-          a.resolve_id == e.server_id
+        matches_all(@attributes[:guild], event.guild_id) do |a, e|
+          a.resolve_id == e
         end,
 
-        matches_all(@attributes[:channel], event.interaction) do |a, e|
-          a.resolve_id == e.channel_id
-        end,
-
-        matches_all(@attributes[:user], event.user) do |a, e|
-          a.resolve_id == e.id
+        matches_all(@attributes[:channel], event.channel_id) do |a, e|
+          a.resolve_id == e
         end
       ].reduce(true, &:&)
     end
@@ -196,33 +201,33 @@ module Discordrb::Events
     def initialize(data, bot)
       super
 
-      command_data = data['data']
+      command_data = data[:data]
 
-      @command_id = command_data['id'].to_i
-      @command_name = command_data['name'].to_sym
-      @command_server_id = command_data['guild_id']
+      @command_id = command_data[:id].to_i
+      @command_name = command_data[:name].to_sym
+      @command_guild_id = command_data[:guild_id]
 
-      @target_id = command_data['target_id']&.to_i
+      @target_id = command_data[:target_id]&.to_i
       @resolved = Resolved.new({}, {}, {}, {}, {}, {})
-      process_resolved(command_data['resolved']) if command_data['resolved']
+      process_resolved(command_data[:resolved]) if command_data[:resolved]
 
-      options = command_data['options'] || []
+      options = command_data[:options] || []
 
       if options.empty?
         @options = {}
         return
       end
 
-      case options[0]['type']
+      case options[0][:type]
       when 2
         options = options[0]
-        @subcommand_group = options['name'].to_sym
-        @subcommand = options['options'][0]['name'].to_sym
-        options = options['options'][0]['options']
+        @subcommand_group = options[:name].to_sym
+        @subcommand = options[:options][0][:name].to_sym
+        options = options[:options][0][:options]
       when 1
         options = options[0]
-        @subcommand = options['name'].to_sym
-        options = options['options']
+        @subcommand = options[:name].to_sym
+        options = options[:options]
       end
 
       @options = transform_options_hash(options || {})
@@ -230,9 +235,9 @@ module Discordrb::Events
 
     # @return [true, false] Whether or not the application command that was executed
     #   has been registered globally. If this is false, then the application command
-    #   that was executed is only available in the invoking server.
+    #   that was executed is only available in the invoking guild.
     def global_command?
-      @command_server_id.nil?
+      @command_guild_id.nil?
     end
 
     # @return [Message, User, nil] The target of this command, for context commands.
@@ -245,7 +250,7 @@ module Discordrb::Events
     private
 
     def transform_options_hash(hash)
-      hash.to_h { |opt| [opt['name'], opt['options'] || opt['value']] }
+      hash.to_h { |opt| [opt[:name].to_sym, opt[:options] || opt[:value]] }
     end
   end
 
@@ -344,18 +349,23 @@ module Discordrb::Events
 
   # An event for when a user interacts with a component.
   class ComponentEvent < InteractionCreateEvent
-    # @return [String] User provided data for this button.
+    # @return [String] user-defined identifier for the component.
     attr_reader :custom_id
 
-    # @return [Interactions::Message, nil] The message the button originates from.
+    # @return [Interactions::Message, nil] the message the component originates from.
     attr_reader :message
+
+    # @return [Resolved] the resolved channels, roles, users, members, and attachments.
+    attr_reader :resolved
 
     # @!visibility private
     def initialize(data, bot)
       super
 
       @message = @interaction.message
-      @custom_id = data['data']['custom_id']
+      @custom_id = data[:data][:custom_id]
+      @resolved = Resolved.new({}, {}, {}, {}, {}, {})
+      process_resolved(data[:data][:resolved]) if data[:data][:resolved]
     end
   end
 
@@ -404,7 +414,7 @@ module Discordrb::Events
     def initialize(data, bot)
       super
 
-      @values = data['data']['values']
+      @values = data[:data][:values]
     end
   end
 
@@ -417,16 +427,11 @@ module Discordrb::Events
     # @return [Array<Component>] an array of partial component objects that were in the modal.
     attr_reader :components
 
-    # @return [Resolved] The resolved channels, roles, users, members, and attachments for the modal.
-    attr_reader :resolved
-
     # @!visibility private
     def initialize(data, bot)
       super
 
       @components = @interaction.components
-      @resolved = Resolved.new({}, {}, {}, {}, {}, {})
-      process_resolved(data['data']['resolved']) if data['data']['resolved']
     end
 
     # Get the value of an input passed to the modal.
@@ -447,7 +452,7 @@ module Discordrb::Events
     # @param custom_id [String] The custom ID of the file upload component to get attachments for.
     # @return [Array<Attachment>] the attachments that were uploaded to the file upload component.
     def attachments(custom_id)
-      values(custom_id)&.map { |id| @resolved[:attachments][id.to_i] } || []
+      values(custom_id)&.map { |id| @resolved.attachments[id.to_i] } || []
     end
   end
 
@@ -457,14 +462,14 @@ module Discordrb::Events
 
   # Event for when a user interacts with a select user component.
   class UserSelectEvent < ComponentEvent
-    # @return [Array<User>] Selected values.
+    # @return [Array<User>] the users that were selected.
     attr_reader :values
 
     # @!visibility private
     def initialize(data, bot)
       super
 
-      @values = data['data']['values'].map { |e| bot.user(e) }
+      @values = data[:data][:values].map { |id| bot.user(id) }
     end
   end
 
@@ -474,14 +479,15 @@ module Discordrb::Events
 
   # Event for when a user interacts with a select role component.
   class RoleSelectEvent < ComponentEvent
-    # @return [Array<Role>] Selected values.
+    # @return [Array<Role>] the roles that were selected.
     attr_reader :values
 
     # @!visibility private
     def initialize(data, bot)
       super
 
-      @values = data['data']['values'].map { |e| bot.server(data['guild_id']).role(e) }
+      guild = @bot.guilds[@interaction.guild_id]
+      @values = data[:data][:values].map { |id| guild&.role(id) || @resolved.roles[id.to_i] }
     end
   end
 
@@ -491,16 +497,16 @@ module Discordrb::Events
 
   # Event for when a user interacts with a select mentionable component.
   class MentionableSelectEvent < ComponentEvent
-    # @return [Hash<Symbol => Array<User>, Symbol => Array<Role>>] Selected values.
+    # @return [Hash<Symbol => Array<User>, Symbol => Array<Role>>] the selected roles and users.
     attr_reader :values
 
     # @!visibility private
     def initialize(data, bot)
       super
 
-      users = data['data']['resolved']['users'].map { |_, user| @bot.ensure_user(user) }
-      roles = data['data']['resolved']['roles'] ? data['data']['resolved']['roles'].keys.map { |e| bot.server(data['guild_id']).role(e) } : []
-      @values = { users: users, roles: roles }
+      guild = @bot.guilds[@interaction.guild_id]
+      roles = @resolved.roles.map { |id, role| guild&.role(id) || role }
+      @values = { users: @resolved.users.values, roles: roles }
     end
   end
 
@@ -510,14 +516,14 @@ module Discordrb::Events
 
   # Event for when a user interacts with a select channel component.
   class ChannelSelectEvent < ComponentEvent
-    # @return [Array<Channel>] Selected values.
+    # @return [Array<Channel>] the channels that were selected.
     attr_reader :values
 
     # @!visibility private
     def initialize(data, bot)
       super
 
-      @values = data['data']['values'].map { |e| bot.channel(e, bot.server(data['guild_id'])) }
+      @values = data[:data][:values].map { |id| @resolved.channels[id.to_i] }
     end
   end
 
@@ -537,7 +543,7 @@ module Discordrb::Events
         matches_all(@attributes[:subcommand], event.subcommand) { |a, e| a&.to_sym == e },
         matches_all(@attributes[:command_name], event.command_name) { |a, e| a&.to_sym == e },
         matches_all(@attributes[:subcommand_group], event.subcommand_group) { |a, e| a&.to_sym == e },
-        matches_all(@attributes[:server], event.server_id) { |a, e| a&.resolve_id == e }
+        matches_all(@attributes[:guild], event.guild_id) { |a, e| a&.resolve_id == e }
       ].reduce(&:&)
     end
   end
@@ -556,18 +562,18 @@ module Discordrb::Events
 
       @choices = {}
 
-      options = data['data']['options']
+      options = data[:data][:options]
 
-      options = case options[0]['type']
+      options = case options[0][:type]
                 when 1
-                  options[0]['options']
+                  options[0][:options]
                 when 2
-                  options[0]['options'][0]['options']
+                  options[0][:options][0][:options]
                 else
                   options
                 end
 
-      @focused = options.find { |opt| opt.key?('focused') }['name']
+      @focused = options.find { |opt| opt.key?(:focused) }[:name]
     end
 
     # Respond to this interaction with autocomplete choices.
@@ -577,10 +583,10 @@ module Discordrb::Events
     end
   end
 
-  # An event for whenever an application command's permissions are updated.
+  # An event for when an application command's permissions are updated.
   class ApplicationCommandPermissionsUpdateEvent < Event
-    # @return [Integer] the ID of the server where the command permissions were updated.
-    attr_reader :server_id
+    # @return [Integer] the ID of the guild where the command permissions were updated.
+    attr_reader :guild_id
 
     # @return [Integer, nil] the ID of the application command that was updated.
     attr_reader :command_id
@@ -594,17 +600,18 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
-      @server_id = data['guild_id'].to_i
-      @application_id = data['application_id'].to_i
-      @command_id = data['id'].to_i if data['id'].to_i != @application_id
-      @permissions = data['permissions'].map do |permission|
+      @guild_id = data[:guild_id].to_i
+      @application_id = data[:application_id].to_i
+      @command_id = data[:id].to_i if data[:id].to_i != @application_id
+      @permissions = data[:permissions].map do |permission|
         Discordrb::ApplicationCommand::Permission.new(permission, data, bot)
       end
     end
 
-    # @return [Server] the server where the command's permissions were updated.
-    def server
-      @bot.server(@server_id)
+    # Get the guild associated with the event.
+    # @return [Guild] the guild where the command's permissions were updated.
+    def guild
+      @bot.guild(@guild_id)
     end
   end
 
@@ -615,7 +622,7 @@ module Discordrb::Events
       return false unless event.is_a?(ApplicationCommandPermissionsUpdateEvent)
 
       [
-        matches_all(@attributes[:server], event.server_id) { |a, e| a.resolve_id == e },
+        matches_all(@attributes[:guild], event.guild_id) { |a, e| a.resolve_id == e },
         matches_all(@attributes[:command_id], event.command_id) { |a, e| a.resolve_id == e },
         matches_all(@attributes[:application_id], event.application_id) { |a, e| a.resolve_id == e }
       ].reduce(&:&)

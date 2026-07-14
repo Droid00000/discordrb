@@ -11,7 +11,7 @@ module Discordrb
       2 => :ban_members,                  # 4
       3 => :administrator,                # 8
       4 => :manage_channels,              # 16
-      5 => :manage_server,                # 32
+      5 => :manage_guild,                 # 32
       6 => :add_reactions,                # 64
       7 => :view_audit_log,               # 128
       8 => :priority_speaker,             # 256
@@ -24,8 +24,8 @@ module Discordrb
       15 => :attach_files,                # 32768
       16 => :read_message_history,        # 65536
       17 => :mention_everyone,            # 131072
-      18 => :use_external_emoji,          # 262144
-      19 => :view_server_insights,        # 524288
+      18 => :use_external_emojis,         # 262144
+      19 => :view_guild_insights,         # 524288
       20 => :connect,                     # 1048576
       21 => :speak,                       # 2097152
       22 => :mute_members,                # 4194304
@@ -36,10 +36,10 @@ module Discordrb
       27 => :manage_nicknames,            # 134217728
       28 => :manage_roles,                # 268435456, also Manage Permissions
       29 => :manage_webhooks,             # 536870912
-      30 => :manage_emojis,               # 1073741824, also Manage Stickers
-      31 => :use_slash_commands,          # 2147483648
+      30 => :manage_expressions,          # 1073741824
+      31 => :use_application_commands,    # 2147483648
       32 => :request_to_speak,            # 4294967296
-      33 => :manage_events,               # 8589934592
+      33 => :manage_scheduled_events,     # 8589934592
       34 => :manage_threads,              # 17179869184
       35 => :use_public_threads,          # 34359738368
       36 => :use_private_threads,         # 68719476736
@@ -49,10 +49,11 @@ module Discordrb
       40 => :moderate_members,            # 1099511627776
       41 => :view_monetization_analytics, # 2199023255552
       42 => :use_soundboard,              # 4398046511104
-      43 => :create_server_expressions,   # 8796093022208
+      43 => :create_expressions,          # 8796093022208
       44 => :create_scheduled_events,     # 17592186044416
       45 => :use_external_sounds,         # 35184372088832
       46 => :send_voice_messages,         # 70368744177664
+      48 => :set_voice_channel_status,    # 281474976710656
       49 => :send_polls,                  # 562949953421312
       50 => :use_external_apps,           # 1125899906842624
       51 => :pin_messages,                # 2251799813685248
@@ -61,7 +62,6 @@ module Discordrb
 
     # @!visibility private
     IMPLICIT = {
-      timeout: 8_584_986_789_608_447,
       send_messages: 6_262_955_671_212_032,
       stage: 2_952_866_897 | 12_906_922_496,
       voice: 2_952_866_897 | 286_431_435_031_296,
@@ -71,17 +71,21 @@ module Discordrb
     # @!visibility private
     MASKS = FLAGS.to_h { |bit, name| [name, 1 << bit] }.freeze
 
+    # @!visibility private
+    ALL = MASKS.values.reduce(0) { |total, bit| total | bit }.freeze
+
     # @return [Integer] the raw bitfield representing the permissions.
     attr_reader :bits
+    alias_method :to_i, :bits
 
     # Create a new permissions object.
     # @example Create a new permissions object for a list of specific permissions.
     #   Permissions.new([:read_messages, :connect, :speak])
     # @example Create a blank permissions object and then add specific permissions.
     #   permission = Permissions.new
-    #   permission.can_bypass_slowmode = true
-    #   permission.can_use_slash_commands = true
-    #   permission.can_send_messages_in_threads = true
+    #   permission.bypass_slowmode = true
+    #   permission.use_slash_commands = true
+    #   permission.send_messages_in_threads = true
     # @param bits [String, Integer, Array<Symbol, String>] The raw bitfield that should
     #   be initially set, or a collection of permission symbols.
     def initialize(bits = 0)
@@ -89,22 +93,19 @@ module Discordrb
     end
 
     MASKS.each do |name, mask|
-      define_method("can_#{name}=") do |state|
-        result = if state
-                   @bits | mask
-                 else
-                   @bits & ~mask
-                 end
-
-        # API call first, update local state after.
-        @bits = result
+      define_method("#{name}=") do |state|
+        @bits = if state
+                  @bits | mask
+                else
+                  @bits & ~mask
+                end
       end
 
-      define_method(name) { @bits.anybits?(mask) }
+      define_method("#{name}?") { @bits.anybits?(mask) }
     end
 
-    alias_method :administrate, :administrator
-    alias_method :can_administrate=, :can_administrator=
+    alias_method :administrate?, :administrator?
+    alias_method :administrate=, :administrator=
 
     # Compare two permission objects based off of their bitfield.
     # @param other [Permissions, Object] The permissions object to compare this one against.
@@ -142,78 +143,66 @@ module Discordrb
     end
   end
 
-  # Mixin to calculate permissions for server members.
+  # Mixin to calculate permissions for guild members.
   module PermissionCalculator
-    # Checks whether this user can do the particular action, regardless of whether it has the permission defined, through for example being
-    #   the server owner or having the Manage Roles permission.
-    # @param permission [Symbol] The permission that should be checked. See also {Permissions::FLAGS} for a list.
-    # @param channel [Channel, nil] If channel overrides should be checked too, this channel specifies where the overrides should be checked.
-    # @example Check if the bot can send messages to a specific channel in a server.
-    #   bot_profile = bot.profile.on(event.server)
-    #   can_send_messages = bot_profile.permission?(:send_messages, channel)
-    # @return [true, false] Whether or not this user has the permission.
-    def permission?(permission, channel = nil)
-      # Interaction events already give us the permissions (including implicit
-      # permissions as well), so we can just delegate to that and call it a day.
-      return @permissions.__send__(permission) if @permissions && !channel
+    # Get the permissions that the member has.
+    # @param channel [Integer, String, Channel, nil] The channel that should be used to calculate
+    #   permissions. If this is `nil`, then the user's overall guild permissions will be calculated.
+    # @return [Integer] The bitwise value that represents the permissions the member has in the guild.
+    def permissions(channel = nil)
+      if @permissions && @interaction_channel_id == channel&.resolve_id
+        return @permissions.bits
+      end
 
-      return true if owner?
+      return Permissions::ALL if owner?
 
-      base = server.everyone_role.permissions.bits
+      base = guild.everyone_role.permissions.bits
 
       roles.each do |role|
         base |= role.permissions.bits
 
-        return true if role.permissions.administrator
+        return Permissions::ALL if role.permissions.administrator?
       end
 
-      # rubocop:disable Style/IfUnlessModifier
-      if channel && !channel.is_a?(Channel)
-        channel = @bot.channel(channel.resolve_id)
-      end
+      (channel = @bot.channel(channel)) if channel && !channel.is_a?(Channel)
 
-      # rubocop:enable Style/IfUnlessModifier
-      computed = if channel
-                   compute_overwrites(base, channel, true)
-                 else
-                   base
-                 end
-
-      # Members in timeout straight-up lose everything except
-      # `:read_messages` and the `:read_message_history` permission.
-      (computed &= ~Permissions::IMPLICIT[:timeout]) if timeout?
-
-      if channel&.thread? && permission == :send_messages
-        computed.anybits?(Permissions::MASKS[:send_messages_in_threads])
-      else
-        computed.anybits?(Permissions::MASKS[permission])
-      end
-    end
-
-    # Checks whether this user has a particular permission defined (i.e. not implicit, through for example Manage Roles).
-    # @param permission [Symbol] The permission that should be checked. See also {Permissions::FLAGS} for a list.
-    # @param channel [Channel, nil] If channel overrides should be checked too, this channel specifies where the overrides should be checked.
-    # @example Check if a member has the Manage Channels permission defined in the server.
-    #   has_manage_channels = member.defined_permission?(:manage_channels)
-    # @return [true, false] Whether or not this user has the permission defined.
-    def defined_permission?(permission, channel = nil)
-      base = server.everyone_role.permissions.bits
-
-      roles.each { |role| base |= role.permissions.bits }
-
-      # rubocop:disable Style/IfUnlessModifier
-      if channel && !channel.is_a?(Channel)
-        channel = @bot.channel(channel.resolve_id)
-      end
-
-      # rubocop:enable Style/IfUnlessModifier
       computed = if channel
                    compute_overwrites(base, channel)
                  else
                    base
                  end
 
-      computed.anybits?(Permissions::MASKS[permission])
+      # Members in timeout lose all of their permissions except for
+      # the `:read_messages` and the `:read_message_history` permissions.
+      timeout? ? Permissions.bits(%i[read_messages read_message_history]) : computed
+    end
+
+    # Checks whether this user can do the particular action, regardless of whether it has the permission defined, through for example being
+    #   the guild owner or having the Manage Roles permission.
+    # @param permission [Symbol] The permission that should be checked. See also {Permissions::FLAGS} for a list.
+    # @param channel [Channel, nil] If channel overrides should be checked too, this channel specifies where the overrides should be checked.
+    # @example Check if the bot can send messages to a specific channel in a guild.
+    #   bot_profile = bot.profile.member(event.guild)
+    #   can_send_messages = bot_profile.permission?(:send_messages, channel)
+    # @return [true, false] Whether or not this user has the permission.
+    def permission?(permission, channel = nil)
+      # Interaction events already give us the permissions (including implicit
+      # permissions as well), so we can just delegate to that and call it a day.
+      if @permissions && @interaction_channel_id == channel&.resolve_id
+        return @permissions.__send__(:"#{permission}?")
+      end
+
+      if channel && !channel.is_a?(Channel)
+        channel = @bot.channel(channel.resolve_id)
+      end
+
+      computed = permissions(channel)
+
+      if channel&.thread? && permission == :send_messages
+        computed.anybits?(Permissions::MASKS[:send_messages_in_threads])
+      else
+        computed.anybits?(Permissions::MASKS[permission])
+      end
     end
 
     # Define methods for querying permissions.
@@ -224,56 +213,52 @@ module Discordrb
     end
 
     alias_method :can_administrate?, :can_administrator?
-    alias_method :can_manage_scheduled_events?, :can_manage_events?
-    alias_method :can_use_external_emojis?, :can_use_external_emoji?
-    alias_method :can_manage_server_expressions?, :can_manage_emojis?
-    alias_method :can_use_application_commands?, :can_use_slash_commands?
+    alias_method :can_use_external_emoji?, :can_use_external_emojis?
 
     private
 
     # @!visibility private
-    def compute_overwrites(base, channel, implicit = nil)
+    def compute_overwrites(base, channel)
       # Threads inherit the permissions of their parent.
-      channel = channel.parent if channel.thread? && implicit
+      channel = channel.parent if channel.thread?
 
-      if (everyone = channel.permission_overwrites[@server_id])
-        base &= ~everyone.deny.bits
-        base |= everyone.allow.bits
+      if (everyone = channel.overwrite(@guild_id))
+        base &= ~everyone.denied.bits
+        base |= everyone.allowed.bits
       end
 
       deny = 0
       allow = 0
 
       roles.each do |role|
-        next unless (found = channel.permission_overwrites[role.id])
+        next unless (found = channel.overwrite(role.id))
 
-        deny |= found.deny.bits
-        allow |= found.allow.bits
+        deny |= found.denied.bits
+        allow |= found.allowed.bits
       end
 
       base &= ~deny
       base |= allow
 
-      if (member_overwrite = channel.permission_overwrites[@user.id])
-        base &= ~member_overwrite.deny.bits
-        base |= member_overwrite.allow.bits
+      if (member_overwrite = channel.overwrite(@user.id))
+        base &= ~member_overwrite.denied.bits
+        base |= member_overwrite.allowed.bits
       end
-
-      return base unless implicit
 
       hash = Permissions::IMPLICIT
       connect = Permissions::MASKS[:connect]
       view = Permissions::MASKS[:read_messages]
       send = Permissions::MASKS[:send_messages]
+      obfuscated = channel&.obfuscated? && @user.current_bot?
 
-      if channel.text? || channel.news? || channel.thread_only?
-        (base &= ~hash[:text]) if base.nobits?(view)
+      if channel.text? || channel.announcement? || channel.forum? || channel.media?
+        (base &= ~hash[:text]) if base.nobits?(view) || obfuscated
         (base &= ~hash[:send_messages]) if base.nobits?(send)
       elsif channel.voice?
-        (base &= ~hash[:voice]) if base.nobits?(connect) || base.nobits?(view)
+        (base &= ~hash[:voice]) if base.nobits?(connect) || base.nobits?(view) || obfuscated
         (base &= ~hash[:send_messages]) if base.nobits?(send)
       elsif channel.stage?
-        (base &= ~hash[:stage]) if base.nobits?(connect) || base.nobits?(view)
+        (base &= ~hash[:stage]) if base.nobits?(connect) || base.nobits?(view) || obfuscated
         (base &= ~hash[:send_messages]) if base.nobits?(send)
       end
 

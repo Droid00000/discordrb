@@ -30,18 +30,30 @@ module Discordrb
     def initialize(data, channel, bot)
       @bot = bot
       @channel = channel
-      @id = data['id'].to_i
-      @type = TYPES.key(data['type'])
-      @denied = Permissions.new(data['deny'].to_i)
-      @allowed = Permissions.new(data['allow'].to_i)
+      @id = data[:id].to_i
+      @type = TYPES.key(data[:type])
+      @denied = Permissions.new(data[:deny].to_i)
+      @allowed = Permissions.new(data[:allow].to_i)
+    end
+
+    # Get the role that the overwrite targets.
+    # @return [Role, nil] The role that the overwrite targets.
+    def role
+      role? ? target : nil
+    end
+
+    # Get the member that the overwrite targets.
+    # @return [Member, nil] The member that the overwrite targets.
+    def member
+      member? ? target : nil
     end
 
     # Get the entity that the overwrite targets.
     # @return [Role, Member, nil] The entity that the overwrite targets.
     def target
-      server = channel.server
+      guild = @channel.guild
 
-      role? ? server.role(@id) : server.member(@id)
+      role? ? guild.role(@id) : guild.member(@id)
     end
 
     # Check if two overwrite objects are the same.
@@ -77,6 +89,37 @@ module Discordrb
     # @!visibility private
     def inspect
       "<Overwrite id=#{@id} allowed=#{@allowed.bits} denied=#{@denied.bits}>"
+    end
+
+    # @!visibility private
+    def self.build_hash(role: nil, user: nil, member: nil, **permissions)
+      if [role, user, member].count(&:itself) != 1
+        raise ArgumentError, "'role', 'user', and 'member' are mutually exclusive"
+      end
+
+      denied = 0
+      allowed = 0
+
+      permissions.each do |key, value|
+        unless (computed = Permissions::MASKS[key&.to_sym])
+          raise ArgumentError, "Invalid permission value: '#{key}'"
+        end
+
+        if value == false
+          denied |= computed
+        elsif value == true
+          allowed |= computed
+        else
+          raise TypeError, "Only 'true' and 'false' are valid values"
+        end
+      end
+
+      {
+        deny: denied.to_s,
+        allow: allowed.to_s,
+        id: (user || member)&.resolve_id || role.resolve_id,
+        type: member || user ? Overwrite::TYPES[:member] : Overwrite::TYPES[:role]
+      }
     end
   end
 end

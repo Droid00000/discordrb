@@ -39,7 +39,7 @@ If you enjoy using the library, consider getting involved with the community to 
 
 **You should consider other libraries if:**
 
-- You need to scale to large volumes of servers (>2,500) with lots of members. It's still possible, but it can be difficult to scale Ruby processes, and it requires more in depth knowledge to do so well. Especially if you already have a bot that is on a large amount of servers, porting to Ruby is unlikely to improve your performance in most cases.
+- You need to scale to large volumes of guilds (>2,500) with lots of members. It's still possible, but it can be difficult to scale Ruby processes, and it requires more in depth knowledge to do so well. Especially if you already have a bot that is on a large amount of guilds, porting to Ruby is unlikely to improve your performance in most cases.
 - You want full control over the library that you're using. While we expose some "lower level" interfaces, they are unstable, and only exist to serve the more powerful abstractions in the library.
 
 ## Dependencies

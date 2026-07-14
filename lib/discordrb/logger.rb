@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # The format log timestamps should be in, in strftime format
-  LOG_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S.%L'
+  # The format log timestamps should be in, in strftime format.
+  LOG_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
   # Logs debug messages
   class Logger
@@ -79,10 +79,10 @@ module Discordrb
     end
 
     # Logs an exception to the console.
-    # @param e [Exception] The exception to log.
-    def log_exception(e)
-      error("Exception: #{e.inspect}")
-      e.backtrace.each { |line| error(line) }
+    # @param exception [Exception] The exception to log.
+    def log_exception(exception)
+      error("Exception: #{exception.inspect}")
+      exception.backtrace.each { |line| error(line) }
     end
 
     private
@@ -113,7 +113,7 @@ module Discordrb
     end
 
     def simple_write(stream, message, mode, thread_name, timestamp)
-      stream.puts "[#{mode[:long]} : #{thread_name} @ #{timestamp}] #{message}"
+      stream.puts "[#{timestamp}] [#{mode[:long]}] #{thread_name}: #{message}"
       stream.flush
     end
   end

@@ -5,8 +5,8 @@ require 'discordrb'
 describe Discordrb::Webhook do
   let(:token) { double('token') }
   let(:reason) { double('reason') }
-  let(:server) { double('server', member: double) }
-  let(:channel) { double('channel', server: server) }
+  let(:guild) { double('guild', member: double) }
+  let(:channel) { double('channel', guild: guild) }
   let(:bot) { double('bot', channel: channel, token: token) }
 
   subject(:webhook) do
@@ -14,23 +14,23 @@ describe Discordrb::Webhook do
   end
 
   fixture :webhook_data, %i[webhook]
-  fixture_property :webhook_name, :webhook_data, ['name']
-  fixture_property :webhook_channel_id, :webhook_data, ['channel_id'], :to_i
-  fixture_property :webhook_id, :webhook_data, ['id'], :to_i
-  fixture_property :webhook_token, :webhook_data, ['token']
-  fixture_property :webhook_avatar, :webhook_data, ['avatar']
+  fixture_property :webhook_name, :webhook_data, [:name]
+  fixture_property :webhook_channel_id, :webhook_data, [:channel_id], :to_i
+  fixture_property :webhook_id, :webhook_data, [:id], :to_i
+  fixture_property :webhook_token, :webhook_data, [:token]
+  fixture_property :webhook_avatar, :webhook_data, [:avatar]
 
   fixture :update_name_data, %i[webhook update_name]
-  fixture_property :edited_webhook_name, :update_name_data, ['name']
+  fixture_property :edited_webhook_name, :update_name_data, [:name]
 
   fixture :update_avatar_data, %i[webhook update_avatar]
-  fixture_property :edited_webhook_avatar, :update_avatar_data, ['avatar']
+  fixture_property :edited_webhook_avatar, :update_avatar_data, [:avatar]
 
   fixture :update_channel_data, %i[webhook update_channel]
-  fixture_property :edited_webhook_channel_id, :update_channel_data, ['channel_id']
+  fixture_property :edited_webhook_channel_id, :update_channel_data, [:channel_id]
 
   fixture :avatar_data, %i[avatar]
-  fixture_property :avatar_string, :avatar_data, ['avatar']
+  fixture_property :avatar_string, :avatar_data, [:avatar]
 
   describe '#initialize' do
     it 'sets readers' do
@@ -38,7 +38,7 @@ describe Discordrb::Webhook do
       expect(webhook.id).to eq webhook_id
       expect(webhook.token).to eq webhook_token
       expect(webhook.avatar).to eq webhook_avatar
-      expect(webhook.server).to eq server
+      expect(webhook.guild).to eq guild
       expect(webhook.channel).to eq channel
     end
 
@@ -52,7 +52,7 @@ describe Discordrb::Webhook do
     context 'when webhook is from auth' do
       context 'when owner cached' do
         let(:member) { double('member') }
-        let(:server) { double('server', member: member) }
+        let(:guild) { double('guild', member: member) }
 
         it 'sets owner from cache' do
           expect(webhook.owner).to eq member
@@ -60,7 +60,7 @@ describe Discordrb::Webhook do
       end
 
       context 'when owner not cached' do
-        let(:server) { double('server', member: nil) }
+        let(:guild) { double('guild', member: nil) }
         let(:user) { double('user') }
         let(:bot) { double('bot', channel: channel, ensure_user: user) }
 
@@ -182,13 +182,13 @@ describe Discordrb::Webhook do
   describe '#update_internal' do
     it 'sets name' do
       name = double('name')
-      webhook.send(:update_internal, 'name' => name)
+      webhook.send(:update_internal, name: name)
       expect(webhook.instance_variable_get(:@name)).to eq name
     end
 
     it 'sets avatar' do
       avatar = double('avatar')
-      webhook.send(:update_internal, 'avatar' => avatar)
+      webhook.send(:update_internal, avatar: avatar)
       expect(webhook.instance_variable_get(:@avatar_id)).to eq avatar
     end
 
@@ -196,7 +196,7 @@ describe Discordrb::Webhook do
       channel = double('channel')
       channel_id = double('channel_id')
       allow(bot).to receive(:channel).with(channel_id).and_return(channel)
-      webhook.send(:update_internal, 'channel_id' => channel_id)
+      webhook.send(:update_internal, channel_id: channel_id)
       expect(webhook.instance_variable_get(:@channel)).to eq channel
     end
   end
@@ -307,8 +307,8 @@ describe Discordrb::Webhook do
 
     before do
       allow(Discordrb::API::Webhook).to receive(:token_edit_message).with(any_args).and_return(resp)
-      allow(JSON).to receive(:parse).with(anything).and_call_original
-      allow(JSON).to receive(:parse).with(resp).and_return(data)
+      allow(JSON).to receive(:parse).with(anything, symbolize_names: true).and_call_original
+      allow(JSON).to receive(:parse).with(resp, symbolize_names: true).and_return(data)
       allow(Discordrb::Message).to receive(:new).with(any_args).and_return(nil)
     end
 
