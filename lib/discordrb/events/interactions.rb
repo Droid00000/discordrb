@@ -120,7 +120,7 @@ module Discordrb::Events
 
       resolved_data['channels']&.each do |id, data|
         data['guild_id'] = @interaction.server_id
-        @resolved[:channels][id.to_i] = @bot.ensure_channel(data)
+        @resolved[:channels][id.to_i] = Discordrb::Channel.new(data, @bot)
       end
 
       resolved_data['members']&.each do |id, data|
