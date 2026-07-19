@@ -42,7 +42,7 @@ module Discordrb
       @managed = data['managed']
       @animated = data['animated'] || false
       @available = data['available']
-      @requires_colons = data['requires_colons']
+      @requires_colons = data['require_colons']
       @creator = @bot.ensure_user(data['user']) if data['user']
       @application_emoji = data['_application'] if data['_application']
     end
