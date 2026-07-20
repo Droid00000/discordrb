@@ -887,7 +887,7 @@ module Discordrb
         return @automod_rules.values
       end
 
-      response.collect { |value| AutoModRule.new(value, self, bot) }
+      response.collect { |value| AutoModRule.new(value, self, @bot) }
     end
 
     # Create an auto moderation rule.
