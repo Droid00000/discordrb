@@ -929,7 +929,7 @@ module Discordrb
         exempt_roles: exempt_roles&.map(&:resolve_id),
         trigger_metadata: trigger.empty? ? nil : trigger,
         exempt_channels: exempt_channels&.map(&:resolve_id),
-        actions: block_given? ? builder&.to_a : actions.map(&:to_h),
+        actions: block_given? ? builder&.to_a : actions&.map(&:to_h),
         event_type: AutoModRule::EVENT_TYPES[event_type] || event_type,
         trigger_type: AutoModRule::Trigger::TYPES[trigger_type] || trigger_type
       }.compact
