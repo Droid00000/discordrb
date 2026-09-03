@@ -31,6 +31,9 @@ module Discordrb
     # @return [Integer] the application's public flags.
     attr_reader :flags
 
+    # @return [User, nil] the user account for the bot associated with the application.
+    attr_reader :bot_user
+
     # @return [User, nil] the user that owns the application, or nil if the application belongs to a team.
     attr_reader :owner
 
@@ -290,6 +293,7 @@ module Discordrb
       @icon = new_data[:icon]
       @rpc_origins = new_data[:rpc_origins] || []
       @flags = new_data[:flags_new].to_i
+      @bot_user = @bot.ensure_user(new_data[:bot]) if new_data[:bot]
       @owner = new_data[:owner] ? @bot.ensure_user(new_data[:owner]) : nil
 
       @public = new_data[:bot_public]

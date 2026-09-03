@@ -122,6 +122,9 @@ module Discordrb
       # @return [String, nil] the CDN hash for the application's icon.
       attr_reader :icon
 
+      # @return [Integer] the application's flags combined as a bitfied.
+      attr_reader :flags
+
       # @return [User, nil] the bot user the application is for, if any.
       attr_reader :bot_user
 
@@ -140,9 +143,10 @@ module Discordrb
         @id = data[:id].to_i
         @name = data[:name]
         @icon = data[:icon]
+        @flags = data[:flags_new].to_i
         @cover_image = data[:cover_image]
         @primary_sku_id = data[:primary_sku_id]&.to_i
-        @bot_user = @bot.ensure_user(data[:user]) if data[:user]
+        @bot_user = @bot.ensure_user(data[:bot]) if data[:bot]
         @description = data[:description] == '' ? nil : data[:description]
       end
 
