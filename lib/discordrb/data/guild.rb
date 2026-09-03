@@ -135,6 +135,11 @@ module Discordrb
     # @return [Time, nil] the time at when non-friend direct messages will be re-enabled on the guild.
     attr_reader :dms_disabled_until
 
+    # @return [PrimaryGuild, nil] the guild tag that the guild has set.
+    # @note Due to a Discord limitation, this attribute will always be `nil` for guilds retrieved via
+    #   the REST API, even if the guild has a tag set.
+    attr_reader :tag
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -2136,6 +2141,7 @@ module Discordrb
       process_stage_instances(new_data[:stage_instances]) if new_data[:stage_instances]
       process_soundboard_sounds(new_data[:soundboard_sounds]) if new_data[:soundboard_sounds]
       process_stickers(new_data[:stickers]) if new_data[:stickers]
+      process_guild_identity(new_data[:profile]) if new_data.key?(:profile)
     end
 
     private
@@ -2265,6 +2271,14 @@ module Discordrb
         sticker = Sticker.new(element, self, @bot)
         @stickers[sticker.id] = sticker
       end
+    end
+
+    def process_guild_identity(identity)
+      return (@tag = nil) unless identity
+
+      identity[:identity_guild_id] = @id
+
+      @tag = PrimaryGuild.new(identity, @bot)
     end
   end
 
