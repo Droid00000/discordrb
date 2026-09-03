@@ -6,7 +6,7 @@ module Discordrb
     # @return [String] the guild's name.
     attr_reader :name
 
-    # @return [String, nil] the hash of the guild's icon, if any.
+    # @return [String, nil] the hash of the guild's icon.
     attr_reader :icon
 
     # Utility method to get a guild's icon URL.
@@ -18,7 +18,7 @@ module Discordrb
     end
   end
 
-  # An isolated collection of channels and users on Discord.
+  # An isolated collection of channels and users.
   class Guild
     include Snowflake
     include GuildAttributes
@@ -712,7 +712,6 @@ module Discordrb
       QueriedMembers.new(@member_chunk_queries.delete(nonce) || { timeout: true }, self, @bot)
     end
 
-    alias_method :users, :members
     alias_method :current_bot, :bot
 
     # @!endgroup
