@@ -150,7 +150,7 @@ module Discordrb
       @threads = {}
       @member_chunk_queries = {}
 
-      # Whether the guild's members have been chunked (resolved using op 8 - GUILD_MEMBERS_CHUNK).
+      # Whether the guild's members have been chunked (resolved using op 8 - REQUEST_GUILD_MEMBERS).
       @chunked = false
 
       update_data(data)
