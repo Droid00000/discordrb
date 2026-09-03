@@ -333,7 +333,7 @@ module Discordrb
       # @return [Object] the old value of the field.
       attr_reader :old
 
-      # @return [String] the name of the changed field.
+      # @return [Symbol] the name of the changed field.
       attr_reader :field
 
       # @return [true, false] if the new value was set to `nil`.
@@ -351,7 +351,7 @@ module Discordrb
         @old = data[:old_value]
         @to_nil = data.key?(:old_value) && !data.key?(:new_value)
         @from_nil = !data.key?(:old_value) && data.key?(:new_value)
-        @field = data[:key].tap { |key| key&.gsub!(/^\$|_hash$/, '') }
+        @field = data[:key]&.tap { |key| key.gsub!(/^\$|_hash$/, '') }&.to_sym
       end
     end
 
