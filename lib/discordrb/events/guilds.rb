@@ -53,7 +53,7 @@ module Discordrb::Events
         end,
 
         matches_all(@attributes[:owner], event.guild) do |a, e|
-          a&.resolve_id == e&.owner&.resolve_id
+          a&.resolve_id == e&.owner&.id
         end,
 
         matches_all(@attributes[:locale], event.guild) do |a, e|

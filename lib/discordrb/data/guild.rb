@@ -622,16 +622,6 @@ module Discordrb
       nil
     end
 
-    # Get the members that currently have an "online" presence.
-    # @param include_idle [true, false] Whether to count idle members as online.
-    # @param include_bots [true, false] Whether to include bot accounts in the count.
-    # @return [Array<Member>] An array of online members on the guild.
-    def online_members(include_idle: false, include_bots: true)
-      members.select do |user|
-        ((include_idle ? user.idle? : false) || user.online?) && (include_bots ? true : !user.bot_account?)
-      end
-    end
-
     # Adds a member to the guild that has granted the bot an OAuth2 access token with the `guilds.join` scope.
     #   For more information, see: https://discord.com/developers/docs/topics/oauth2.
     # @param user [User, String, Integer] The user, or the ID of the user to add to the guild.
@@ -643,7 +633,7 @@ module Discordrb
     # @param flags [Integer, nil] The flags to set for the member upon joining.
     # @note Your bot must be present in the guild, and have permission to create instant invites.
     # @return [Member, nil] The member that was added, or `nil` if the user is already a guild member.
-    def add_member_using_token(user, access_token, nickname: nil, roles: [], deafened: false, muted: false, flags: nil)
+    def add_member(user, access_token, nickname: nil, roles: [], deafened: false, muted: false, flags: nil)
       data = {
         mute: muted,
         deaf: deafened,

@@ -96,8 +96,8 @@ module Discordrb::Events
           a&.resolve_id == e&.resolve_id
         end,
 
-        matches_all(@attributes[:creator], event.scheduled_event.creator) do |a, e|
-          a&.resolve_id == e&.resolve_id
+        matches_all(@attributes[:creator], event.scheduled_event) do |a, e|
+          a&.resolve_id == e&.creator&.id
         end,
 
         matches_all(@attributes[:channel], event.scheduled_event.channel) do |a, e|

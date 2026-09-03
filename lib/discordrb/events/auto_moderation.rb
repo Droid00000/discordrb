@@ -132,7 +132,7 @@ module Discordrb::Events
         end,
 
         matches_all(@attributes[:creator], event.automod_rule) do |a, e|
-          a.resolve_id == e.creator.id
+          a.resolve_id == e.creator&.id
         end,
 
         matches_all(@attributes[:name], event.automod_rule.name) do |a, e|

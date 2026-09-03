@@ -48,15 +48,15 @@ module Discordrb::Events
 
       [
         matches_all(@attributes[:guild], event.guild) do |a, e|
-          a.resolve_id == e.resolve_id
+          a&.resolve_id == e.resolve_id
         end,
 
         matches_all(@attributes[:id], event.soundboard_sound) do |a, e|
-          a.resolve_id == e.resolve_id
+          a&.resolve_id == e.resolve_id
         end,
 
         matches_all(@attributes[:creator], event.soundboard_sound) do |a, e|
-          a.resolve_id == e.creator&.resolve_id
+          a&.resolve_id == e.creator&.id
         end,
 
         matches_all(@attributes[:name], event.soundboard_sound.name) do |a, e|
