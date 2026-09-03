@@ -712,7 +712,6 @@ module Discordrb
       QueriedMembers.new(@member_chunk_queries.delete(nonce) || { timeout: true }, self, @bot)
     end
 
-    alias_method :profile, :bot
     alias_method :users, :members
     alias_method :current_bot, :bot
 
