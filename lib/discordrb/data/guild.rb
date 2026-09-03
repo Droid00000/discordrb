@@ -135,9 +135,9 @@ module Discordrb
     # @return [Time, nil] the time at when non-friend direct messages will be re-enabled on the guild.
     attr_reader :dms_disabled_until
 
-    # @return [PrimaryGuild, nil] the guild tag that the guild has set.
+    # @return [PrimaryGuild, nil] the guild tag for the guild.
     # @note Due to a Discord limitation, this attribute will always be `nil` for guilds retrieved via
-    #   the REST API, even if the guild has a tag set.
+    #   the REST API, even if the guild has set a tag.
     attr_reader :tag
 
     # @!visibility private
