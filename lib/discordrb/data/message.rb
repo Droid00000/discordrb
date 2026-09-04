@@ -278,7 +278,7 @@ module Discordrb
     end
 
     # Get the games that were mentioned in the message.
-    # @return [Array<Integer>] The game IDs that were used in the message.
+    # @return [Array<Integer>] The IDs of the games that were in the message.
     def games
       return (@games || []) if @games || !@content || @content.empty?
 
