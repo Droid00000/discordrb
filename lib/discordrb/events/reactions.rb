@@ -53,7 +53,7 @@ module Discordrb::Events
     # @return [Integer] the ID of the user who added the reaction.
     attr_reader :user_id
 
-    # @return [Array<ColourRGB>] the colours that were used for the super reaction.
+    # @return [Array<ColorRGB>] the colours that were used for the super reaction.
     attr_reader :burst_colors
     alias burst_colours burst_colors
 
@@ -68,7 +68,7 @@ module Discordrb::Events
       @user_id = data[:user_id]&.to_i
       @emoji = Discordrb::Emoji.new(data[:emoji], @bot)
       @message_author_id = data[:message_author_id]&.to_i
-      @burst_colors = data[:burst_colors]&.map { |bc| Discordrb::ColourRGB.new(bc) } || []
+      @burst_colors = data[:burst_colors]&.map { |item| Discordrb::ColorRGB.new(item) } || []
     end
 
     # Get the user who added the reaction.

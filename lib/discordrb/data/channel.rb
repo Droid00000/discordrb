@@ -561,12 +561,10 @@ module Discordrb
 
       id = (user || member)&.resolve_id || role.resolve_id
       old = overwrite(id)
-      denied = denied.bits if denied.respond_to?(:bits)
-      allowed = allowed.bits if allowed.respond_to?(:bits)
 
       data = {
-        deny: (denied == :undef ? old&.denied&.bits : denied)&.to_s,
-        allow: (allowed == :undef ? old&.allowed&.bits : allowed)&.to_s,
+        deny: (denied == :undef ? old&.denied : denied)&.to_i&.to_s,
+        allow: (allowed == :undef ? old&.allowed : allowed)&.to_i&.to_s,
         type: role ? Overwrite::TYPES[:role] : Overwrite::TYPES[:member]
       }
 

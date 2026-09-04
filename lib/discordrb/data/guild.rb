@@ -477,9 +477,9 @@ module Discordrb
     # @param icon [File, #read, nil] The custom icon to set for the role. Must be a file-like object.
     # @param hoisted [true, false, nil] Whether or not the role should be shown separately in the member's list.
     # @param mentionable [true, false, nil] Whether or not any guild member can mention the role in messages.
-    # @param colour [Integer, ColourRGB, nil] The primary colour to set for the role.
-    # @param tertiary_colour [Integer, ColourRGB, nil] The tertiary colour to set for the role.
-    # @param secondary_colour [Integer, ColourRGB, nil] The secondary colour to set for the role.
+    # @param colour [Integer, ColorRGB, nil] The primary colour to set for the role.
+    # @param tertiary_colour [Integer, ColorRGB, nil] The tertiary colour to set for the role.
+    # @param secondary_colour [Integer, ColorRGB, nil] The secondary colour to set for the role.
     # @param reason [String, nil] the reason to show in the guild's audit log for creating the role.
     # @yieldparam builder [Permissions] An optional permissions builder. Ignored when `permissions:` is passed.
     # @note The American spelling can be used instead of the British spelling for all of the colour parameters.

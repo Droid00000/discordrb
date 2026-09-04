@@ -372,7 +372,7 @@ class Discordrb::Webhooks::View
   class ContainerBuilder
     # Create a container component.
     # @param id [Integer, nil] The unique 32-bit ID of the container component.
-    # @param colour [Array, Integer, String, ColourRGB, nil] The accent colour of the container
+    # @param colour [Array, Integer, String, ColorRGB, nil] The accent colour of the container
     #   component. This argument can be passed via the American spelling (`color:`) as well.
     # @param spoiler [true, false] Whether or not to apply a spoiler label to the container component.
     # @yieldparam builder [ContainerBuilder] Yields the initialized container component.
@@ -424,7 +424,7 @@ class Discordrb::Webhooks::View
     end
 
     # Set the color of the container.
-    # @param colour [Array, Integer, String, ColourRGB, nil] The accent colour of the container component, or `nil` to clear the accent colour.
+    # @param colour [Array, Integer, String, ColorRGB, nil] The accent colour of the container component, or `nil` to clear the accent colour.
     def colour=(colour)
       @colour = case colour
                 when Array

@@ -25,7 +25,7 @@ module Discordrb
     # @return [Time, nil] the timestamp of the embed object. `nil` if there is not a timestamp
     attr_reader :timestamp
 
-    # @return [ColourRGB, nil] the color of the embed object. `nil` if there is not a color
+    # @return [ColorRGB, nil] the color of the embed object. `nil` if there is not a color
     attr_reader :color
     alias_method :colour, :color
 
@@ -59,7 +59,7 @@ module Discordrb
       @type = data[:type].to_sym
       @description = data[:description]
       @timestamp = Time.iso8601(data[:timestamp]) if data[:timestamp]
-      @color = ColourRGB.new(data[:color]) if data[:color]
+      @color = ColorRGB.new(data[:color]) if data[:color]
       @footer = EmbedFooter.new(data[:footer], @bot) if data[:footer]
       @image = EmbedImage.new(data[:image], @bot) if data[:image]
       @video = EmbedVideo.new(data[:video], @bot) if data[:video]

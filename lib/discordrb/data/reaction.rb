@@ -40,7 +40,7 @@ module Discordrb
       @emoji = Emoji.new(data[:emoji], @bot)
       @burst_count = data[:count_details][:burst]
       @standard_count = data[:count_details][:normal]
-      @burst_colors = data[:burst_colors]&.map { |item| ColourRGB.new(item) } || []
+      @burst_colors = data[:burst_colors]&.map { |item| ColorRGB.new(item) } || []
     end
 
     # @!visibility private

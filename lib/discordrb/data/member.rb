@@ -85,7 +85,7 @@ module Discordrb
     # @!group General
 
     # Get the color of the member.
-    # @return [ColourRGB, nil] The color of the member.
+    # @return [ColorRGB, nil] The color of the member.
     def color
       color_role&.color
     end

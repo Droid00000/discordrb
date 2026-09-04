@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Discordrb
-  # A colour (red, green and blue values). Used for role colours. If you prefer the American spelling, the alias
-  #   {ColorRGB} is also available.
-  class ColourRGB
+  # A colour (red, green and blue values). Used for role colours. If you prefer the British spelling, the alias
+  #   {ColourRGB} is also available.
+  class ColorRGB
     # @return [Integer] the red part of this colour (0-255).
     attr_reader :red
 
@@ -18,12 +18,12 @@ module Discordrb
     alias_method :to_i, :combined
 
     # Make a new colour from the combined value.
-    # @param combined [String, Integer] The colour's RGB values combined into one integer or a hexadecimal string
+    # @param combined [String, Integer] The colour's RGB values combined as an integer or a hexadecimal string.
     # @example Initialize a with a base 10 integer
-    #   ColourRGB.new(7506394) #=> ColourRGB
-    #   ColourRGB.new(0x7289da) #=> ColourRGB
+    #   ColorRGB.new(7506394) #=> ColorRGB
+    #   ColorRGB.new(0x7289da) #=> ColorRGB
     # @example Initialize a with a hexadecimal string
-    #   ColourRGB.new('7289da') #=> ColourRGB
+    #   ColorRGB.new('7289da') #=> ColorRGB
     def initialize(combined)
       @combined = combined.is_a?(String) ? combined.delete_prefix('#').to_i(16) : combined
       @red = (@combined >> 16) & 0xFF
@@ -45,12 +45,12 @@ module Discordrb
     # @param other [Object] The object to compare against for equality.
     # @return [true, false] Whether or not the two objects are equivalent.
     def ==(other)
-      other.is_a?(ColourRGB) ? @combined == other.combined : false
+      other.is_a?(ColorRGB) ? @combined == other.combined : false
     end
 
     alias_method :eql?, :==
   end
 
-  # Alias for the {ColourRGB} class.
-  ColorRGB = ColourRGB
+  # Alias for the {ColorRGB} class.
+  ColourRGB = ColorRGB
 end

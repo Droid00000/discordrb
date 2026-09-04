@@ -92,13 +92,19 @@ module Discordrb
     end
 
     # @!visibility private
-    def self.build_hash(role: nil, user: nil, member: nil, **permissions)
+    def self.build_hash(
+      role: nil, user: nil, member: nil, allowed: nil, denied: nil, **permissions
+    )
       if [role, user, member].count(&:itself) != 1
         raise ArgumentError, "'role', 'user', and 'member' are mutually exclusive"
       end
 
-      denied = 0
-      allowed = 0
+      if (allowed || denied) && permissions.any?
+        raise ArgumentError, "'allowed' and 'denied' are mutually exclusive with 'permissions'"
+      end
+
+      denied = denied ? denied.to_i : 0
+      allowed = allowed ? allowed.to_i : 0
 
       permissions.each do |key, value|
         unless (computed = Permissions::MASKS[key&.to_sym])

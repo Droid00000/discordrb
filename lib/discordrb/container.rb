@@ -451,7 +451,7 @@ module Discordrb
     # @option attributes [true, false] :hoisted Matches whether the role is hoisted.
     # @option attributes [String, Regexp] :unicode_emoji A unicode emoji to match against.
     # @option attributes [true, false] :mentionable Matches whether the role is mentionable.
-    # @option attributes [ColourRGB, Integer] :colour A role colour to match against.
+    # @option attributes [ColorRGB, Integer] :colour A role colour to match against.
     # @option attributes [Integer, String, User, Member] :bot_id A bot ID to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [GuildRoleCreateEvent] The event that was raised.
@@ -468,7 +468,7 @@ module Discordrb
     # @option attributes [true, false] :hoisted Matches whether the role is hoisted.
     # @option attributes [String, Regexp] :unicode_emoji A unicode emoji to match against.
     # @option attributes [true, false] :mentionable Matches whether the role is mentionable.
-    # @option attributes [ColourRGB, Integer] :colour A role colour to match against.
+    # @option attributes [ColorRGB, Integer] :colour A role colour to match against.
     # @option attributes [Integer, String, User, Member] :bot_id A bot ID to match against.
     # @yield The block is executed when the event is raised.
     # @yieldparam event [GuildRoleUpdateEvent] The event that was raised.
