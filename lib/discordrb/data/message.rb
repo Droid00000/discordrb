@@ -284,7 +284,7 @@ module Discordrb
 
       list = []
 
-      @content.scan(/<@\$(\d{15,48})>/) { |value| list << value.to_i }
+      @content.scan(/<@\$(\d{15,48})>/) { |(game)| list << game.to_i }
 
       @games = list
     end
