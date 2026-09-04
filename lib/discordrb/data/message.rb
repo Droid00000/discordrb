@@ -804,7 +804,7 @@ module Discordrb
       end
 
       if (poll = new_data[:poll])
-        @poll ||= Poll.new(new_data[:poll], self, @bot)
+        @poll ||= Poll.new(poll, self, @bot)
         @poll&.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
       else
         @poll = nil
