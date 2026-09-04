@@ -277,6 +277,18 @@ module Discordrb
       @role_mentions ||= @mention_roles.filter_map { |item| guild&.role(item) }
     end
 
+    # Get the games that were mentioned in the message.
+    # @return [Array<Integer>] The game IDs that were used in the message.
+    def games
+      return (@games || []) if @games || !@content || @content.empty?
+
+      list = []
+
+      @content.scan(/<@\$(\d{15,48})>/) { |value| list << value.to_i }
+
+      @games = list
+    end
+
     # Get the custom emojis that were used in the message.
     # @return [Array<Emoji>] The custom emojis that were used in the message.
     def emojis
@@ -284,7 +296,7 @@ module Discordrb
 
       list = []
 
-      @content.scan(/<(a?):(\w{2,32}):(\d{15,32})>/) do |type, name, id|
+      @content.scan(/<(a?):(\w{2,32}):(\d{15,48})>/) do |type, name, id|
         id = id.to_i
         animated = (type == 'a')
         list << (@bot.emoji(id) || Emoji.new({ id:, name:, animated: }, @bot))
@@ -762,7 +774,6 @@ module Discordrb
     # @!visibility private
     def update_data(new_data)
       @flags = new_data[:flags] || 0
-      @content = new_data[:content]
       @mentions = new_data[:mentions]&.map { |item| @bot.ensure_user(item) } || []
 
       @pinned = new_data[:pinned]
@@ -785,16 +796,21 @@ module Discordrb
         @reference = MessageReference.new(reference, @bot)
       end
 
+      if new_data[:content] != @content
+        # Reset the data that has been parsed from the message content.
+        @games = nil
+        @emojis = nil
+        @timestamps = nil
+      end
+
       if (poll = new_data[:poll])
+        @poll ||= Poll.new(new_data[:poll], self, @bot)
         @poll&.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
       else
         @poll = nil
       end
 
-      # Reset the data that has been parsed from the message content.
-      @emojis = nil
-      @timestamps = nil
-
+      @content = new_data[:content]
       @call = new_data[:call] ? Call.new(new_data[:call], @bot) : nil
       @activity = new_data[:activity] ? MessageActivity.new(new_data[:activity], @bot) : nil
       @client_theme = new_data[:shared_client_theme] ? ClientTheme.new(new_data[:shared_client_theme], @bot) : nil
