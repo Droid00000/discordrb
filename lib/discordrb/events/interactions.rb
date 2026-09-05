@@ -1,9 +1,21 @@
 # frozen_string_literal: true
 
 module Discordrb::Events
-  # Generic subclass for interaction events
+  # Generic superclass for interaction events.
   class InteractionCreateEvent < Event
     # Struct to allow accessing data via [] or methods.
+    # @!attribute [r] roles
+    #   @return [Hash<Integer => Role>] a mapping of role IDs to roles.
+    # @!attribute [r] users
+    #   @return [Hash<Integer => User>] a mapping of user IDs to users.
+    # @!attribute [r] members
+    #   @return [Hash<Integer => Member>] a mapping of user IDs to members.
+    # @!attribute [r] channels
+    #   @return [Hash<Integer => Channel>] a mapping of channel IDs to channels.
+    # @!attribute [r] messages
+    #   @return [Hash<Integer => Message>] a mapping of message IDs to messages.
+    # @!attribute [r] attachments
+    #   @return [Hash<Integer => Attachment>] a mapping of attachment IDs to attachments.
     Resolved = Struct.new('Resolved', :channels, :members, :messages, :roles, :users, :attachments) # rubocop:disable Lint/StructNewOverride
 
     # @return [Interaction] The interaction for the event.
