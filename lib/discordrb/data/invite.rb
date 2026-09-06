@@ -255,10 +255,10 @@ module Discordrb
       # @return [String] the name of the role.
       attr_reader :name
 
-      # @return [String, nil] the CDN hash for the role's custom icon.
+      # @return [String, nil] the CDN hash to the role's custom icon.
       attr_reader :icon
 
-      # @return [ColorRGB] the primary color of the role.
+      # @return [Color] the primary color of the role.
       attr_reader :color
 
       # @return [Integer] the sorting position of the role. Not always unique.
@@ -267,10 +267,10 @@ module Discordrb
       # @return [String, nil] the unicode emoji for the role's icon.
       attr_reader :unicode_emoji
 
-      # @return [ColorRGB, nil] the third color for the role's gradident.
+      # @return [Color, nil] the third color for the role's gradident.
       attr_reader :tertiary_color
 
-      # @return [ColorRGB, nil] the second color for the role's gradident.
+      # @return [Color, nil] the second color for the role's gradident.
       attr_reader :secondary_color
 
       alias_method :colour, :color
@@ -286,9 +286,9 @@ module Discordrb
         @position = data[:position]
         @unicode_emoji = data[:unicode_emoji]
         colors = data[:colors]
-        @color = ColorRGB.new(colors[:primary_color])
-        @tertiary_color = colors[:tertiary_color] ? ColorRGB.new(colors[:tertiary_color]) : nil
-        @secondary_color = colors[:secondary_color] ? ColorRGB.new(colors[:secondary_color]) : nil
+        @color = Color.new(colors[:primary_color])
+        @tertiary_color = colors[:tertiary_color] ? Color.new(colors[:tertiary_color]) : nil
+        @secondary_color = colors[:secondary_color] ? Color.new(colors[:secondary_color]) : nil
       end
 
       # Get a string that will mention the role.

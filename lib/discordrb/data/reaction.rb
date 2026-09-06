@@ -22,7 +22,7 @@ module Discordrb
     # @return [true, false] whether or not the the bot account has reacted.
     attr_reader :current_bot
 
-    # @return [Array<ColorRGB>] the colors associated with the super reaction.
+    # @return [Array<Color>] the colors associated with the super reaction.
     attr_reader :burst_colors
 
     # @return [Integer] the total number of non-super reactions for the emoji.
@@ -40,7 +40,7 @@ module Discordrb
       @emoji = Emoji.new(data[:emoji], @bot)
       @burst_count = data[:count_details][:burst]
       @standard_count = data[:count_details][:normal]
-      @burst_colors = data[:burst_colors]&.map { |item| ColorRGB.new(item) } || []
+      @burst_colors = data[:burst_colors]&.map { |item| Color.new(item) } || []
     end
 
     # @!visibility private

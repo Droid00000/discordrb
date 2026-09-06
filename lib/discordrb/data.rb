@@ -3,7 +3,7 @@
 require 'discordrb/allowed_mentions'
 require 'discordrb/permissions'
 require 'discordrb/snowflake'
-require 'discordrb/colour_rgb'
+require 'discordrb/color'
 require 'discordrb/errors'
 require 'discordrb/webhooks/embeds'
 require 'discordrb/webhooks/view'
