@@ -91,8 +91,6 @@ module Discordrb
     # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
     # @param fancy_log [true, false] Whether the output log should be made extra fancy using ANSI escape codes. (Your
     #   terminal may not support this.)
-    # @param suppress_ready [true, false] Whether the READY packet should be exempt from being printed to console.
-    #   Useful for very large bots running in debug or verbose log_mode.
     # @param parse_self [true, false] Whether the bot should react on its own messages. It's best to turn this off
     #   unless you really need this so you don't inadvertently create infinite loops.
     # @param shard_id [Integer] The number of the shard this bot should handle. See
@@ -111,21 +109,21 @@ module Discordrb
     #   exactly all the intents specified in the bitwise value.
     # @see Discordrb::INTENTS
     def initialize(
-      token:, log_mode: :normal,, fancy_log: false, suppress_ready: true,
-      parse_self: false, shard_id: nil, num_shards: nil, redact_token: true,
-      ignore_bots: false, compression_mode: :large, intents: :all
+      token:, log_mode: :normal, fancy_log: false,
+      parse_self: false, shard_id: nil, num_shards: nil,
+      redact_token: true, ignore_bots: false, intents: :all,
+      compression_mode: :large
     )
       LOGGER.mode = log_mode
+      LOGGER.fancy = fancy_log
       LOGGER.token = token if redact_token
 
       @should_parse_self = parse_self
-
       @shard_key = num_shards ? [shard_id, num_shards] : nil
 
-      LOGGER.fancy = fancy_log
-      @prevent_ready = suppress_ready
-
-      raise 'Token string is empty or nil' if token.nil? || token.empty?
+      if token.nil? || token.empty?
+        raise ArgumentError, "'token' cannot be empty or nil'"
+      end
 
       intents = case intents
                 when :all
