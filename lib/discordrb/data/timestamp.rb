@@ -71,9 +71,7 @@ module Discordrb
     # @!method medium_datetime?
     #   @return [true, false] whether or not the timestamp is displayed in a format such as ` 20/04/2021, 16:20:30`.
     STYLES.each do |name, value|
-      define_method("#{name}?") do
-        style == value
-      end
+      define_method("#{name}?") { @style == value }
     end
   end
 end

@@ -296,6 +296,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, entities, bot)
         @bot = bot
+        @user = nil
         @entities = entities
         @id = data[:id].to_i
         @action = data[:action_type]

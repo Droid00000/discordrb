@@ -43,7 +43,7 @@ module Discordrb::HTTP
     def create_channel_invite(channel_id, target_users_file: :undef, reason: :undef, **body)
       filter_undef(body)
 
-      if target_users_file != :undef
+      if target_users_file != :undef && target_users_file
         body = {
           payload_json: JSON.dump(body),
           target_users_file: Faraday::Multipart::FilePart.new(

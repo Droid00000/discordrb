@@ -18,6 +18,8 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @channel = nil
+      @message = nil
       @guild_id = data[:guild_id]&.to_i
       @channel_id = data[:channel_id]&.to_i
       @message_id = data[:message_id]&.to_i
@@ -53,7 +55,7 @@ module Discordrb::Events
     # @return [Integer] the ID of the user who added the reaction.
     attr_reader :user_id
 
-    # @return [Array<ColorRGB>] the colours that were used for the super reaction.
+    # @return [Array<Color>] the colours that were used for the super reaction.
     attr_reader :burst_colors
     alias burst_colours burst_colors
 
@@ -64,11 +66,12 @@ module Discordrb::Events
     def initialize(data, bot)
       super
 
+      @member = nil
       @type = data[:type]
       @user_id = data[:user_id]&.to_i
       @emoji = Discordrb::Emoji.new(data[:emoji], @bot)
       @message_author_id = data[:message_author_id]&.to_i
-      @burst_colors = data[:burst_colors]&.map { |item| Discordrb::ColorRGB.new(item) } || []
+      @burst_colors = data[:burst_colors]&.map { |item| Discordrb::Color.new(item) } || []
     end
 
     # Get the user who added the reaction.
@@ -101,6 +104,7 @@ module Discordrb::Events
     def initialize(data, bot)
       super
 
+      @member = nil
       @type = data[:type]
       @user_id = data[:user_id]&.to_i
       @emoji = Discordrb::Emoji.new(data[:emoji], @bot)

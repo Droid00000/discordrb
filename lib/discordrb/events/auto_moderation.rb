@@ -71,6 +71,11 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @user = nil
+      @guild = nil
+      @channel = nil
+      @message = nil
+      @automod_rule = nil
       @content = data[:content]
       @user_id = data[:user_id]&.to_i
       @guild_id = data[:guild_id]&.to_i

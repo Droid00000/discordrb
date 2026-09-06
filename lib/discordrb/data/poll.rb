@@ -47,7 +47,6 @@ module Discordrb
       @multiselect = data[:allow_multiselect]
       @closes_at = Time.iso8601(data[:expiry]) if data[:expiry]
       results = data[:results]
-      @unknown_results = results.nil?
       @finalised = results&.[](:is_finalized) || false
       process_answers(data[:answers], results&.[](:answer_counts))
     end
@@ -130,6 +129,10 @@ module Discordrb
 
     # @!visibility private
     def process_answers(answers, counts)
+      # NOTE: we set this value here because we need to update this
+      # state when we update a poll's data in {Message#update_data}.
+      @unknown_results = counts.nil?
+
       @answers = answers.map do |answer|
         count_data = counts&.find { |count| count[:id] == answer[:answer_id] }
 

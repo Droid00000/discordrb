@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'discordrb/version'
+require 'discordrb/predicate'
 require 'discordrb/bot'
 require 'discordrb/commands/command_bot'
 require 'discordrb/logger'
@@ -53,16 +54,13 @@ module Discordrb
   # @see https://discord.com/developers/docs/topics/gateway#privileged-intents
   NO_INTENTS = 0
 
+  # The maximum length a Discord message can have.
+  CHARACTER_LIMIT = 2000
+
   # Compares two objects based on IDs - either the objects' IDs are equal, or one object is equal to the other's ID.
   def self.id_compare?(one_id, other)
     other.respond_to?(:resolve_id) ? (one_id.resolve_id == other.resolve_id) : (one_id == other)
   end
-
-  # @deprecated Please use {Discordrb.id_compare?}
-  singleton_class.alias_method :id_compare, :id_compare?
-
-  # The maximum length a Discord message can have.
-  CHARACTER_LIMIT = 2000
 
   # Splits a message into chunks of 2000 characters. Attempts to split by lines if possible.
   # @param msg [String] The message to split.

@@ -251,9 +251,7 @@ module Discordrb
       #   @return [true, false] whether the user must provide a value for the option.
       # @!attribute [r] autocomplete?
       #   @return [true, false] whether the option can dynamically return data when typed into.
-      %i[required autocomplete].each do |name|
-        define_method("#{name}?") { instance_variable_get("@#{name}") }
-      end
+      %i[required autocomplete].each { |name| Discordrb.predicate_method(self, name) }
 
       # @!method string?
       #   @return [true, false] whether the option will accept a string.
@@ -433,9 +431,7 @@ module Discordrb
       # @!method channel?
       #   @return [true, false] whether this permission is for a channel.
       TYPES.each do |name, value|
-        define_method("#{name}?") do
-          @type == value
-        end
+        define_method("#{name}?") { @type == value }
       end
     end
   end

@@ -41,6 +41,7 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @user = nil
       @user_id = data[:user_id]&.to_i
       @join_request_id = data[:id]&.to_i
       @guild = bot.guild(data[:guild_id].to_i)

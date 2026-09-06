@@ -129,9 +129,7 @@ module Discordrb
     # @param other [Onboarding, nil] The object to compare this one against.
     # @return [true, false] Whether or not the onboarding is equal to the other object.
     def ==(other)
-      return false unless other.is_a?(Onboarding)
-
-      other.guild == @guild && other.mode == @mode && other.prompts == @prompts
+      other.is_a?(Onboarding) ? @guild.id == other.guild.id : false
     end
 
     alias_method :eql?, :==
