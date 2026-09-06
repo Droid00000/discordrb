@@ -44,7 +44,7 @@ module Discordrb
 
     # Mapping of public flags.
     FLAGS = {
-      staff: 1 << 0,
+      discord_employee: 1 << 0,
       partner: 1 << 1,
       hypesquad_events: 1 << 2,
       bug_hunter: 1 << 3,
@@ -98,7 +98,7 @@ module Discordrb
     def initialize(data, bot)
       @bot = bot
       @id = data[:id].to_i
-      @flags = data[:public_flags] || data[:flags] || 0
+      @flags = data[:flags] || data[:public_flags] || 0
       @username = data[:username]
       @avatar = data[:avatar]
       @global_name = data[:global_name]
@@ -126,9 +126,12 @@ module Discordrb
     # Utility method to get a user's banner URL.
     # @param format [String] The extension to return the URL in. Can be one of `webp`, `jpg`, or `png`.
     # @param size [Integer, nil] The size of the image. You can specify any number from 0-4096 that's a power of two to override this.
-    # @return [String, nil] The URL to the user's banner, or `nil` if the user doesn't have a banner set.
-    def banner_url(format: 'webp', size: nil)
-      asset = banner(bypass_cache: true)
+    # @param bypass_cache [true, false] Whether to ignore the cached banner hash and re-fetch it via HTTP.
+    # @return [String, nil] The URL to the user's custom banner, or `nil` if the user doesn't have a banner set.
+    def banner_url(
+      format: 'webp', size: nil, bypass_cache: true
+    )
+      asset = banner(bypass_cache: bypass_cache)
 
       Assets[:user_banner, asset, format, size:] if asset
     end
@@ -151,10 +154,10 @@ module Discordrb
       end
     end
 
-    # @!method staff?
-    #   @return [true, false] whether or not the user is a Discord employee.
+    # @!method discord_employee?
+    #   @return [true, false] whether or not the user works for Discord.
     # @!method partner?
-    #   @return [true, false] whether or not the user is a partnered guild owner.
+    #   @return [true, false] whether or not the user owns a partnered guild.
     # @!method hypesquad_events?
     #   @return [true, false] whether or not the user has attended a hypesquad event.
     # @!method bug_hunter?

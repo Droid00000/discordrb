@@ -30,9 +30,9 @@ module Discordrb
 
     # Utility method to get a team's icon URL.
     # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg`, or `png` to override this.
-    # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+    # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] the URL to the icon image (`nil` if no image is set).
-    def icon_url(format: 'webp', size: 4096)
+    def icon_url(format: 'webp', size: nil)
       Assets[:team_icon, @id, @icon, format, size:] if @icon
     end
 
@@ -41,13 +41,10 @@ module Discordrb
       # @return [Symbol] the role of the team member.
       attr_reader :role
 
-      # @return [Team] the team the member is a part of.
+      # @return [Team] the team that the team member is a part of.
       attr_reader :team
 
-      # @return [Integer] the membership state of the team member.
-      attr_reader :state
-
-      # @return [Integer] the user associated with the team member.
+      # @return [Integer] the user that the team member represents.
       attr_reader :user
 
       # @!visibility private

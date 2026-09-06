@@ -43,8 +43,8 @@ class Discordrb::Webhooks::View
   }.freeze
 
   # This builder is used when constructing an ActionRow. Button and select menu components must be within an action row, but this can
-  # change in the future. A message can have 10 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
-  # and dropdowns have a weight of 5.
+  #   change in the future. A message can have 10 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
+  #   and dropdowns have a weight of 5.
   class RowBuilder
     # @!visibility private
     def initialize(id: nil)
@@ -372,7 +372,7 @@ class Discordrb::Webhooks::View
   class ContainerBuilder
     # Create a container component.
     # @param id [Integer, nil] The unique 32-bit ID of the container component.
-    # @param colour [Array, Integer, String, ColorRGB, nil] The accent colour of the container
+    # @param colour [Array, Integer, String, Color, nil] The accent colour of the container
     #   component. This argument can be passed via the American spelling (`color:`) as well.
     # @param spoiler [true, false] Whether or not to apply a spoiler label to the container component.
     # @yieldparam builder [ContainerBuilder] Yields the initialized container component.
@@ -424,7 +424,7 @@ class Discordrb::Webhooks::View
     end
 
     # Set the color of the container.
-    # @param colour [Array, Integer, String, ColorRGB, nil] The accent colour of the container component, or `nil` to clear the accent colour.
+    # @param colour [Array, Integer, String, Color, nil] The accent colour of the container component, or `nil` to clear the accent colour.
     def colour=(colour)
       @colour = case colour
                 when Array

@@ -21,6 +21,7 @@ module Discordrb
     # @!visibility private
     def initialize(data, thread, bot)
       @bot = bot
+      @member = nil
       @thread = thread
       @user_id = data[:user_id]&.to_i
       update_data(data)
@@ -48,6 +49,7 @@ module Discordrb
     end
 
     alias_method :eql?, :==
+    alias_method :kick, :remove
 
     # @!visibility private
     def inspect

@@ -151,7 +151,7 @@ module Discordrb
       modify(status: STATUSES[:completed], reason: reason)
     end
 
-    # Edit the properties of the scheduled event.
+    # Modify the properties of the scheduled event.
     # @param name [String] The new 1-100 character name of the scheduled event.
     # @param channel [Integer, Channel, String, nil] The new channel of the scheduled event.
     # @param location [String, nil] The new location of the scheduled event.
@@ -361,6 +361,21 @@ module Discordrb
         end
       end
 
+      # Compare two recurrence rules for equality.
+      # @param other [RecurrenceRule] The recurrence rule to compare the current one against.
+      # @return [true, false] Whether or not the two recurrence rules are equivalent to each other.
+      def ==(other)
+        return false unless other.is_a?(RecurrenceRule)
+
+        @count == other.count && @by_month == other.by_month &&
+          @end_time == other.end_time && @start_time == other.start_time &&
+          @by_weekday == other.by_weekday && @interval == other.interval &&
+          @frequency == other.frequency && @by_year_day == other.by_year_day &&
+          @by_n_weekday == other.by_n_weekday && @by_month_day == other.by_month_day
+      end
+
+      alias_method :eql?, :==
+
       # Convert the recurrence rule into an RFC-5545 string.
       # @param start_time [true, false] Whether to include the `DTSTART` value in the string.
       # @return [String] An RFC-5545 compliant string that can represent the recurrence rule.
@@ -417,6 +432,7 @@ module Discordrb
         # @!visibility private
         def initialize(data, bot)
           @bot = bot
+          @hash = nil
           @week = data[:n]
           @day = data[:day]
         end
@@ -425,6 +441,22 @@ module Discordrb
         def to_h
           { n: @week, day: @day }
         end
+
+        # @!visibility private
+        def hash
+          @hash ||= [WeeklyDay, @day, @week].hash
+        end
+
+        # Compare two weekly days for equality.
+        # @param other [WeeklyDay] The weekly day to compare the current one against.
+        # @return [true, false] Whether or not the two weekly days are equivalent to each other.
+        def ==(other)
+          return false unless other.is_a?(WeeklyDay)
+
+          (@day == other.day) && (@week == other.week)
+        end
+
+        alias_method :eql?, :==
 
         # @!method monday?
         #   @return [true, false] whether the day within the week is a monday.
@@ -515,6 +547,91 @@ module Discordrb
             frequency: FREQUENCIES[@frequency] || @frequency
           }
         end
+      end
+    end
+
+    # A canceled or re-scheduled occurence for a recurring scheduled event.
+    class Exception
+      # @return [Integer] the non-unique ID of the scheduled event exception.
+      attr_reader :id
+
+      # @return [Time, nil] the new end time of the scheduled event recurrence.
+      attr_reader :end_time
+
+      # @return [true, false] if the scheduled event recurrence will be skipped.
+      attr_reader :canceled
+
+      # @return [Time, nil] the new start time of the scheduled event recurrence.
+      attr_reader :start_time
+
+      alias_method :resolve_id, :id
+      alias_method :canceled?, :canceled
+      alias_method :cancelled?, :canceled
+
+      # @!visibility private
+      def initialize(data, event, bot)
+        @bot = bot
+        @hash = nil
+        @event = event
+        @original_start_time = nil
+        @id = data[:event_exception_id].to_i
+        update_data(data)
+      end
+
+      # @!visibility private
+      def hash
+        @hash ||= [Exception, @id, @event.id].hash
+      end
+
+      # Get the original start time of the scheduled event recurrence.
+      # @return [Time] The original start time of the scheduled event recurrence.
+      def original_start_time
+        @original_start_time ||= Snowflake.decompose(@id)
+      end
+
+      # Compare two exceptions for equality.
+      # @param other [Exception] The exception to compare the current one against.
+      # @return [true, false] Whether or not the two scheduled event exceptions are equivalent.
+      def ==(other)
+        other.is_a?(Exception) ? hash == other.hash : false
+      end
+
+      alias_method :eql?, :==
+
+      # Delete the scheduled event exception.
+      # @param reason [String, nil] The reason to show in the guild's audit log for deleting the exception.
+      # @return [nil]
+      def delete(reason: nil)
+        @bot.http.delete_scheduled_event_exception(@event.guild.id, @event.id, @id, reason:)
+        nil
+      end
+
+      # Modify the properties of the scheduled event exception.
+      # @param canceled [true, false] Whether the scheduled event recurrence should be skipped.
+      # @param end_time [Time, nil] The new end time of the scheduled event recurrence, or `nil`.
+      # @param start_time [Time, nil] The new start time of the scheduled event recurrence, or `nil`.
+      # @param reason [String, nil] The reason to show in the guild's audit log for updating the exception.
+      # @return [nil]
+      def modify(
+        canceled: :undef, start_time: :undef, end_time: :undef,
+        cancelled: :undef, reason: nil
+      )
+        data = {
+          reason: reason,
+          is_canceled: cancelled == :undef ? canceled : cancelled,
+          end_time: end_time == :undef ? end_time : end_time&.iso8601,
+          start_time: start_time == :undef ? start_time : start_time&.iso8601
+        }
+
+        update_data(@bot.http.modify_scheduled_event_exception(@event.guild.id, @event.id, @id, **data))
+        nil
+      end
+
+      # @!visibility private
+      def update_data(new_data)
+        @canceled = new_data[:is_canceled]
+        @end_time = new_data[:scheduled_end_time] ? Time.iso8601(new_data[:scheduled_end_time]) : nil
+        @start_time = new_data[:scheduled_start_time] ? Time.iso8601(new_data[:scheduled_start_time]) : nil
       end
     end
   end

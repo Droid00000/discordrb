@@ -122,6 +122,7 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @member = nil
       @user_id = data[:user_id]&.to_i
       @animation_id = data[:animation_id]
       @animation_type = data[:animation_type]

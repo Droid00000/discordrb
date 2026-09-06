@@ -25,7 +25,7 @@ module Discordrb
     # @return [Time, nil] the timestamp of the embed object. `nil` if there is not a timestamp
     attr_reader :timestamp
 
-    # @return [ColorRGB, nil] the color of the embed object. `nil` if there is not a color
+    # @return [Color, nil] the color of the embed object. `nil` if there is not a color
     attr_reader :color
     alias_method :colour, :color
 
@@ -50,6 +50,9 @@ module Discordrb
     # @return [Array<EmbedField>] the fields of the embed object.
     attr_reader :fields
 
+    # @return [Array<Component>] the components used to render the embed.
+    attr_reader :components
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -59,7 +62,7 @@ module Discordrb
       @type = data[:type].to_sym
       @description = data[:description]
       @timestamp = Time.iso8601(data[:timestamp]) if data[:timestamp]
-      @color = ColorRGB.new(data[:color]) if data[:color]
+      @color = Color.new(data[:color]) if data[:color]
       @footer = EmbedFooter.new(data[:footer], @bot) if data[:footer]
       @image = EmbedImage.new(data[:image], @bot) if data[:image]
       @video = EmbedVideo.new(data[:video], @bot) if data[:video]
@@ -67,6 +70,7 @@ module Discordrb
       @thumbnail = EmbedThumbnail.new(data[:thumbnail], @bot) if data[:thumbnail]
       @author = EmbedAuthor.new(data[:author], @bot) if data[:author]
       @fields = data[:fields]&.map { |field| EmbedField.new(field, @bot) } || []
+      @components = data[:components]&.filter_map { |item| Components.from_data(item, @bot) } || []
     end
 
     # @!visibility private

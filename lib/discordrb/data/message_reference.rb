@@ -61,7 +61,7 @@ module Discordrb
     def message
       return @message if @message || @deleted
 
-      @message = channel&.load_message(@message_id)
+      @message = channel&.message(@message_id)
       @message.tap { @deleted = true unless @message }
     end
 

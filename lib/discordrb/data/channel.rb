@@ -138,9 +138,10 @@ module Discordrb
       @recipient = @bot.ensure_user(data[:recipients][0]) if dm?
       update_data(data)
 
-      return unless thread?
-
+      @status = :undef
+      @start_time = :undef
       @thread_members = {}
+      @stage_instance = nil
 
       if (member = data[:member])
         member[:id] = @id
@@ -384,19 +385,17 @@ module Discordrb
         invitable: invitable
       }
 
-      if tags != :undef && ((forum? || media?) || thread?)
+      if tags != :undef && (forum? || media? || thread?)
         tags = (thread? ? tags&.map(&:resolve_id)&.uniq : tags&.map(&:to_h))
 
         data[thread? ? :applied_tags : :available_tags] = tags
       end
 
       if data[:type] != :undef
-        if announcement? && data[:type] != TYPES[:announcement]
-          raise ArgumentError, 'Can only convert news channels to text channels'
-        elsif text? && data[:type] != TYPES[:announcement]
-          raise ArgumentError, 'Can only convert text channels to news channels'
-        elsif !text? && !announcement?
-          raise ArgumentError, 'Can only convert between text and news channels'
+        if (@type != TYPES[:text]) || (@type != TYPES[:announcement])
+          raise ArgumentError, 'Current channel type does not support type conversion'
+        elsif (data[:type] != TYPES[:text]) || (data[:type] != TYPES[:announcement])
+          raise ArgumentError, "Can only convert between 'text' and 'announcement' channels"
         end
       end
 
@@ -856,25 +855,25 @@ module Discordrb
     # Retrieve the status of the voice channel.
     # @return [String, nil] The status of the voice channel, or `nil`.
     def status
-      if !instance_variable_defined?(:@status) && voice?
+      if @status == :undef && voice?
         @bot.gateway.request_channel_info(guild: @guild_id, fields: %i[status voice_start_time])
 
         sleep(0.01) until instance_variable_defined?(:@status)
       end
 
-      @status
+      @status == :undef ? nil : @status
     end
 
     # Retrieve the start time of the sesison for the voice channel.
     # @return [Time, nil] The time at when the voice session started, or `nil`.
     def start_time
-      if !instance_variable_defined?(:@start_time) && voice?
+      if @start_time == :undef && voice?
         @bot.gateway.request_channel_info(guild: @guild_id, fields: %i[status voice_start_time])
 
         sleep(0.01) until instance_variable_defined?(:@start_time)
       end
 
-      @start_time
+      @start_time == :undef ? nil : @start_time
     end
 
     # Get the scheduled events for the voice or stage channel.
@@ -1433,7 +1432,7 @@ module Discordrb
 
     # @!visibility private
     def pop_thread_member(user_id)
-      @thread_members&.delete(user_id.resolve_id)
+      @thread_members.delete(user_id.resolve_id)
     end
 
     # @!visibility private
