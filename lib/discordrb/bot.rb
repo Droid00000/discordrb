@@ -87,8 +87,8 @@ module Discordrb
     # Simply creating a bot won't be enough to start sending messages etc. with, only a limited set of methods can
     # be used after logging in. If you want to do something when the bot has connected successfully, either do it in the
     # {#ready} event, or use the {#run} method with the `background` parameter and do the processing after that.
-    # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
     # @param token [String] The token that should be used to log in.
+    # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
     # @param fancy_log [true, false] Whether the output log should be made extra fancy using ANSI escape codes. (Your
     #   terminal may not support this.)
     # @param suppress_ready [true, false] Whether the READY packet should be exempt from being printed to console.
@@ -111,7 +111,7 @@ module Discordrb
     #   exactly all the intents specified in the bitwise value.
     # @see Discordrb::INTENTS
     def initialize(
-      log_mode: :normal, token: nil, fancy_log: false, suppress_ready: true,
+      token:, log_mode: :normal,, fancy_log: false, suppress_ready: true,
       parse_self: false, shard_id: nil, num_shards: nil, redact_token: true,
       ignore_bots: false, compression_mode: :large, intents: :all
     )
