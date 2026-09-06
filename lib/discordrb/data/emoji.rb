@@ -152,13 +152,15 @@ module Discordrb
     def self.build_hash(emoji, prefix: true)
       data = { id: nil, name: nil }
 
-      case emoji
-      when Emoji, Reaction
-        emoji.id ? data[:id] = emoji.id : data[:name] = emoji.name
-      when Integer, String
-        emoji.to_i.zero? ? data[:name] = emoji : data[:id] = emoji
-      else
-        raise TypeError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
+      if emoji
+        case emoji
+        when Emoji, Reaction
+          emoji.id ? data[:id] = emoji.id : data[:name] = emoji.name
+        when Integer, String
+          emoji.to_i.zero? ? data[:name] = emoji : data[:id] = emoji
+        else
+          raise TypeError, "Invalid data type for emoji: #{emoji.class}"
+        end
       end
 
       prefix ? data.transform_keys!({ id: :emoji_id, name: :emoji_name }) : data
