@@ -48,6 +48,7 @@ module Discordrb
     end
 
     alias_method :eql?, :==
+    alias_method :kick, :remove
 
     # @!visibility private
     def inspect

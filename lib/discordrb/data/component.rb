@@ -353,7 +353,7 @@ module Discordrb
       # @return [Integer] the numeric identifier of the container.
       attr_reader :id
 
-      # @return [ColorRGB, nil] the accent colour of the container.
+      # @return [Color, nil] the color of the container's side bar.
       attr_reader :color
       alias colour color
 
@@ -370,7 +370,7 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @spoiler = data[:spoiler]
-        @color = ColorRGB.new(data[:accent_color]) if data[:accent_color]
+        @color = Color.new(data[:accent_color]) if data[:accent_color]
         @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
 

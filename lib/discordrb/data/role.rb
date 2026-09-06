@@ -29,7 +29,7 @@ module Discordrb
     # @return [Integer] the flags for the role.
     attr_reader :flags
 
-    # @return [ColorRGB] the primary color of the role.
+    # @return [Color] the primary color of the role.
     attr_reader :color
 
     # @return [Integer] the ID of the guild that the role originates from.
@@ -44,10 +44,10 @@ module Discordrb
     # @return [String, nil] the unicode emoji for the role's icon.
     attr_reader :unicode_emoji
 
-    # @return [ColorRGB, nil] the third color for the role's gradident.
+    # @return [Color, nil] the third color for the role's gradident.
     attr_reader :tertiary_color
 
-    # @return [ColorRGB, nil] the second color for the role's gradident.
+    # @return [Color, nil] the second color for the role's gradident.
     attr_reader :secondary_color
 
     # @return [Integer, nil] the ID of the bot the auto-generated role is for.
@@ -120,9 +120,9 @@ module Discordrb
     # @param icon [File, #read, nil] The custom icon to set for the role. Must be a file-like object.
     # @param hoisted [true, false, nil] Whether or not the role should be shown separately in the member's list.
     # @param mentionable [true, false, nil] Whether or not any guild member can mention the role in messages.
-    # @param colour [Integer, ColorRGB, nil] The primary colour to set for the role.
-    # @param tertiary_colour [Integer, ColorRGB, nil] The tertiary colour to set for the role.
-    # @param secondary_colour [Integer, ColorRGB, nil] The secondary colour to set for the role.
+    # @param colour [Integer, Color, nil] The primary colour to set for the role.
+    # @param tertiary_colour [Integer, Color, nil] The tertiary colour to set for the role.
+    # @param secondary_colour [Integer, Color, nil] The secondary colour to set for the role.
     # @param reason [String, nil] the reason to show in the guild's audit log for updating the role.
     # @yieldparam builder [Permissions] An optional permissions builder. Ignored when `permissions:` is passed.
     # @note The American spelling can be used instead of the British spelling for all of the colour parameters.
@@ -338,10 +338,10 @@ module Discordrb
       @flags = new_data[:flags] || 0
       colors = new_data[:colors]
       @managed = new_data[:managed]
-      @color = ColorRGB.new(colors[:primary_color])
+      @color = Color.new(colors[:primary_color])
       @permissions = Permissions.new(new_data[:permissions].to_i)
-      @tertiary_color = colors[:tertiary_color] ? ColorRGB.new(colors[:tertiary_color]) : nil
-      @secondary_color = colors[:secondary_color] ? ColorRGB.new(colors[:secondary_color]) : nil
+      @tertiary_color = colors[:tertiary_color] ? Color.new(colors[:tertiary_color]) : nil
+      @secondary_color = colors[:secondary_color] ? Color.new(colors[:secondary_color]) : nil
 
       tags = new_data[:tags]
       @bot_id = tags&.[](:bot_id)&.to_i

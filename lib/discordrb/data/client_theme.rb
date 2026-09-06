@@ -18,7 +18,7 @@ module Discordrb
     # @return [Integer] the angle of the theme's colours.
     attr_reader :angle
 
-    # @return [Array<ColorRGB>] the colours of the theme.
+    # @return [Array<Color>] the 1-5 colors of the theme.
     attr_reader :colours
     alias colors colours
 
@@ -31,7 +31,7 @@ module Discordrb
       @base = data[:base_theme]
       @intensity = data[:base_mix]
       @angle = data[:gradient_angle]
-      @colours = data[:colors]&.map { |value| ColorRGB.new(value) }
+      @colours = data[:colors]&.map { |value| Color.new(value) }
     end
 
     # Check if two shared theme objects are equivalent.
@@ -66,7 +66,7 @@ module Discordrb
         base_theme: @base,
         base_mix: @intensity,
         gradient_angle: @angle,
-        colors: @colours.map { |colour| format('%06x', colour.to_i) }
+        colors: @colours.map { |color| format('%06x', color.to_i) }
       }
     end
 
@@ -89,7 +89,7 @@ module Discordrb
       end
 
       # Add a colour to the shared theme.
-      # @param value [Integer, String, ColorRGB] The colour to add to the theme's colours.
+      # @param value [Integer, String, Color] The colour to add to the theme's colours.
       # @return [void]
       def colour(value)
         raise 'Maximum number of client theme colours reached (5)' if @colours.length >= 5

@@ -152,17 +152,17 @@ module Discordrb
 
       # Utility method to get a application's icon URL.
       # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-      # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+      # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
       # @return [String, nil] The URL to the icon image, or `nil` if the application doesn't have an icon image.
-      def icon_url(format: 'webp', size: 4096)
+      def icon_url(format: 'webp', size: nil)
         Assets[:application_icon, @id, @icon, format, size:] if @icon
       end
 
       # Utility method to get a application's cover image URL.
       # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-      # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+      # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
       # @return [String, nil] The URL to the cover image, or `nil` if the application doesn't have a cover image.
-      def cover_image_url(format: 'webp', size: 4096)
+      def cover_image_url(format: 'webp', size: nil)
         Assets[:application_cover, @id, @cover_image, format, size:] if @cover_image
       end
 

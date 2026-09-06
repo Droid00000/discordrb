@@ -277,18 +277,6 @@ module Discordrb
       @role_mentions ||= @mention_roles.filter_map { |item| guild&.role(item) }
     end
 
-    # Get the games that were mentioned in the message.
-    # @return [Array<Integer>] The IDs of the games that were in the message.
-    def games
-      return (@games || []) if @games || !@content || @content.empty?
-
-      list = []
-
-      @content.scan(/<@\$(\d{15,48})>/) { |(game)| list << game.to_i }
-
-      @games = list
-    end
-
     # Get the custom emojis that were used in the message.
     # @return [Array<Emoji>] The custom emojis that were used in the message.
     def emojis
@@ -499,7 +487,7 @@ module Discordrb
 
     # Convert the message into a hash that can be used to reference the message in a forward or a reply.
     # @param type [Integer, Symbol] The reference type to set. Can either be one of `:reply` or `:forward`.
-    # @param must_exist [true, false] Whether to raise an error if this message was deleted when sending it.
+    # @param must_exist [true, false] Whether to raise an error if the message was deleted when sending it.
     # @return [Hash] The message as a hash representation that can be used in a forwarded message or a reply.
     def to_reference(type: :reply, must_exist: true)
       type = type.is_a?(Numeric) ? type : Message::Reference::TYPES[type.to_sym]
@@ -798,14 +786,16 @@ module Discordrb
 
       if new_data[:content] != @content
         # Reset the data that has been parsed from the message content.
-        @games = nil
         @emojis = nil
         @timestamps = nil
       end
 
       if (poll = new_data[:poll])
-        @poll ||= Poll.new(poll, self, @bot)
-        @poll&.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
+        if @poll
+          @poll.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
+        else
+          @poll = Poll.new(poll, self, @bot)
+        end
       else
         @poll = nil
       end
