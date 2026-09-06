@@ -8,7 +8,7 @@ module Discordrb
       @users = {}
       @guilds = {}
       @channels = {}
-      @dm_channels ||= {}
+      @dm_channels = {}
       @default_stickers = {}
 
       @voice_regions = []
@@ -187,14 +187,23 @@ module Discordrb
     end
 
     # Fetch the bot's guilds. This will always bypass the cache and make an HTTP request.
+    # @param large [true, false] Whether the large bot strategy should be used to get guilds.
     # @param after [Time, #resolve_id, nil] Get joined guilds starting from after this point.
     # @param before [Time, #resolve_id, nil] Get joined guilds starting from before this point.
     # @param limit [Integer, nil] The maximum number of guilds to return, or `nil` to retrieve
     #   all of the joined guilds. For bots in many guilds, this operation may timeout and fail.
     # @return [Array<JoinedGuild>] A list of joined guilds representing the bot's joined guilds.
-    def fetch_guilds(limit: 200, before: nil, after: nil)
+    def fetch_guilds(limit: 200, large: false, before: nil, after: nil)
       if before && after
         raise ArgumentError, "'before' and 'after' are mutually exclusive"
+      end
+
+      if large && (before || after)
+        raise ArgumentError, "'before' and 'after' are mutually exclusive with 'large'"
+      end
+
+      if large
+        max_shards = @http.get_gateway_bot[:session_start_limit][:max_concurrency]
       end
 
       options = {
@@ -204,16 +213,33 @@ module Discordrb
         before: before.is_a?(Time) ? Snowflake.synthesise(before) : before&.resolve_id
       }.compact
 
-      get_guilds = lambda do |cursor:|
-        data = @http.get_current_user_guilds(**options, after: cursor)
-        data.tap { data.map! { |guild| JoinedGuild.new(guild, self) } }
+      get_guilds = lambda do |cursor:, shard: nil|
+        data = @http.get_current_user_guilds(**options, after: cursor, shard: shard)
+        data.tap { data.map! { |joined_guild| JoinedGuild.new(joined_guild, self) } }
       end
 
-      paginator = Paginator.new(limit, :down) do |last_page|
-        if last_page && last_page.count < 200
-          []
-        else
-          get_guilds.call(cursor: last_page&.last&.id || options[:after])
+      if large && max_shards != 1
+        shard = 0
+
+        paginator = Paginator.new(limit, :down) do |last_page|
+          if last_page && last_page.count < 200
+            if shard >= max_shards
+              []
+            else
+              shard += 1
+              get_guilds.call(shard: shard, cursor: nil)
+            end
+          else
+            get_guilds.call(cursor: last_page&.last&.id, shard: shard)
+          end
+        end
+      else
+        paginator = Paginator.new(limit, :down) do |last_page|
+          if last_page && last_page.count < 200
+            []
+          else
+            get_guilds.call(cursor: last_page&.last&.id || options[:after])
+          end
         end
       end
 

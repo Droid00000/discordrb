@@ -3,8 +3,8 @@
 module Discordrb
   # Components are interactable interfaces that can be attached to messages.
   module Components
-    # @deprecated This alias will be removed in future releases.
-    class View < Webhooks::View; end
+    # Mapping of component types.
+    TYPES = Webhooks::View::COMPONENT_TYPES
 
     # @!visibility private
     def self.from_data(data, bot)
@@ -83,6 +83,11 @@ module Discordrb
       def to_a
         @components
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:action_row], components: @components.map(&:to_h), **@modified_data }.compact
+      end
     end
 
     # An interactable button component.
@@ -131,9 +136,7 @@ module Discordrb
       # @!method link?
       #   @return [true, false] whether the button is a container for a URL that will open upon click.
       Webhooks::View::BUTTON_STYLES.each do |name, value|
-        define_method("#{name}?") do
-          @style == value
-        end
+        define_method("#{name}?") { @style == value }
       end
 
       # Await a button click.
@@ -144,6 +147,14 @@ module Discordrb
       # Await a button click, blocking.
       def await_click!(**attributes, &block)
         @bot.add_await!(Discordrb::Events::ButtonEvent, { custom_id: @custom_id }.merge!(attributes), &block)
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:button], label: @label, style: @style, custom_id: @custom_id, disabled: @disabled, url: @url, emoji: @emoji&.to_h, **@modified_data }.compact
       end
     end
 
@@ -170,10 +181,18 @@ module Discordrb
           @description = data[:description]
           @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
         end
+
+        # @!visibility private
+        def to_h
+          { label: @label, value: @value, description: @description, emoji: @emoji&.to_h }.compact
+        end
       end
 
       # @return [Integer] the numeric identifier of the select menu.
       attr_reader :id
+
+      # @return [Integer] the specific sub-type of the select menu.
+      attr_reader :type
 
       # @return [Array<String>] the submitted values from the modal.
       attr_reader :values
@@ -197,12 +216,21 @@ module Discordrb
       def initialize(data, bot)
         @bot = bot
         @id = data[:id]
+        @type = data[:type]
         @values = data[:values] || []
         @custom_id = data[:custom_id]
         @max_values = data[:max_values]
         @min_values = data[:min_values]
         @placeholder = data[:placeholder]
         @options = data[:options]&.map { |option| Option.new(option) } || []
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: @type, custom_id: @custom_id, max_values: @max_values, min_values: @min_values, placeholder: @placeholder, options: @options.map(&:to_h), **@modified_data }.compact
       end
     end
 
@@ -244,6 +272,14 @@ module Discordrb
         @accessory = Components.from_data(data[:accessory], @bot)
         @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:section], accessory: @accessory.to_h, components: @components.map(&:to_h), **@modified_data }
+      end
     end
 
     # A content component representing message content.
@@ -259,6 +295,14 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @content = data[:content]
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:text_display], content: @content, **@modified_data }
       end
     end
 
@@ -286,6 +330,11 @@ module Discordrb
         @description = data[:description]
         @media = MediaItem.new(data[:media], @bot)
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:thumbnail], media: @media.to_h, spoiler: @spoiler, description: @description }.compact
+      end
     end
 
     # A grouping of media attachments in an organized gallery format.
@@ -301,6 +350,11 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @items = data[:items].map { |item| Item.new(item, @bot) }
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:media_gallery], items: @items.map(&:to_h) }.compact
       end
 
       # A singular media attachment.
@@ -322,6 +376,11 @@ module Discordrb
           @spoiler = data[:spoiler]
           @description = data[:description]
           @media = MediaItem.new(data[:media], @bot)
+        end
+
+        # @!visibility private
+        def to_h
+          { media: @media.to_h, spoiler: @spoiler, description: @description }.compact
         end
       end
     end
@@ -346,6 +405,14 @@ module Discordrb
         @divider = data[:divider]
         @spacing = data[:spacing]
       end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:separator], divider: @divider, spacing: @spacing, **@modified_data }.compact
+      end
     end
 
     # A collection of components in an embed-like format.
@@ -353,7 +420,7 @@ module Discordrb
       # @return [Integer] the numeric identifier of the container.
       attr_reader :id
 
-      # @return [ColorRGB, nil] the accent colour of the container.
+      # @return [Color, nil] the color of the container's side bar.
       attr_reader :color
       alias colour color
 
@@ -370,7 +437,7 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @spoiler = data[:spoiler]
-        @color = ColorRGB.new(data[:accent_color]) if data[:accent_color]
+        @color = Color.new(data[:accent_color]) if data[:accent_color]
         @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
 
@@ -385,6 +452,14 @@ module Discordrb
             component.accessory if component.accessory.is_a?(Button)
           end
         end.compact
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:container], spoiler: @spoiler, accent_color: @color&.to_i, components: @components.map(&:to_h), **@modified_data }.compact
       end
     end
 
@@ -417,6 +492,11 @@ module Discordrb
         @spoiler = data[:spoiler]
         @media = MediaItem.new(data[:file], @bot)
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:file], spoiler: @spoiler, file: @media.to_h }
+      end
     end
 
     # Resolved metadata about a piece of media.
@@ -424,6 +504,13 @@ module Discordrb
       # Mapping of flags.
       FLAGS = {
         animated: 1 << 0
+      }.freeze
+
+      # Mapping of content scan flags.
+      CONTENT_SCAN_FLAGS = {
+        explicit_content: 1 << 0,
+        gore_content: 1 << 1,
+        self_harm_content: 1 << 2
       }.freeze
 
       # @return [String] the URL to the media item.
@@ -451,7 +538,10 @@ module Discordrb
       #   when the media item was uploaded via an `attachment://<filename>` reference.
       attr_reader :attachment_id
 
-      # @return [Integer, nil] the version of the thumbhash for images and videos, if any.
+      # @return [Integer] the results of Discord's content scanning combined as a bitfield.
+      attr_reader :content_scan_flags
+
+      # @return [Integer, nil] the version of the thumbhash for images and videos, if applicable.
       attr_reader :placeholder_version
 
       # @!visibility private
@@ -466,14 +556,28 @@ module Discordrb
         @content_type = data[:content_type]
         @attachment_id = data[:attachment_id]&.to_i
         @placeholder_version = data[:placeholder_version]
+        @content_scan_flags = data[:content_scan_metadata]&.[](:flags) || 0
       end
 
       # @!method animated?
       #   @return [true, false] whether or not the media item is animated.
       FLAGS.each do |name, value|
-        define_method("#{name}?") do
-          @flags.anybits?(value)
-        end
+        define_method("#{name}?") { @flags.anybits?(value) }
+      end
+
+      # @!method gore_content?
+      #   @return [true, false] whether or not the media item has been flagged as gore by Discord's content scanning.
+      # @!method explicit_content?
+      #   @return [true, false] whether or not the media item has been flagged as NSFW by Discord's content scanning.
+      # @!method self_harm_content?
+      #   @return [true, false] whether or not the media item has been flagged as self-harm by Discord's content scanning.
+      CONTENT_SCAN_FLAGS.each do |name, value|
+        define_method("#{name}?") { @content_scan_flags.anybits?(value) }
+      end
+
+      # @!visibility private
+      def to_h
+        { url: @url, attachment_id: @attachment_id }.compact
       end
     end
 

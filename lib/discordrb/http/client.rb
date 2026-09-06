@@ -314,10 +314,16 @@ module Discordrb
 
           files.each_with_index do |hash, index|
             if (file = hash[:file])
-              content_type = hash.delete(:content_type) || 'application/octet-stream'
-              part = Faraday::Multipart::FilePart.new(file, content_type, hash[:filename])
+              if file.is_a?(CloudAttachment)
+                file = file.to_h
+                attachments << file.tap { file[:index] = index } unless file.empty?
+                next
+              else
+                content_type = hash.delete(:content_type) || 'application/octet-stream'
+                part = Faraday::Multipart::FilePart.new(file, content_type, hash[:filename])
 
-              body["files[#{index}]"] = part
+                body["files[#{index}]"] = part
+              end
             end
 
             attachments << if hash[:id]

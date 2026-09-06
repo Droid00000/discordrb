@@ -121,7 +121,7 @@ module Discordrb
 
     # @return [true, false] whether or not the guild has enabled the boost progress bar.
     attr_reader :premium_progress_bar
-    alias_method :premium_progress_bar?, :premium_progress_bar
+    alias :premium_progress_bar? :premium_progress_bar
 
     # @return [Time, nil] the time at when the last raid was detected on the guild.
     attr_reader :raid_detected_at
@@ -315,8 +315,8 @@ module Discordrb
       nil
     end
 
-    alias_method :jump_url, :jump_link
-    alias_method :available_voice_regions, :voice_regions
+    alias :jump_url :jump_link
+    alias :available_voice_regions :voice_regions
 
     # @!endgroup
 
@@ -365,7 +365,7 @@ module Discordrb
       NOTIFICATION_LEVELS.key(@notification_level)
     end
 
-    alias_method :explicit_content_filter_level, :explicit_content_filter
+    alias :explicit_content_filter_level :explicit_content_filter
 
     # @!endgroup
 
@@ -477,9 +477,9 @@ module Discordrb
     # @param icon [File, #read, nil] The custom icon to set for the role. Must be a file-like object.
     # @param hoisted [true, false, nil] Whether or not the role should be shown separately in the member's list.
     # @param mentionable [true, false, nil] Whether or not any guild member can mention the role in messages.
-    # @param colour [Integer, ColorRGB, nil] The primary colour to set for the role.
-    # @param tertiary_colour [Integer, ColorRGB, nil] The tertiary colour to set for the role.
-    # @param secondary_colour [Integer, ColorRGB, nil] The secondary colour to set for the role.
+    # @param colour [Integer, Color, nil] The primary colour to set for the role.
+    # @param tertiary_colour [Integer, Color, nil] The tertiary colour to set for the role.
+    # @param secondary_colour [Integer, Color, nil] The secondary colour to set for the role.
     # @param reason [String, nil] the reason to show in the guild's audit log for creating the role.
     # @yieldparam builder [Permissions] An optional permissions builder. Ignored when `permissions:` is passed.
     # @note The American spelling can be used instead of the British spelling for all of the colour parameters.
@@ -717,7 +717,7 @@ module Discordrb
       QueriedMembers.new(@member_chunk_queries.delete(nonce) || { timeout: true }, self, @bot)
     end
 
-    alias_method :current_bot, :bot
+    alias :current_bot :bot
 
     # @!endgroup
 
@@ -1000,7 +1000,7 @@ module Discordrb
     # @raise [Discordrb::Errors::NoPermission] This may occur when the application has not enabled the `MESSAGE_CONTENT` privileged intent on the Discord Developer Portal.
     # @note Messages with GIFs sent before February 24th, 2026 may not be returned under the `gif` embed type when using the `embed_types:` parameter.
     # @note Messages fetched via this method will not contain reactions. This means that {Message#reactions} will **always** return an empty array, even if the message has reactions.
-    # @return [SearchedMessages] the results of the search query.
+    # @return [SearchedMessages] The results of the search query.
     def search_messages(
       limit: 25, offset: nil, before: nil, after: nil, content: nil, slop: 2, channels: nil, authors: nil, author_types: nil,
       mentions: nil, role_mentions: nil, mentions_everyone: nil, reply_users: nil, reply_messages: nil, pinned: nil, contains: nil,
@@ -1205,7 +1205,7 @@ module Discordrb
       Assets[:guild_widget, @id, style: style || :shield] if widget?
     end
 
-    alias_method :widget?, :widget_enabled?
+    alias :widget? :widget_enabled?
 
     # @!endgroup
 
@@ -1253,7 +1253,7 @@ module Discordrb
       VanityInvite.new(data, self, @bot)
     end
 
-    alias_method :vanity_invite_url, :vanity_invite_link
+    alias :vanity_invite_url :vanity_invite_link
 
     # @!endgroup
 
@@ -1925,7 +1925,7 @@ module Discordrb
       entries.tap { |list| list.map! { |entry| AuditLog::Entry.new(entry, results, @bot) } }
     end
 
-    alias_method :audit_logs, :audit_log
+    alias :audit_logs :audit_log
 
     # @!endgroup
 
@@ -2213,7 +2213,7 @@ module Discordrb
     end
 
     def process_active_threads(threads)
-      @threads ||= {}
+      @threads = {}
 
       # Set this so we know the threads are cached.
       @resolved_threads = true
@@ -2308,8 +2308,8 @@ module Discordrb
       @guild.unban(@user, reason:)
     end
 
-    alias_method :lift, :remove
-    alias_method :unban, :remove
+    alias :lift :remove
+    alias :unban :remove
   end
 
   # A bulk ban entry on a guild.

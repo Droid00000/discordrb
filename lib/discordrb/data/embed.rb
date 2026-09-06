@@ -3,6 +3,14 @@
 module Discordrb
   # An embed associated with a message.
   class Embed
+    # Mapping of embed flags.
+    FLAGS = {
+      explicit_content: 1 << 4,
+      content_inventory_entry: 1 << 5,
+      gore_content: 1 << 6,
+      self_harm_content: 1 << 7
+    }.freeze
+
     # @return [String] the URL the embed object is based on.
     attr_reader :url
 
@@ -25,9 +33,9 @@ module Discordrb
     # @return [Time, nil] the timestamp of the embed object. `nil` if there is not a timestamp
     attr_reader :timestamp
 
-    # @return [ColorRGB, nil] the color of the embed object. `nil` if there is not a color
+    # @return [Color, nil] the color of the embed object. `nil` if there is not a color
     attr_reader :color
-    alias_method :colour, :color
+    alias :colour :color
 
     # @return [EmbedFooter, nil] the footer of the embed object. `nil` if there is not a footer
     attr_reader :footer
@@ -50,6 +58,9 @@ module Discordrb
     # @return [Array<EmbedField>] the fields of the embed object.
     attr_reader :fields
 
+    # @return [Array<Component>] the components used to render the embed.
+    attr_reader :components
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -59,7 +70,7 @@ module Discordrb
       @type = data[:type].to_sym
       @description = data[:description]
       @timestamp = Time.iso8601(data[:timestamp]) if data[:timestamp]
-      @color = ColorRGB.new(data[:color]) if data[:color]
+      @color = Color.new(data[:color]) if data[:color]
       @footer = EmbedFooter.new(data[:footer], @bot) if data[:footer]
       @image = EmbedImage.new(data[:image], @bot) if data[:image]
       @video = EmbedVideo.new(data[:video], @bot) if data[:video]
@@ -67,6 +78,19 @@ module Discordrb
       @thumbnail = EmbedThumbnail.new(data[:thumbnail], @bot) if data[:thumbnail]
       @author = EmbedAuthor.new(data[:author], @bot) if data[:author]
       @fields = data[:fields]&.map { |field| EmbedField.new(field, @bot) } || []
+      @components = data[:components]&.filter_map { |item| Components.from_data(item, @bot) } || []
+    end
+
+    # @!method content_inventory_entry?
+    #   @return [true, false] whether or not the embed is a fallback for a reply to an activity card.
+    # @!method gore_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as gore by Discord's content scanning.
+    # @!method explicit_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as NSFW by Discord's content scanning.
+    # @!method self_harm_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as self-harm by Discord's content scanning.
+    FLAGS.each do |name, value|
+      define_method("#{name}?") { @flags.anybits?(value) }
     end
 
     # @!visibility private

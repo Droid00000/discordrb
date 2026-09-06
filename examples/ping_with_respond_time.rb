@@ -11,7 +11,7 @@ bot.message(content: 'Ping!') do |event|
   # The `respond` method returns a `Message` object, which is stored in a variable `m`. The `edit` method is then called
   # to edit the message with the time difference between when the event was received and after the message was sent.
   message = event.respond(content: 'Pong!')
-  message.modify(content: "Pong! Time taken: #{Time.now - event.timestamp} seconds.")
+  message.modify(content: "Pong! Time taken: #{Time.now - event.creation_time} seconds.")
 end
 
 bot.run

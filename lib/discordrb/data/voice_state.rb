@@ -66,7 +66,7 @@ module Discordrb
     # @!attribute [r] self_deafened?
     #   @return [true, false] whether the member has locally deafened themselves.
     PREDICATES.each do |name|
-      define_method(name) { instance_variable_get(:"@#{name[..-2]}") }
+      Discordrb.predicate_method(self, name)
     end
 
     # @!visibility private

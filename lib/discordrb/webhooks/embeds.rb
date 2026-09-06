@@ -17,7 +17,7 @@ module Discordrb::Webhooks
     #   @param value [Time, String, nil] The timestamp of the emebd; Time object or ISO8601 string.
     #   @return [void]
     # @overload color=(value)
-    #   @param value [Integer, String, ColorRGB, nil] The colour of the embed.
+    #   @param value [Integer, String, Color, nil] The colour of the embed.
     #   @return [void]
     # @overload image=(value)
     #   @param value [String, nil] The image of the embed; HTTPS URL or `attachment://` reference.
@@ -72,6 +72,6 @@ module Discordrb::Webhooks
       }.compact
     end
 
-    alias_method :colour=, :color=
+    alias :colour= :color=
   end
 end

@@ -10,7 +10,10 @@ module Discordrb
       clip: 1 << 0,
       thumbnail: 1 << 1,
       spoiler: 1 << 3,
-      animated: 1 << 5
+      explicit_content: 1 << 4,
+      animated: 1 << 5,
+      gore_content: 1 << 6,
+      self_harm_content: 1 << 7
     }.freeze
 
     # @return [String] the CDN URL the attachment can be downloaded at.
@@ -39,7 +42,7 @@ module Discordrb
 
     # @return [true, false] whether the attachment is ephemeral, meaning it will automatically be deleted.
     attr_reader :ephemeral
-    alias_method :ephemeral?, :ephemeral
+    alias :ephemeral? :ephemeral
 
     # @return [Float, nil] the duration of the voice message in seconds.
     attr_reader :duration_seconds
@@ -119,6 +122,12 @@ module Discordrb
     #   @return [true, false] whether or not the attachment is considered to be an animated image.
     # @!method thumbnail?
     #   @return [true, false] whether or not the attachment is the thumbnail of a thread in a media channel.
+    # @!method gore_content?
+    #   @return [true, false] whether or not the attachment has been flagged as gore by Discord's content scanning.
+    # @!method explicit_content?
+    #   @return [true, false] whether or not the attachment has been flagged as NSFW by Discord's content scanning.
+    # @!method self_harm_content?
+    #   @return [true, false] whether or not the attachment has been flagged as self-harm by Discord's content scanning.
     FLAGS.each do |name, value|
       define_method("#{name}?") { @flags.anybits?(value) }
     end

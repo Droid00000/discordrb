@@ -54,7 +54,7 @@ class Discordrb::Webhooks::Modal
       @options << { value: value, label: label, description: description, default: default }.compact
     end
 
-    alias_method :button, :radio_button
+    alias :button :radio_button
 
     # @!visibility private
     def to_h
@@ -99,9 +99,9 @@ class Discordrb::Webhooks::Modal
     # @param min_length [Integer, nil] The minimum input length for a text input, min 0, max 4000.
     # @param max_length [Integer, nil] The maximum input length for a text input, min 1, max 4000.
     # @param required [true, false, nil] Whether this component is required to be filled, default true.
-    # @param value [String, nil] A pre-filled value for this component, max 4000 characters.
+    # @param default_value [String, nil] A pre-filled value for this component, max 4000 characters.
     # @param placeholder [String, nil] Custom placeholder text if the input is empty, max 100 characters.
-    def text_input(style:, custom_id:, id: nil, min_length: nil, max_length: nil, required: nil, value: nil, placeholder: nil)
+    def text_input(style:, custom_id:, id: nil, min_length: nil, max_length: nil, required: nil, default_value: nil, placeholder: nil)
       @component = {
         id: id,
         style: TEXT_INPUT_STYLES[style] || style,
@@ -110,7 +110,7 @@ class Discordrb::Webhooks::Modal
         min_length: min_length,
         max_length: max_length,
         required: required,
-        value: value,
+        value: default_value,
         placeholder: placeholder
       }.compact
     end
@@ -133,7 +133,7 @@ class Discordrb::Webhooks::Modal
       @component = builder.to_h
     end
 
-    alias_method :select_menu, :string_select
+    alias :select_menu :string_select
 
     # Add a user select to the label component.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.

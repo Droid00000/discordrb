@@ -116,3 +116,7 @@ Style/SafeNavigationChainLength:
 Naming/MethodName:
   Exclude:
     - lib/discordrb.rb
+
+Naming/AccessorMethodName:
+  Exclude:
+    - lib/discordrb/data/invite.rb

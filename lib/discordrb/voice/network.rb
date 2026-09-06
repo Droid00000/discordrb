@@ -36,7 +36,7 @@ module Discordrb::Voice
     # @return [true, false] whether or not UDP communications are encrypted.
     # @deprecated Discord no longer supports unencrypted voice communication.
     attr_accessor :encrypted
-    alias_method :encrypted?, :encrypted
+    alias :encrypted? :encrypted
 
     # Sets the secret key used for encryption
     attr_writer :secret_key

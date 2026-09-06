@@ -43,11 +43,11 @@ module Discordrb
 
     # @return [true, false] if users other than the bot owner can add the bot to guilds.
     attr_reader :public
-    alias_method :public?, :public
+    alias :public? :public
 
     # @return [true, false] whether the bot requires the full OAuth2 code grant in order to join guilds.
     attr_reader :requires_code_grant
-    alias_method :requires_code_grant?, :requires_code_grant
+    alias :requires_code_grant? :requires_code_grant
 
     # @return [String, nil] the URL to the application's terms of service.
     attr_reader :terms_of_service_url
@@ -87,7 +87,7 @@ module Discordrb
 
     # @return [Array<String>] an array of redirect URIs for the application.
     attr_reader :redirect_uris
-    alias_method :redirect_urls, :redirect_uris
+    alias :redirect_urls :redirect_uris
 
     # @return [String, nil] the interactions endpoint URL for the application.
     attr_reader :interactions_endpoint_url
@@ -126,17 +126,17 @@ module Discordrb
 
     # Utility method to get a application's icon URL.
     # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-    # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+    # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] The URL of the icon image (`nil` if no image is set).
-    def icon_url(format: 'webp', size: 4096)
+    def icon_url(format: 'webp', size: nil)
       Assets[:application_icon, @id, @icon, format, size:] if @icon
     end
 
     # Utility method to get a application's cover image URL.
     # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-    # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+    # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
     # @return [String, nil] The URL of the cover image (`nil` if no cover is set).
-    def cover_image_url(format: 'webp', size: 4096)
+    def cover_image_url(format: 'webp', size: nil)
       Assets[:application_cover, @id, @cover_image, format, size:] if @cover_image
     end
 
@@ -256,9 +256,7 @@ module Discordrb
     # @!method application_command_badge?
     #   @return [true, false] whether or not the application has registered at least one global application command.
     FLAGS.each do |name, value|
-      define_method("#{name}?") do
-        @flags.anybits?(value)
-      end
+      define_method("#{name}?") { @flags.anybits?(value) }
     end
 
     # Check if the application has the presence intent toggled on its dashboard.

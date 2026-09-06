@@ -44,8 +44,8 @@ module Discordrb::Events
       result
     end
 
-    alias_method :send, :send_message
-    alias_method :respond, :send_message
+    alias :send :send_message
+    alias :respond :send_message
   end
 
   # Event raised when a text message is sent to a channel
@@ -76,10 +76,10 @@ module Discordrb::Events
     # @!attribute [r] content
     #   @return [String] the message's content.
     #   @see Message#content
-    # @!attribute [r] timestamp
+    # @!attribute [r] creation_time
     #   @return [Time] the time at which the message was sent.
-    #   @see Message#timestamp
-    delegate :author, :channel, :content, :timestamp, to: :message
+    #   @see Message#creation_time
+    delegate :author, :channel, :content, :creation_time, to: :message
 
     # @!attribute [r] guild
     #   @return [Guild, nil] the guild where this message was sent, or nil if it was sent in a DM channel.
@@ -143,8 +143,8 @@ module Discordrb::Events
       @bot.voice(@message.channel.guild.id)
     end
 
-    alias_method :user, :author
-    alias_method :text, :content
+    alias :user :author
+    alias :text :content
   end
 
   # Event handler for MessageEvent
@@ -220,8 +220,8 @@ module Discordrb::Events
             a == e
           end
         end,
-        matches_all(@attributes[:after], event.timestamp) { |a, e| a > e },
-        matches_all(@attributes[:before], event.timestamp) { |a, e| a < e },
+        matches_all(@attributes[:after], event.creation_time) { |a, e| a > e },
+        matches_all(@attributes[:before], event.creation_time) { |a, e| a < e },
         matches_all(@attributes[:private], event.channel.private?) { |a, e| !e == !a },
         matches_all(@attributes[:guild], event.guild) { |a, e| a&.resolve_id == e&.resolve_id }
       ].reduce(true, &:&)
@@ -242,7 +242,7 @@ module Discordrb::Events
     # @return [true, false] whether this mention event was raised
     #   due to a mention of the bot's auto-generated role.
     attr_reader :role_mention
-    alias_method :role_mention?, :role_mention
+    alias :role_mention? :role_mention
 
     # @!visibility private
     def initialize(message, bot, role_mention)

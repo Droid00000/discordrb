@@ -195,6 +195,7 @@ module Discordrb
         channel_overwrite_create: 13,
         channel_overwrite_update: 14,
         channel_overwrite_delete: 15,
+        channel_move: 16,
         member_kick: 20,
         member_prune: 21,
         member_ban_add: 22,
@@ -207,6 +208,7 @@ module Discordrb
         role_create: 30,
         role_update: 31,
         role_delete: 32,
+        role_move: 33,
         invite_create: 40,
         invite_update: 41,
         invite_delete: 42,
@@ -296,6 +298,7 @@ module Discordrb
       # @!visibility private
       def initialize(data, entities, bot)
         @bot = bot
+        @user = nil
         @entities = entities
         @id = data[:id].to_i
         @action = data[:action_type]
