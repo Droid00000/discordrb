@@ -71,6 +71,11 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @user = nil
+      @guild = nil
+      @channel = nil
+      @message = nil
+      @automod_rule = nil
       @content = data[:content]
       @user_id = data[:user_id]&.to_i
       @guild_id = data[:guild_id]&.to_i
@@ -179,7 +184,7 @@ module Discordrb::Events
     # @!visibility private
     def matches?(event)
       # Check for the proper event type.
-      return false unless event.is_a?(AutoModActionEvent)
+      return false unless event.is_a?(AutoModRuleExecutionEvent)
 
       [
         matches_all(@attributes[:content], event.content) do |a, e|

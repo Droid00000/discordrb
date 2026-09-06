@@ -27,7 +27,7 @@ module Discordrb
       @guild = guild
       @id = data[:id].to_i
       @guild_id = @guild&.id || data[:guild_id]&.to_i
-      @user = @bot.ensure_user(data[:user]) if data[:user]
+      @user = data[:user] ? @bot.ensure_user(data[:user]) : nil
       @status = data[:application_status]&.downcase&.to_sym
       @user_id = @user&.id || data[:user_id]&.to_i
       @responses = data[:form_responses]&.map { |item| Response.new(item, @bot) } || []
@@ -63,7 +63,7 @@ module Discordrb
     # @!attribute [r] submitted?
     #   @return [true, false] whether or not the join request is waiting for a review.
     %i[approved rejected submitted].each do |name|
-      define_method(:"#{name}?") { @status == name }
+      define_method("#{name}?") { @status == name }
     end
 
     # Approve the join request.

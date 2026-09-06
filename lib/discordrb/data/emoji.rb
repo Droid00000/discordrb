@@ -27,10 +27,10 @@ module Discordrb
     # @return [true, false, nil] if the emoji must be wrapped in colons to be used.
     attr_reader :requires_colons
 
-    alias_method :managed?, :managed
-    alias_method :animated?, :animated
-    alias_method :available?, :available
-    alias_method :requires_colons?, :requires_colons
+    alias :managed? :managed
+    alias :animated? :animated
+    alias :available? :available
+    alias :requires_colons? :requires_colons
 
     # @!visibility private
     def initialize(data, bot, guild = nil)
@@ -55,8 +55,14 @@ module Discordrb
 
     # Get a hash that will allow the emoji to be used in various endpoints.
     # @return [Hash] A hash that will allow the emoji to be sent in polls and buttons.
-    def to_h
-      @id ? { id: @id } : { name: @name }
+    def to_h(prefix: false)
+      Emoji.build_hash(self, prefix: prefix)
+    end
+
+    # Get a string that will allow the emoji to be sent in a message.
+    # @return [String] A string that can be used to send the emoji in a message.
+    def mention
+      @id ? "<#{'a' if @animated}:#{@name}:#{@id}>" : @name
     end
 
     # Get the icon URL of the emoji.
@@ -66,13 +72,7 @@ module Discordrb
     #   number between 1-4096 that's a power of two.
     # @return [String, nil] The icon URL, or `nil` if the emoji is not a custom emoji.
     def url(format: 'webp', size: nil)
-      Assets[:custom_emoji, @id, format, size:] if @id
-    end
-
-    # Get a string that will allow the emoji to be sent in a message.
-    # @return [String] A string that can be used to send the emoji in a message.
-    def mention
-      @id ? "<#{'a' if @animated}:#{@name}:#{@id}>" : @name
+      Assets[:custom_emoji, @id, format, size:, animated:] if @id
     end
 
     # Check if the emoji is equivalent to another emoji.
@@ -152,13 +152,15 @@ module Discordrb
     def self.build_hash(emoji, prefix: true)
       data = { id: nil, name: nil }
 
-      case emoji
-      when Emoji, Reaction
-        emoji.id ? data[:id] = emoji.id : data[:name] = emoji.name
-      when Integer, String
-        emoji.to_i.zero? ? data[:name] = emoji : data[:id] = emoji
-      else
-        raise TypeError, "Invalid emoji type: #{emoji.class}" unless emoji.nil?
+      if emoji
+        case emoji
+        when Emoji, Reaction
+          emoji.id ? data[:id] = emoji.id : data[:name] = emoji.name
+        when Integer, String
+          emoji.to_i.zero? ? data[:name] = emoji : data[:id] = emoji
+        else
+          raise TypeError, "Invalid data type for emoji: #{emoji.class}"
+        end
       end
 
       prefix ? data.transform_keys!({ id: :emoji_id, name: :emoji_name }) : data

@@ -39,7 +39,7 @@ module Discordrb
 
     # @return [true, false] whether the attachment is ephemeral, meaning it will automatically be deleted.
     attr_reader :ephemeral
-    alias_method :ephemeral?, :ephemeral
+    alias :ephemeral? :ephemeral
 
     # @return [Float, nil] the duration of the voice message in seconds.
     attr_reader :duration_seconds

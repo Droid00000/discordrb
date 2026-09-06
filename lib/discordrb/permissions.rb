@@ -41,8 +41,8 @@ module Discordrb
       32 => :request_to_speak,            # 4294967296
       33 => :manage_scheduled_events,     # 8589934592
       34 => :manage_threads,              # 17179869184
-      35 => :use_public_threads,          # 34359738368
-      36 => :use_private_threads,         # 68719476736
+      35 => :create_public_threads,       # 34359738368
+      36 => :create_private_threads,      # 68719476736
       37 => :use_external_stickers,       # 137438953472
       38 => :send_messages_in_threads,    # 274877906944
       39 => :use_embedded_activities,     # 549755813888
@@ -93,12 +93,8 @@ module Discordrb
     end
 
     MASKS.each do |name, mask|
-      define_method("#{name}=") do |state|
-        @bits = if state
-                  @bits | mask
-                else
-                  @bits & ~mask
-                end
+      define_method("#{name}=") do |value|
+        value ? (@bits |= mask) : (@bits &= ~mask)
       end
 
       define_method("#{name}?") { @bits.anybits?(mask) }
@@ -205,7 +201,257 @@ module Discordrb
       end
     end
 
-    # Define methods for querying permissions.
+    # @!method can_kick_members?
+    #   Check if the member has the `KICK_MEMBERS` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_ban_members?
+    #   Check if the member has the `BAN_MEMBERS` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_administrator?
+    #   Check if the member has the `ADMINISTRATOR` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_change_nickname?
+    #   Check if the member has the `CHANGE_NICKNAME` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_nicknames?
+    #   Check if the member has the `MANAGE_NICKNAMES` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_guild?
+    #   Check if the member has the `MANAGE_GUILD` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_view_audit_log?
+    #   Check if the member has the `VIEW_AUDIT_LOG` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_view_guild_insights?
+    #   Check if the member has the `VIEW_GUILD_INSIGHTS` permission.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_create_instant_invite?(channel = nil)
+    #   Check if the member has the `CREATE_INSTANT_INVITE` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_channels?(channel = nil)
+    #   Check if the member has the `MANAGE_CHANNELS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_add_reactions?(channel = nil)
+    #   Check if the member has the `ADD_REACTIONS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_priority_speaker?(channel = nil)
+    #   Check if the member has the `PRIORITY_SPEAKER` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_stream?(channel = nil)
+    #   Check if the member has the `STREAM` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_read_messages?(channel = nil)
+    #   Check if the member has the `READ_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_send_messages?(channel = nil)
+    #   Check if the member has the `SEND_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_send_tts_messages?(channel = nil)
+    #   Check if the member has the `SEND_TTS_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_messages?(channel = nil)
+    #   Check if the member has the `MANAGE_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_embed_links?(channel = nil)
+    #   Check if the member has the `EMBED_LINKS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_attach_files?(channel = nil)
+    #   Check if the member has the `ATTACH_FILES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_read_message_history?(channel = nil)
+    #   Check if the member has the `READ_MESSAGE_HISTORY` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_mention_everyone?(channel = nil)
+    #   Check if the member has the `MENTION_EVERYONE` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_external_emojis?(channel = nil)
+    #   Check if the member has the `USE_EXTERNAL_EMOJIS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_connect?(channel = nil)
+    #   Check if the member has the `CONNECT` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_speak?(channel = nil)
+    #   Check if the member has the `SPEAK` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_mute_members?(channel = nil)
+    #   Check if the member has the `MUTE_MEMBERS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_deafen_members?(channel = nil)
+    #   Check if the member has the `DEAFEN_MEMBERS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_move_members?(channel = nil)
+    #   Check if the member has the `MOVE_MEMBERS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_voice_activity?(channel = nil)
+    #   Check if the member has the `USE_VOICE_ACTIVITY` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_roles?(channel = nil)
+    #   Check if the member has the `MANAGE_ROLES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_webhooks?(channel = nil)
+    #   Check if the member has the `MANAGE_WEBHOOKS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_expressions?(channel = nil)
+    #   Check if the member has the `MANAGE_EXPRESSIONS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_application_commands?(channel = nil)
+    #   Check if the member has the `USE_APPLICATION_COMMANDS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_request_to_speak?(channel = nil)
+    #   Check if the member has the `REQUEST_TO_SPEAK` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_scheduled_events?(channel = nil)
+    #   Check if the member has the `MANAGE_SCHEDULED_EVENTS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_manage_threads?(channel = nil)
+    #   Check if the member has the `MANAGE_THREADS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_create_public_threads?(channel = nil)
+    #   Check if the member has the `CREATE_PUBLIC_THREADS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_create_private_threads?(channel = nil)
+    #   Check if the member has the `CREATE_PRIVATE_THREADS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_external_stickers?(channel = nil)
+    #   Check if the member has the `USE_EXTERNAL_STICKERS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_send_messages_in_threads?(channel = nil)
+    #   Check if the member has the `SEND_MESSAGES_IN_THREADS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_embedded_activities?(channel = nil)
+    #   Check if the member has the `USE_EMBEDDED_ACTIVITIES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_moderate_members?(channel = nil)
+    #   Check if the member has the `MODERATE_MEMBERS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_view_monetization_analytics?(channel = nil)
+    #   Check if the member has the `VIEW_MONETIZATION_ANALYTICS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_soundboard?(channel = nil)
+    #   Check if the member has the `USE_SOUNDBOARD` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_create_expressions?(channel = nil)
+    #   Check if the member has the `CREATE_EXPRESSIONS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_create_scheduled_events?(channel = nil)
+    #   Check if the member has the `CREATE_SCHEDULED_EVENTS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_external_sounds?(channel = nil)
+    #   Check if the member has the `USE_EXTERNAL_SOUNDS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_send_voice_messages?(channel = nil)
+    #   Check if the member has the `SEND_VOICE_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_set_voice_channel_status?(channel = nil)
+    #   Check if the member has the `SET_VOICE_CHANNEL_STATUS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_send_polls?(channel = nil)
+    #   Check if the member has the `SEND_POLLS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_use_external_apps?(channel = nil)
+    #   Check if the member has the `USE_EXTERNAL_APPS` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_pin_messages?(channel = nil)
+    #   Check if the member has the `PIN_MESSAGES` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
+    #
+    # @!method can_bypass_slowmode?(channel = nil)
+    #   Check if the member has the `BYPASS_SLOWMODE` permission.
+    #   @param channel [Channel, Integer, String, nil] The channel where the permission should be checked.
+    #   @return [true, false] whether or not the member can perform the action.
     Discordrb::Permissions::MASKS.each_key do |flag|
       define_method("can_#{flag}?") do |channel = nil|
         permission?(flag, channel)

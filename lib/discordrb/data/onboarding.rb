@@ -20,7 +20,7 @@ module Discordrb
 
     # @return [true, false] whether or not the onboarding is enabled.
     attr_reader :enabled
-    alias enabled? enabled
+    alias :enabled? :enabled
 
     # @!visibility private
     def initialize(data, guild, bot)
@@ -129,9 +129,7 @@ module Discordrb
     # @param other [Onboarding, nil] The object to compare this one against.
     # @return [true, false] Whether or not the onboarding is equal to the other object.
     def ==(other)
-      return false unless other.is_a?(Onboarding)
-
-      other.guild == @guild && other.mode == @mode && other.prompts == @prompts
+      other.is_a?(Onboarding) ? @guild.id == other.guild.id : false
     end
 
     alias_method :eql?, :==
@@ -185,6 +183,13 @@ module Discordrb
         dropdown: 1
       }.freeze
 
+      # @!visibility private
+      PREDICATES = %i[
+        required?
+        single_select?
+        in_onboarding?
+      ].freeze
+
       # @return [Integer] the type of the prompt.
       attr_reader :type
 
@@ -194,24 +199,22 @@ module Discordrb
       # @return [Array<Option>] the options of the prompt.
       attr_reader :options
 
-      # @return [true, false] whether or not the user must answer the prompt.
-      attr_reader :required
-      alias required? required
-
-      # @return [true, false] whether or not only a single option can be selected.
-      attr_reader :single_select
-      alias single_select? single_select
-
-      # @return [true, false] whether or not the prompt is initially visible during onboarding.
-      attr_reader :in_onboarding
-      alias in_onboarding? in_onboarding
-
       # @!visibility private
       def initialize(data, onboarding, bot)
         @bot = bot
         @id = data[:id].to_i
         @onboarding = onboarding
         update_data(data)
+      end
+
+      # @!attribute [r] required?
+      #   @return [true, false] whether or not the user must answer the prompt.
+      # @!attribute [r] single_select?
+      #   @return [true, false] whether or not only a single option can be selected.
+      # @!attribute [r] in_onboarding?
+      #   @return [true, false] whether or not the prompt is initially visible during onboarding.
+      PREDICATES.each do |name|
+        Discordrb.predicate_method(self, name)
       end
 
       # Get the guild that the onboarding prompt is from.

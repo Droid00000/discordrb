@@ -11,7 +11,7 @@ module Discordrb
 
     # @return [true, false] whether the subscription notification is for a renewal.
     attr_reader :renewal
-    alias_method :renewal?, :renewal
+    alias :renewal? :renewal
 
     # @return [Integer] the total number of months the user has been subscribed for.
     attr_reader :total_months_subscribed

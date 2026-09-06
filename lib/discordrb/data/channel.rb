@@ -5,6 +5,13 @@ module Discordrb
   class Channel
     include Snowflake
 
+    # @!visibility private
+    PREDICATES = %i[
+      locked?
+      archived?
+      invitable?
+    ].freeze
+
     # Mapping of types.
     TYPES = {
       text: 0,
@@ -51,19 +58,18 @@ module Discordrb
     }.freeze
 
     # @return [Integer] the type of the channel.
+    # @see TYPES
     attr_reader :type
 
     # @return [String, nil] the name of the channel, `nil` for obfuscated channels.
     attr_reader :name
 
     # @return [Integer] the flags for the channel represented as a bitfield.
+    # @see FLAGS
     attr_reader :flags
 
     # @return [String, nil] the topic of the channel, dobules as the guidelines of a forum.
     attr_reader :topic
-
-    # @return [true, false] whether or not the thread has been locked.
-    attr_reader :locked
 
     # @return [Integer, nil] the bitrate (in bits) of the voice or stage channel.
     attr_reader :bitrate
@@ -73,13 +79,6 @@ module Discordrb
 
     # @return [Integer] the sorting position of the channel; not guranteed to be unique.
     attr_reader :position
-
-    # @return [true, false] whether or not the thread has been archived.
-    attr_reader :archived
-
-    # @return [true, false] Whether or not non-moderators can add other non-moderators
-    #   to the private thread.
-    attr_reader :invitable
 
     # @return [Integer, nil] the ID of the category channel, or the thread's parent channel.
     attr_reader :parent_id
@@ -124,10 +123,6 @@ module Discordrb
     # @return [Integer, nil] the default auto archive duration to copy onto newly-created threads in the channel.
     attr_reader :default_auto_archive_duration
 
-    alias_method :locked?, :locked
-    alias_method :archived?, :archived
-    alias_method :invitable?, :invitable
-
     # @!visibility private
     def initialize(data, bot, guild = nil)
       @bot = bot
@@ -138,15 +133,26 @@ module Discordrb
       @recipient = @bot.ensure_user(data[:recipients][0]) if dm?
       update_data(data)
 
-      return unless thread?
-
+      @status = :undef
+      @start_time = :undef
       @thread_members = {}
+      @stage_instance = nil
 
       if (member = data[:member])
         member[:id] = @id
         member[:user_id] = @bot.profile.id
         ensure_thread_member(member)
       end
+    end
+
+    # @!attribute [r] locked?
+    #   @return [true, false] whether or not the thread has been locked.
+    # @!attribute [r] archived?
+    #   @return [true, false] whether or not the thread has been archived.
+    # @!attribute [r] invitable?
+    #   @return [true, false] Whether or not non-moderators can add other non-moderators to the private thread.
+    PREDICATES.each do |name|
+      Discordrb.predicate_method(self, name)
     end
 
     #  ##     ##    ###    #### ##    ##
@@ -231,8 +237,9 @@ module Discordrb
     # @param orphan [true, nil] Whether to remove the channel from its current category.
     # @param sync_overwrites [true, false, nil] Whether to sync the overwrites of the channel
     #   with the new category channel (if moving to a new category).
+    # @param reason [String, nil] The reason to show in the audit log for moving the channels.
     # @return [nil]
-    def move(above: nil, below: nil, orphan: nil, sync_overwrites: nil)
+    def move(above: nil, below: nil, orphan: nil, sync_overwrites: nil, reason: nil)
       if [above, below, orphan].count(&:itself) > 1
         raise ArgumentError, "'above', 'below', and 'orphan' are mutually exclusive"
       end
@@ -319,7 +326,7 @@ module Discordrb
         hash
       end
 
-      @bot.http.modify_guild_channel_positions(@guild_id, list)
+      @bot.http.modify_guild_channel_positions(@guild_id, list, reason: reason)
       nil
     end
 
@@ -384,19 +391,17 @@ module Discordrb
         invitable: invitable
       }
 
-      if tags != :undef && ((forum? || media?) || thread?)
+      if tags != :undef && (forum? || media? || thread?)
         tags = (thread? ? tags&.map(&:resolve_id)&.uniq : tags&.map(&:to_h))
 
         data[thread? ? :applied_tags : :available_tags] = tags
       end
 
       if data[:type] != :undef
-        if announcement? && data[:type] != TYPES[:announcement]
-          raise ArgumentError, 'Can only convert news channels to text channels'
-        elsif text? && data[:type] != TYPES[:announcement]
-          raise ArgumentError, 'Can only convert text channels to news channels'
-        elsif !text? && !announcement?
-          raise ArgumentError, 'Can only convert between text and news channels'
+        if (@type != TYPES[:text]) || (@type != TYPES[:announcement])
+          raise ArgumentError, 'Current channel type does not support type conversion'
+        elsif (data[:type] != TYPES[:text]) || (data[:type] != TYPES[:announcement])
+          raise ArgumentError, "Can only convert between 'text' and 'announcement' channels"
         end
       end
 
@@ -625,6 +630,8 @@ module Discordrb
         response = @bot.http.list_channel_pins(@id, limit: fetch_limit, before: before&.iso8601)
         response[:items].map { |pin| Message.new(pin[:message].merge!(pinned_at: pin[:pinned_at]), @bot) }
       end
+
+      return get_pins.call(limit) if limit && limit <= 50
 
       paginator = Paginator.new(limit, :down) do |last_page|
         if last_page && last_page.count < 50
@@ -856,25 +863,25 @@ module Discordrb
     # Retrieve the status of the voice channel.
     # @return [String, nil] The status of the voice channel, or `nil`.
     def status
-      if !instance_variable_defined?(:@status) && voice?
+      if @status == :undef && voice?
         @bot.gateway.request_channel_info(guild: @guild_id, fields: %i[status voice_start_time])
 
         sleep(0.01) until instance_variable_defined?(:@status)
       end
 
-      @status
+      @status == :undef ? nil : @status
     end
 
     # Retrieve the start time of the sesison for the voice channel.
     # @return [Time, nil] The time at when the voice session started, or `nil`.
     def start_time
-      if !instance_variable_defined?(:@start_time) && voice?
+      if @start_time == :undef && voice?
         @bot.gateway.request_channel_info(guild: @guild_id, fields: %i[status voice_start_time])
 
         sleep(0.01) until instance_variable_defined?(:@start_time)
       end
 
-      @start_time
+      @start_time == :undef ? nil : @start_time
     end
 
     # Get the scheduled events for the voice or stage channel.
@@ -1163,8 +1170,116 @@ module Discordrb
       @bot.ensure_channel(response, @guild)
     end
 
+    # Search the threads that have been created in the channel.
+    # @param name [String, #to_s, nil] Get threads with matching thread names.
+    # @param after [Time, #resolve_id, nil] Get threads with IDs that come after this point.
+    # @param before [Time, #resolve_id, nil] Get threads with IDs that come before this point.
+    # @param offset [Integer, nil] The number of threads between 0-9975 to offset the search query by.
+    # @param slop [Integer, nil] The amount of variation allowed between the placement of words when matching against thread names; between 0-100.
+    # @param tags [Array<ChannelTag, Integer, String>, ChannelTag, Integer, String, nil] Get threads that have these tags.
+    # @param tag_matching [Symbol, string, nil] Whether to match `:match_all`, or `:match_some` of the `tags:`.
+    # @param archived [true, false, nil] Whether or not to include archived threads. `nil` will retrieve archived **and** un-archived threads.
+    # @param sort_by [Symbol, String, nil] Whether to sort the threads by `:creation_time`, `:relevance`, `:archive_time`, or `:last_message_time`.
+    # @param sort_order [Symbol, string, nil] Whether to order the returned threads in `:descending`, or `:ascending` order.
+    # @param limit [Integer, nil] The maximum number of threads to retrieve, or `nil` to retrieve all of the threads that matched the search query.
+    # @return [SearchedThreads] The results of the search query.
+    def search_threads(
+      name: nil, slop: 2, tags: nil, tag_matching: :match_all, archived: nil,
+      sort_by: :creation_time, sort_order: :descending, limit: 25, offset: nil,
+      before: nil, after: nil
+    )
+      tag_match = case tag_matching&.to_sym
+                  when nil, :all, :match_all
+                    :match_all
+                  when :some, :match_some
+                    :match_some
+                  else
+                    raise ArgumentError, "Invalid value for the 'tag_matching' parameter"
+                  end
+
+      sort_order = case sort_order&.to_sym
+                   when nil, :desc, :descending, :newest_first
+                     :desc
+                   when :asc, :ascending, :oldest_first
+                     :asc
+                   else
+                     raise ArgumentError, "Invalid value for the 'sort_order' parameter"
+                   end
+
+      sort_by = case sort_by&.to_sym
+                when :last_message_time, :recently_active, :activity
+                  :last_message_time
+                when nil, :timestamp, :creation_time
+                  :creation_time
+                when :archived_at, :archive_time
+                  :archive_time
+                when :relevance, :match_score
+                  :relevance
+                else
+                  raise ArgumentError, "Invalid value for the 'sort_by' parameter"
+                end
+
+      options = {
+        name: name&.to_s,
+        slop: slop || 2,
+        tag_setting: tag_match,
+        tag: tags ? [*tags].map(&:resolve_id) : nil,
+        archived: archived,
+        sort_by: sort_by,
+        sort_order: sort_order,
+        limit: limit && limit <= 25 ? limit : 25,
+        offset: offset || 0,
+        min_id: after.is_a?(Time) ? Snowflake.synthesise(after) : after&.resolve_id,
+        max_id: before.is_a?(Time) ? Snowflake.synthesise(before) : before&.resolve_id
+      }.compact
+
+      # Only store the total thread count from the first request.
+      total = nil
+
+      # A map of thread IDs to the first message sent in each thread.
+      messages = {}
+
+      # The API helpfully provides this data so we known when to break.
+      more_threads = nil
+
+      get_threads = lambda do |query|
+        data = @bot.http.search_channel_threads(@id, **options, **query.compact)
+        total ||= data[:total_results]
+        more_threads = data[:has_more]
+
+        data[:first_messages]&.each do |value|
+          messages[value[:channel_id].to_i] = Message.new(value, @bot)
+        end
+
+        data[:threads]&.map do |thread|
+          thread[:member] = data[:members]&.find { |member| thread[:id] == member[:id] }
+
+          @bot.ensure_channel(thread, @guild)
+        end
+      end
+
+      paginator = Paginator.new(limit, :down) do |page|
+        if more_threads == false
+          []
+        elsif sort_by != :creation_time
+          if (count = (paginator.amount_fetched + options[:offset])) > 9975
+            []
+          else
+            get_threads.call(offset: count)
+          end
+        elsif sort_order == :desc
+          get_threads.call(max_id: page&.last&.id, offset: page ? 0 : nil)
+        else
+          get_threads.call(min_id: page&.last&.id, offset: page ? 0 : nil)
+        end
+      end
+
+      SearchedThreads.new(paginator.to_a, total, messages, @bot)
+    end
+
     alias_method :add_tag, :add_tags
     alias_method :remove_tag, :remove_tags
+    alias_method :create_thread, :start_thread
 
     # @!endgroup
 
@@ -1390,8 +1505,8 @@ module Discordrb
       @locked = metadata&.[](:locked) || false
       @archived = metadata&.[](:archived) || false
       @invitable = metadata&.[](:invitable) || false
-      @archived_at = Time.iso8601(metadata[:archive_timestamp]) if metadata&.[](:archive_timestamp)
-      @create_timestamp ||= Time.iso8601(metadata[:create_timestamp]) if metadata&.[](:create_timestamp)
+      @archived_at = metadata&.[](:archive_timestamp) ? Time.iso8601(metadata[:archive_timestamp]) : nil
+      @create_timestamp ||= metadata&.[](:create_timestamp) ? Time.iso8601(metadata[:create_timestamp]) : nil
       @auto_archive_duration = metadata&.[](:auto_archive_duration)
 
       @nsfw = new_data[:nsfw] || false
@@ -1433,7 +1548,7 @@ module Discordrb
 
     # @!visibility private
     def pop_thread_member(user_id)
-      @thread_members&.delete(user_id.resolve_id)
+      @thread_members.delete(user_id.resolve_id)
     end
 
     # @!visibility private
@@ -1476,10 +1591,10 @@ module Discordrb
     private
 
     # @!visibility private
-    def process_permission_overwrites(array)
+    def process_permission_overwrites(overwrites)
       @overwrites = {}
 
-      array&.each do |item|
+      overwrites&.each do |item|
         overwrite = Overwrite.new(item, self, @bot)
         @overwrites[overwrite.resolve_id] = overwrite
       end
@@ -1497,21 +1612,63 @@ module Discordrb
     end
 
     # @!visibility private
-    def process_available_tags(array)
-      return unless array
+    def process_available_tags(tags)
+      return (@available_tags = []) unless tags
 
       if @available_tags&.any?
         old = @available_tags
 
-        @available_tags = array.map do |tag|
+        @available_tags = tags.map do |tag|
           id = tag[:id].to_i
           current = old.find { |key| key.id == id }
           current&.update_data(tag)
           current || ChannelTag.new(tag, self, @bot)
         end
       else
-        @available_tags = array.map { |tag| ChannelTag.new(tag, self, @bot) }
+        @available_tags = tags.map { |tag| ChannelTag.new(tag, self, @bot) }
       end
+    end
+  end
+
+  # A set of threads collected from a search query.
+  class SearchedThreads
+    include Enumerable
+
+    # @return [Array<Channel>] the threads that matched the search query.
+    attr_reader :channels
+    alias threads channels
+
+    # @return [Integer] the total number of threads that matched the search query.
+    attr_reader :total_results
+
+    # @return [Hash<Integer => Message>] a mapping of thread IDs to the first message
+    #   sent in each thread. Will only be populated for threads created in a forum channel.
+    attr_reader :first_messages
+
+    # @!visibility private
+    def initialize(threads, total, messages, bot)
+      @bot = bot
+      @channels = threads
+      @total_results = total
+      @first_messages = messages
+    end
+
+    # Get a single thread that matched the search query by its index.
+    # @param index [Integer] The index of the thread to get from the array.
+    # @return [Channel] the thread that was found at the specified index.
+    def [](index)
+      @channels[index]
+    end
+
+    # Iterate over each thread that matched the search query.
+    # @return [Array<Channel>, Enumerable] The array that was iterated over.
+    def each(...)
+      @channels.each(...)
+    end
+
+    # @!visibility private
+    def inspect
+      "<SearchedThreads threads=[#{'...' if @channels.any?}] total_results=#{@total_results}>"
     end
   end
 end

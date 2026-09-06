@@ -61,9 +61,7 @@ module Discordrb
     # @!method boolean_not_equal?
     #   @return [true, false] whether the boolean metadata value is not equivalent to the guild's configured boolean value.
     TYPES.each do |name, value|
-      define_method("#{name}?") do
-        @type == value
-      end
+      define_method("#{name}?") { @type == value }
     end
   end
 end

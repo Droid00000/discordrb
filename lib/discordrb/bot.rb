@@ -87,12 +87,10 @@ module Discordrb
     # Simply creating a bot won't be enough to start sending messages etc. with, only a limited set of methods can
     # be used after logging in. If you want to do something when the bot has connected successfully, either do it in the
     # {#ready} event, or use the {#run} method with the `background` parameter and do the processing after that.
-    # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
     # @param token [String] The token that should be used to log in.
+    # @param log_mode [Symbol] The mode this bot should use for logging. See {Logger#mode=} for a list of modes.
     # @param fancy_log [true, false] Whether the output log should be made extra fancy using ANSI escape codes. (Your
     #   terminal may not support this.)
-    # @param suppress_ready [true, false] Whether the READY packet should be exempt from being printed to console.
-    #   Useful for very large bots running in debug or verbose log_mode.
     # @param parse_self [true, false] Whether the bot should react on its own messages. It's best to turn this off
     #   unless you really need this so you don't inadvertently create infinite loops.
     # @param shard_id [Integer] The number of the shard this bot should handle. See
@@ -101,7 +99,7 @@ module Discordrb
     #   https://github.com/discord/discord-api-docs/issues/17 for how to do sharding.
     # @param redact_token [true, false] Whether the bot should redact the token in logs. Default is true.
     # @param ignore_bots [true, false] Whether the bot should ignore bot accounts or not. Default is false.
-    # @param compression_mode [:none, :large, :stream] Sets which compression mode should be used when connecting
+    # @param compression [:none, :large, :stream] Sets which compression mode should be used when connecting
     #   to Discord's gateway. `:none` will request that no payloads are received compressed (not recommended for
     #   production bots). `:large` will request that large payloads are received compressed. `:stream` will request
     #   that all data be received in a continuous compressed stream.
@@ -111,21 +109,21 @@ module Discordrb
     #   exactly all the intents specified in the bitwise value.
     # @see Discordrb::INTENTS
     def initialize(
-      log_mode: :normal, token: nil, fancy_log: false, suppress_ready: true,
-      parse_self: false, shard_id: nil, num_shards: nil, redact_token: true,
-      ignore_bots: false, compression_mode: :large, intents: :all
+      token:, log_mode: :normal, fancy_log: false,
+      parse_self: false, shard_id: nil, num_shards: nil,
+      redact_token: true, ignore_bots: false, intents: :all,
+      compression: :large
     )
       LOGGER.mode = log_mode
+      LOGGER.fancy = fancy_log
       LOGGER.token = token if redact_token
 
       @should_parse_self = parse_self
-
       @shard_key = num_shards ? [shard_id, num_shards] : nil
 
-      LOGGER.fancy = fancy_log
-      @prevent_ready = suppress_ready
-
-      raise 'Token string is empty or nil' if token.nil? || token.empty?
+      if token.nil? || token.empty?
+        raise ArgumentError, "'token' cannot be empty or nil"
+      end
 
       intents = case intents
                 when :all
@@ -140,7 +138,7 @@ module Discordrb
 
       @raw_token = token.delete_prefix('Bot ')
       @token = "Bot #{@raw_token}"
-      @gateway = Gateway.new(self, @shard_key, compression_mode, intents)
+      @gateway = Gateway.new(self, @shard_key, compression, intents)
       @http = HTTP::Client.new(@token)
 
       reset_cache
@@ -1150,10 +1148,7 @@ module Discordrb
         # Initialize guilds
         @guilds = {}
 
-        if @gateway&.intents&.anybits?(INTENTS[:guilds])
-          # Count unavailable guilds
-          @unavailable_guilds = data[:guilds].length
-        end
+        @unavailable_guilds = @gateway&.intents&.anybits?(INTENTS[:guilds]) ? data[:guilds].length : 0
 
         # Don't notify yet if there are unavailable guilds because they need to get available before the bot truly has
         # all the data
@@ -1609,7 +1604,7 @@ module Discordrb
         event = AutoModRuleDeleteEvent.new(data, self)
         raise_event(event)
       when :AUTO_MODERATION_ACTION_EXECUTION
-        event = AutoModActionEvent.new(data, self)
+        event = AutoModRuleExecutionEvent.new(data, self)
         raise_event(event)
       when :MESSAGE_POLL_VOTE_ADD
         event = PollVoteAddEvent.new(data, self)
@@ -1749,7 +1744,7 @@ module Discordrb
 
     # @!visibility private
     def calculate_intents(intents)
-      intents = [intents] unless intents.is_a? Array
+      intents = [intents] unless intents.is_a?(Array)
 
       intents.reduce(0) do |sum, intent|
         case intent

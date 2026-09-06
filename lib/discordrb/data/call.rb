@@ -9,6 +9,7 @@ module Discordrb
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @participants = nil
       @participant_ids = data[:participants] || []
       @ended_at = Time.iso8601(data[:ended_timestamp]) if data[:ended_timestamp]
     end

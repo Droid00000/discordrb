@@ -8,6 +8,7 @@ module Discordrb
 
     # @return [String] the custom code of the vanity invite.
     attr_reader :code
+    alias :to_s :code
 
     # @return [Guild] the guild that the vanity invite belongs to.
     attr_reader :guild
@@ -23,9 +24,6 @@ module Discordrb
 
     # @return [Integer] the approximate number of online members on the invite's guild.
     attr_reader :presence_count
-
-    alias_method :to_s, :code
-    alias_method :uses, :usage_count
 
     # @!visibility private
     def initialize(data, guild, bot)

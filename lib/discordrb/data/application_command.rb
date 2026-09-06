@@ -251,9 +251,7 @@ module Discordrb
       #   @return [true, false] whether the user must provide a value for the option.
       # @!attribute [r] autocomplete?
       #   @return [true, false] whether the option can dynamically return data when typed into.
-      %i[required autocomplete].each do |name|
-        define_method("#{name}?") { instance_variable_get("@#{name}") }
-      end
+      %i[required autocomplete].each { |name| Discordrb.predicate_method(self, name) }
 
       # @!method string?
       #   @return [true, false] whether the option will accept a string.
@@ -373,46 +371,46 @@ module Discordrb
         @application_id = command[:application_id].to_i
       end
 
-      # Whether this permission has been allowed, e.g has a green check in the UI.
+      # Whether the permission has been allowed, e.g has a green check in the UI.
       # @return [true, false]
       def allowed?
         @overwrite == true
       end
 
-      # Whether this permission has been denied, e.g has a red X-mark in the UI.
+      # Whether the permission has been denied, e.g has a red X-mark in the UI.
       # @return [true, false]
       def denied?
         @overwrite == false
       end
 
-      # Whether this permission is applied to the everyone role in the guild.
+      # Whether the permission is applied to the everyone role in the guild.
       # @return [true, false]
       def everyone?
         @target_id == @guild_id
       end
 
-      # Get the ID of the application command this permission is for.
+      # Get the ID of the application command the permission is for.
       # @return [Integer, nil] This will be `nil` if the permission is the
       #   default permission.
       def command_id
         @command_id unless default?
       end
 
-      # Whether this permission is the default for all commands that don't
+      # Whether the permission is the default for all commands that don't
       #  contain explicit permission oerwrites.
       # @return [true, false]
       def default?
         @command_id == @application_id
       end
 
-      # Whether this permission is applied to every channel in the guild.
+      # Whether the permission is applied to every channel in the guild.
       # @return [true, false]
       def all_channels?
         @target_id == (@guild_id - 1)
       end
 
-      # Get the user, role, or channel(s) that this permission targets.
-      # @return [Array<Channel>, Role, Member]
+      # Get the user, role, or channel(s) that the permission targets.
+      # @return [Array<Channel>, Role, Member] The entity that the permission target.
       def target
         case @type
         when TYPES[:role]
@@ -427,15 +425,13 @@ module Discordrb
       alias_method :targets, :target
 
       # @!method role?
-      #   @return [true, false] whether this permission is for a role.
+      #   @return [true, false] whether the permission is for a role.
       # @!method member?
-      #   @return [true, false] whether this permission is for a member.
+      #   @return [true, false] whether the permission is for a member.
       # @!method channel?
-      #   @return [true, false] whether this permission is for a channel.
+      #   @return [true, false] whether the permission is for a channel.
       TYPES.each do |name, value|
-        define_method("#{name}?") do
-          @type == value
-        end
+        define_method("#{name}?") { @type == value }
       end
     end
   end
