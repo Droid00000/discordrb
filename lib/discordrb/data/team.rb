@@ -41,13 +41,10 @@ module Discordrb
       # @return [Symbol] the role of the team member.
       attr_reader :role
 
-      # @return [Team] the team the member is a part of.
+      # @return [Team] the team that the team member is a part of.
       attr_reader :team
 
-      # @return [Integer] the membership state of the team member.
-      attr_reader :state
-
-      # @return [Integer] the user associated with the team member.
+      # @return [Integer] the user that the team member represents.
       attr_reader :user
 
       # @!visibility private
