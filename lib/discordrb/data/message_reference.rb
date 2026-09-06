@@ -61,11 +61,11 @@ module Discordrb
     def message
       return @message if @message || @deleted
 
-      @message = channel&.load_message(@message_id)
+      @message = channel&.message(@message_id)
       @message.tap { @deleted = true unless @message }
     end
 
-    alias_method :resolve, :message
+    alias :resolve :message
 
     # @!method reply?
     #   @return [true, false] whether the message is a reply to another message.

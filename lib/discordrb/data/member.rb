@@ -34,6 +34,7 @@ module Discordrb
     # @return [true, false] whether the member has yet to pass the
     #   member verification requirements.
     attr_reader :pending
+    alias :pending? :pending
 
     # @return [String, nil] the member's guild specifc display name.
     attr_reader :nickname
@@ -48,9 +49,6 @@ module Discordrb
 
     # @return [Time, nil] the time at when the member starting "boosting" the guild.
     attr_reader :premium_since
-
-    alias_method :pending?, :pending
-    alias_method :boosting_since, :premium_since
 
     # @!visibility private
     def initialize(data, guild, bot)
@@ -70,8 +68,7 @@ module Discordrb
       timeout_timestamp = data[:communication_disabled_until]
       @timeout_until = Time.iso8601(timeout_timestamp) if timeout_timestamp
       @permissions = Permissions.new(data[:permissions].to_i) if data[:permissions]
-      interaction_channel_id = data[:_interaction_channel_id]
-      @interaction_channel_id = interaction_channel_id&.to_i if interaction_channel_id
+      @interaction_channel_id = data[:interaction]&.channel_id
     end
 
     #  ##     ##    ###    #### ##    ##
@@ -85,7 +82,7 @@ module Discordrb
     # @!group General
 
     # Get the color of the member.
-    # @return [ColorRGB, nil] The color of the member.
+    # @return [Color, nil] The color of the member.
     def color
       color_role&.color
     end
@@ -126,7 +123,7 @@ module Discordrb
     # @param banner [#read, File, nil] The new guild banner to set for the current bot. Should be a file-like object.
     # @param bio [String, nil] The new 1-300 character guild specific bio to set for the current bot.
     # @param suppressed [true, false] Whether or not the member should be suppressed in the stage channel.
-    # @param request_to_speak [true, false] Whether or not the current bot is requesting to speak in the stage channel.
+    # @param request_to_speak [true, false] Whether or not the current bot should request to speak in the stage channel.
     # @param reason [String, nil] The reason to show in the guild's audit log for modifying the member.
     # @return [nil]
     def modify(
@@ -160,10 +157,6 @@ module Discordrb
       end
 
       if suppressed != :undef || request_to_speak != :undef
-        unless self.voice_channel&.stage?
-          raise ArgumentError, 'The member must be connected to a stage channel'
-        end
-
         stage_data = {
           suppress: suppressed,
           channel_id: self.voice_channel.resolve_id
@@ -190,8 +183,8 @@ module Discordrb
       nil
     end
 
-    alias_method :colour, :color
-    alias_method :boosting?, :premium?
+    alias :colour :color
+    alias :boosting? :premium?
 
     # @!endgroup
 
@@ -272,10 +265,10 @@ module Discordrb
       nil
     end
 
-    alias_method :add_role, :add_roles
-    alias_method :highest_role, :top_role
-    alias_method :colour_role, :color_role
-    alias_method :remove_role, :remove_roles
+    alias :add_role :add_roles
+    alias :highest_role :top_role
+    alias :colour_role :color_role
+    alias :remove_role :remove_roles
 
     # @!endgroup
 
@@ -479,6 +472,7 @@ module Discordrb
       bot_account?
       creation_time
       verified_bot?
+      system_account?
       webhook_account?
     ]
 
@@ -487,7 +481,7 @@ module Discordrb
       @user == other
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # Send a message to the current member in the DM channel.
     # @return [Message] The message that was sent to the current member.
@@ -528,8 +522,18 @@ module Discordrb
     #
     # @!method verified_bot?
     #   Check if the member is a bot account that has been verified.
-    #   # @return [true, false] Whethero nor the bot account has been verified.
-    #   # @see User#verified_bot
+    #   # @return [true, false] Whether or not the bot account has been verified.
+    #   # @see User#verified_bot?
+    #
+    # @!method system_account?
+    #   Check if the member is an official system account from Discord.
+    #   # @return [true, false] Whether or not the member is an offical system account.
+    #   # @see User#system_account?
+    #
+    # @!method webhook_account?
+    #   Check if the member is a fake user for a message sent via a webhook.
+    #   # @return [true, false] Whether or not the member is a fake user for a webhook.
+    #   # @see User#webhook_account?
     names.each do |name|
       define_method(name) { @user.public_send(name) }
     end

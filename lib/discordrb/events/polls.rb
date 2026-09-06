@@ -22,6 +22,8 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @user = nil
+      @message = nil
       @user_id = data[:user_id]&.to_i
       @guild_id = data[:guild_id]&.to_i
       @answer_id = data[:answer_id]&.to_i
@@ -67,7 +69,7 @@ module Discordrb::Events
       @user ||= (guild&.member(@user_id) || @bot.user(@user_id))
     end
 
-    alias_method :member, :user
+    alias :member :user
   end
 
   # Generic event handler for polls.

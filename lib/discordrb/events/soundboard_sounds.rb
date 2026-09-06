@@ -122,6 +122,7 @@ module Discordrb::Events
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
+      @member = nil
       @user_id = data[:user_id]&.to_i
       @animation_id = data[:animation_id]
       @animation_type = data[:animation_type]
@@ -182,7 +183,7 @@ module Discordrb::Events
       @member ||= (guild&.member(@user_id) || @bot.user(@user_id))
     end
 
-    alias_method :user, :member
+    alias :user :member
   end
 
   # Event handler for VOICE_CHANNEL_EFFECT_SEND events.

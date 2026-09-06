@@ -54,7 +54,7 @@ class Discordrb::Webhooks::Modal
       @options << { value: value, label: label, description: description, default: default }.compact
     end
 
-    alias_method :button, :radio_button
+    alias :button :radio_button
 
     # @!visibility private
     def to_h
@@ -133,7 +133,7 @@ class Discordrb::Webhooks::Modal
       @component = builder.to_h
     end
 
-    alias_method :select_menu, :string_select
+    alias :select_menu :string_select
 
     # Add a user select to the label component.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.

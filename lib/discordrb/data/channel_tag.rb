@@ -13,7 +13,7 @@ module Discordrb
 
     # @return [true, false] whether or not the channel tag is moderated.
     attr_reader :moderated
-    alias moderated? moderated
+    alias :moderated? :moderated
 
     # @!visibility private
     def initialize(data, channel, bot)

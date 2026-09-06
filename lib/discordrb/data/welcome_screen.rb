@@ -44,7 +44,7 @@ module Discordrb
       modify(channels: @channels.dup << channel_data, reason: reason)
     end
 
-    alias_method :create_channel, :add_channel
+    alias :create_channel :add_channel
 
     # Modify the properties of the welcome screen.
     # @param enabled [true, false, nil] Whether or not the welcome screen should be enabled.
@@ -70,7 +70,7 @@ module Discordrb
       other.is_a?(WelcomeScreen) ? other.guild == @guild : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def inspect
@@ -147,7 +147,7 @@ module Discordrb
         other.is_a?(WelcomeChannel) ? other.channel == @channel : false
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h

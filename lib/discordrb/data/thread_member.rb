@@ -15,12 +15,13 @@ module Discordrb
     # @return [Time] the time at when the member joined the thread.
     attr_reader :joined_at
 
-    alias_method :channel, :thread
-    alias_method :resolve_id, :user_id
+    alias :channel :thread
+    alias :resolve_id :user_id
 
     # @!visibility private
     def initialize(data, thread, bot)
       @bot = bot
+      @member = nil
       @thread = thread
       @user_id = data[:user_id]&.to_i
       update_data(data)
@@ -47,7 +48,8 @@ module Discordrb
       @thread.id == other.thread.id && @user_id == other.user_id
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
+    alias :kick :remove
 
     # @!visibility private
     def inspect

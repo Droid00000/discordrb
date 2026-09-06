@@ -34,9 +34,9 @@ module Discordrb::HTTP
     end
 
     # @see https://docs.discord.com/developers/resources/guild#modify-guild-channel-positions
-    def modify_guild_channel_positions(guild_id, channels)
+    def modify_guild_channel_positions(guild_id, channels, reason: :undef)
       request Route[:PATCH, "/guilds/#{guild_id}/channels", guild_id],
-              body: channels
+              body: channels, reason: reason
     end
 
     # @see https://docs.discord.com/developers/resources/guild#list-active-guild-threads

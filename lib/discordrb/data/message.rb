@@ -5,6 +5,13 @@ module Discordrb
   class Message
     include Snowflake
 
+    # @!visibility private
+    PREDICATES = %i[
+      tts?
+      pinned?
+      mentions_everyone?
+    ].freeze
+
     # Mapping of flags.
     FLAGS = {
       crossposted: 1 << 0,
@@ -128,7 +135,7 @@ module Discordrb
 
     # @return [PollResult, nil] the finalized poll results that prompted the message.
     attr_reader :poll_results
-    alias poll_result poll_results
+    alias :poll_result :poll_results
 
     # @return [Call, nil] the call that prompted the message.
     attr_reader :call
@@ -180,6 +187,14 @@ module Discordrb
       @client_theme = ClientTheme.new(data[:shared_client_theme], @bot) if data[:shared_client_theme]
       @poll_results = Poll::Result.new(data[:embeds].pop, data[:message_reference], @bot) if poll_result?
 
+      # These are lazy-loaded, but explicitly declare
+      # them as `nil` because of how Ruby "shapes" work.
+      @emojis = nil
+      @author = nil
+      @channel = nil
+      @timestamps = nil
+      @role_mentions = nil
+
       if data[:author]
         if @webhook_id
           # Create a fake user for webhooks.
@@ -213,8 +228,8 @@ module Discordrb
     #   @return [true, false] whether or not the message has been pinned in the channel.
     # @!attribute [r] mentions_everyone?
     #   @return [true, false] whether or not the message pinged `@everyone` in the guild.
-    %i[tts pinned mentions_everyone].each do |name|
-      define_method("#{name}?") { instance_variable_get("@#{name}") }
+    PREDICATES.each do |name|
+      Discordrb.predicate_method(self, name)
     end
 
     #  ##     ##    ###    #### ##    ##
@@ -277,18 +292,6 @@ module Discordrb
       @role_mentions ||= @mention_roles.filter_map { |item| guild&.role(item) }
     end
 
-    # Get the games that were mentioned in the message.
-    # @return [Array<Integer>] The IDs of the games that were in the message.
-    def games
-      return (@games || []) if @games || !@content || @content.empty?
-
-      list = []
-
-      @content.scan(/<@\$(\d{15,48})>/) { |(game)| list << game.to_i }
-
-      @games = list
-    end
-
     # Get the custom emojis that were used in the message.
     # @return [Array<Emoji>] The custom emojis that were used in the message.
     def emojis
@@ -331,7 +334,7 @@ module Discordrb
     # Modify the properties of the message.
     # @param content [String, nil] The content of the message. Should not be longer than 2000 characters or it will result in an error.
     # @param embeds [Array<Hash, Webhooks::EmbedBuilder>, nil] The embeds that should be attached to the message.
-    # @param attachments [Array<File, Attachment, #read>, nil] The files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, Attachment, #read, CloudAttachment>, nil] The files that can be referenced in embeds and components.
     # @param allowed_mentions [Hash, Discordrb::AllowedMentions, nil] The mentions that are allowed to ping on the message.
     # @param flags [Integer, Symbol, Array<Symbol, Integer>] The new flags to set for the message.
     # @param components [View, Array<#to_h>, nil] The bot components to associate with the message.
@@ -353,8 +356,8 @@ module Discordrb
       builder = Discordrb::Webhooks::Builder.new
 
       builder.content = content
+      builder.allowed_mentions = allowed_mentions
       [*embeds].each { |item| builder << item } unless embeds == :undef
-      builder.allowed_mentions = allowed_mentions unless allowed_mentions == :undef
       yield(builder, view) if block_given?
 
       view = view.to_a
@@ -424,8 +427,8 @@ module Discordrb
       nil
     end
 
-    alias_method :edit, :modify
-    alias_method :jump_url, :jump_link
+    alias :edit :modify
+    alias :jump_url :jump_link
 
     # @!endgroup
 
@@ -467,8 +470,8 @@ module Discordrb
       @author ||= @bot.user(@author_id)
     end
 
-    alias_method :user, :author
-    alias_method :member, :author
+    alias :user :author
+    alias :member :author
 
     # @!endgroup
 
@@ -499,7 +502,7 @@ module Discordrb
 
     # Convert the message into a hash that can be used to reference the message in a forward or a reply.
     # @param type [Integer, Symbol] The reference type to set. Can either be one of `:reply` or `:forward`.
-    # @param must_exist [true, false] Whether to raise an error if this message was deleted when sending it.
+    # @param must_exist [true, false] Whether to raise an error if the message was deleted when sending it.
     # @return [Hash] The message as a hash representation that can be used in a forwarded message or a reply.
     def to_reference(type: :reply, must_exist: true)
       type = type.is_a?(Numeric) ? type : Message::Reference::TYPES[type.to_sym]
@@ -586,7 +589,7 @@ module Discordrb
       paginator.to_a
     end
 
-    alias_method :remove_reactions, :remove_reaction
+    alias :remove_reactions :remove_reaction
 
     # @!endgroup
 
@@ -798,14 +801,16 @@ module Discordrb
 
       if new_data[:content] != @content
         # Reset the data that has been parsed from the message content.
-        @games = nil
         @emojis = nil
         @timestamps = nil
       end
 
       if (poll = new_data[:poll])
-        @poll ||= Poll.new(poll, self, @bot)
-        @poll&.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
+        if @poll
+          @poll.process_answers(poll[:answers], poll[:results]&.[](:answer_counts))
+        else
+          @poll = Poll.new(poll, self, @bot)
+        end
       else
         @poll = nil
       end

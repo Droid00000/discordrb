@@ -16,7 +16,7 @@ module Discordrb
 
     # @return [true, false, nil]
     attr_accessor :replied_user
-    alias_method :replied_user?, :replied_user
+    alias :replied_user? :replied_user
 
     # Create a new allowed mentions instance.
     # @param parse [Array<"users", "roles", "everyone">] Mention types that can be inferred from the message.

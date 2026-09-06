@@ -135,7 +135,7 @@ module Discordrb::Voice
       @playing
     end
 
-    alias_method :isplaying?, :playing?
+    alias :isplaying? :playing?
 
     # Continue playback. This change may take up to 100ms to take effect, which is usually negligible.
     def continue
@@ -298,7 +298,7 @@ module Discordrb::Voice
       end
     end
 
-    alias_method :play_stream, :play_io
+    alias :play_stream :play_io
 
     private
 

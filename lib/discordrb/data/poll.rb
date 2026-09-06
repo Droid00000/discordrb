@@ -25,18 +25,18 @@ module Discordrb
 
     # @return [true, false] whether or not Discord has precisely counted the votes yet.
     attr_reader :finalised
-    alias finalised? finalised
-    alias finalized? finalised
+    alias :finalised? :finalised
+    alias :finalized? :finalised
 
     # @return [true, false] whether or not users are allowed to vote for multiple answers.
     attr_reader :multiselect
-    alias multiselect? multiselect
+    alias :multiselect? :multiselect
 
     # @return [true, false] whether or not Discord did not fetch the results for the poll.
     #   When this is `true`, the {#finalised?} method will always return a value of `false`,
     #   and {Answer#votes} will always return a value of `0`.
     attr_reader :unknown_results
-    alias unknown_results? unknown_results
+    alias :unknown_results? :unknown_results
 
     # @!visibility private
     def initialize(data, message, bot)
@@ -47,7 +47,6 @@ module Discordrb
       @multiselect = data[:allow_multiselect]
       @closes_at = Time.iso8601(data[:expiry]) if data[:expiry]
       results = data[:results]
-      @unknown_results = results.nil?
       @finalised = results&.[](:is_finalized) || false
       process_answers(data[:answers], results&.[](:answer_counts))
     end
@@ -104,7 +103,7 @@ module Discordrb
       other.is_a?(Poll) ? @message == other.message : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!method default_layout?
     #   @return [true, false] whether or not the poll is using the default layout.
@@ -130,6 +129,10 @@ module Discordrb
 
     # @!visibility private
     def process_answers(answers, counts)
+      # NOTE: we set this value here because we need to update this
+      # state when we update a poll's data in {Message#update_data}.
+      @unknown_results = counts.nil?
+
       @answers = answers.map do |answer|
         count_data = counts&.find { |count| count[:id] == answer[:answer_id] }
 
@@ -214,7 +217,7 @@ module Discordrb
         @message_id == other.message_id && @id == other.id
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -251,7 +254,7 @@ module Discordrb
         @text == other.text && @emoji == other.emoji
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -316,7 +319,7 @@ module Discordrb
         other.is_a?(Result) ? @message_id == other.message_id : false
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def inspect
@@ -349,7 +352,7 @@ module Discordrb
         @answers << { poll_media: { text: text, emoji: emoji }.compact }
       end
 
-      alias_method :add_answer, :answer
+      alias :add_answer :answer
 
       # @!visibility private
       def to_h

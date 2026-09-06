@@ -16,7 +16,7 @@ module Discordrb
 
     # @return [true, false] whether or not the soundboard sound can be used.
     attr_reader :available
-    alias available? available
+    alias :available? :available
 
     # @!visibility private
     def initialize(data, guild, bot)

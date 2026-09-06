@@ -25,7 +25,7 @@ module Discordrb
     # @!method dnd?
     #   @return [true, false] whether or not the user is on do not disturb.
     %i[idle online offline dnd].each do |name|
-      define_method("#{name}?") { @status.to_sym == name }
+      define_method("#{name}?") { @status == name }
     end
 
     # @!visibility private
@@ -42,9 +42,16 @@ module Discordrb
     include Snowflake
     include UserPresence
 
+    # @!visibility private
+    PREDICATES = %i[
+      bot_account
+      system_account
+      webhook_account
+    ].freeze
+
     # Mapping of public flags.
     FLAGS = {
-      staff: 1 << 0,
+      discord_employee: 1 << 0,
       partner: 1 << 1,
       hypesquad_events: 1 << 2,
       bug_hunter: 1 << 3,
@@ -75,30 +82,17 @@ module Discordrb
     # @return [String, nil] the user's non-unique display name.
     attr_reader :global_name
 
-    # @return [true, false] whether or not the user is a bot account.
-    attr_reader :bot_account
-
     # @return [Collectibles] the nameplate and avatar decoration for the user.
     attr_reader :collectibles
 
     # @return [Integer, nil] the 4-digit tag of the bot account.
     attr_reader :discriminator
 
-    # @return [true, false] whether or not the user is an offical Discord account.
-    attr_reader :system_account
-
-    # @return [true, false] whether or not the user is a fake user for a webhook message.
-    attr_reader :webhook_account
-
-    alias_method :bot_account?, :bot_account
-    alias_method :system_account?, :system_account
-    alias_method :webhook_account?, :webhook_account
-
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
       @id = data[:id].to_i
-      @flags = data[:public_flags] || data[:flags] || 0
+      @flags = data[:flags] || data[:public_flags] || 0
       @username = data[:username]
       @avatar = data[:avatar]
       @global_name = data[:global_name]
@@ -114,6 +108,16 @@ module Discordrb
       @client_status = process_client_status(data[:client_status])
     end
 
+    # @!attribute [r] bot_account?
+    #   @return [true, false] whether or not the user is a bot account.
+    # @!attribute [r] system_account?
+    #   @return [true, false] whether or not the user is an offical Discord account.
+    # @!attribute [r] webhook_account?
+    #   @return [true, false] whether or not the user is a fake user for a webhook message.
+    PREDICATES.each do |name|
+      Discordrb.predicate_method(self, name)
+    end
+
     # Get the CDN hash of the user's banner.
     # @param bypass_cache [true, false] Whether to ignore the cached banner data and re-fetch it via HTTP.
     # @return [String, nil] The CDN hash of the user's banner, or `nil` if the user doesn't have a banner image set.
@@ -126,9 +130,12 @@ module Discordrb
     # Utility method to get a user's banner URL.
     # @param format [String] The extension to return the URL in. Can be one of `webp`, `jpg`, or `png`.
     # @param size [Integer, nil] The size of the image. You can specify any number from 0-4096 that's a power of two to override this.
-    # @return [String, nil] The URL to the user's banner, or `nil` if the user doesn't have a banner set.
-    def banner_url(format: 'webp', size: nil)
-      asset = banner(bypass_cache: true)
+    # @param bypass_cache [true, false] Whether to ignore the cached banner hash and re-fetch it via HTTP.
+    # @return [String, nil] The URL to the user's custom banner, or `nil` if the user doesn't have a banner set.
+    def banner_url(
+      format: 'webp', size: nil, bypass_cache: true
+    )
+      asset = banner(bypass_cache: bypass_cache)
 
       Assets[:user_banner, asset, format, size:] if asset
     end
@@ -151,14 +158,24 @@ module Discordrb
       end
     end
 
-    # @!method staff?
-    #   @return [true, false] whether or not the user is a Discord employee.
+    #  ######## ##          ###     ######    ######
+    #  ##       ##         ## ##   ##    ##  ##    ##
+    #  ##       ##        ##   ##  ##        ##
+    #  ######   ##       ##     ## ##   ####  ######
+    #  ##       ##       ######### ##    ##        ##
+    #  ##       ##       ##     ## ##    ##  ##    ##
+    #  ##       ######## ##     ##  ######    ######
+
+    # @!group Flags
+
+    # @!method discord_employee?
+    #   @return [true, false] whether or not the user works for Discord.
     # @!method partner?
-    #   @return [true, false] whether or not the user is a partnered guild owner.
+    #   @return [true, false] whether or not the user owns a partnered guild.
     # @!method hypesquad_events?
     #   @return [true, false] whether or not the user has attended a hypesquad event.
     # @!method bug_hunter?
-    #   @return [true, false] whether or not the user is a bug hunter (green colour).
+    #   @return [true, false] whether or not the user is a bug hunter (green variant).
     # @!method hypesquad_bravery?
     #   @return [true, false] whether or not the user is in the `bravery` hypesquad house.
     # @!method hypesquad_brilliance?
@@ -170,7 +187,7 @@ module Discordrb
     # @!method team_pseudo_user?
     #   @return [true, false] whether or not the user is a developer team.
     # @!method golden_bug_hunter?
-    #   @return [true, false] whether or not the user is a bug hunter (golden colour).
+    #   @return [true, false] whether or not the user is a bug hunter (golden variant).
     # @!method verified_bot?
     #   @return [true, false] whether or not the user is a bot account that has been verified.
     # @!method early_verified_bot_developer?
@@ -182,6 +199,8 @@ module Discordrb
     FLAGS.each do |name, value|
       define_method("#{name}?") { @flags.anybits?(value) }
     end
+
+    # @!endgroup
 
     # Get a string that will mention the user.
     # @return [String] A string that will mention the user.

@@ -16,6 +16,18 @@ module Discordrb
       @avatar_decoration = AvatarDecoration.new(data[:avatar_decoration_data], bot) if data[:avatar_decoration_data]
     end
 
+    # Compare two collectibles for equality.
+    # @param other [Collectibles] The collectibles to compare against.
+    # @return [true, false] Whether or not the collectibles are equal.
+    def ==(other)
+      return false unless other.is_a?(Collectibles)
+
+      @nameplate == other.nameplace &&
+        @avatar_decoration == other.avatar_decoration
+    end
+
+    alias :eql? :==
+
     # @!visibility private
     def to_h
       {
@@ -68,7 +80,7 @@ module Discordrb
         (@asset == other.asset) && (@sku_id == other.sku_id)
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -105,7 +117,7 @@ module Discordrb
       # Utility method to get an avatar decoration URL.
       # @return [String] the URL to the avatar decoration.
       def url
-        Assets[:avatar_decoration, @asset]
+        Assets[:avatar_decoration, @asset, 'png']
       end
 
       # Comparison based off of asset and SKU ID.
@@ -117,7 +129,7 @@ module Discordrb
         (@asset == other.asset) && (@sku_id == other.sku_id)
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h

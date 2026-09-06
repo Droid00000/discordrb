@@ -5,6 +5,7 @@ module Discordrb
   class GuildTemplate
     # @return [String] the code of the template.
     attr_reader :code
+    alias :to_s :code
 
     # @return [String] the name of the template.
     attr_reader :name
@@ -29,8 +30,6 @@ module Discordrb
 
     # @return [SourceGuild] the snapshot of the guild object the template is for.
     attr_reader :guild_snapshot
-
-    alias_method :to_s, :code
 
     # @!visibility private
     def initialize(data, bot)
@@ -61,7 +60,7 @@ module Discordrb
       "https://discord.new/#{@code}"
     end
 
-    alias_method :url, :link
+    alias :url :link
 
     # Sync the guild template to match the source guild.
     # @return [nil]
@@ -93,7 +92,7 @@ module Discordrb
       other.is_a?(GuildTemplate) ? (@guild_id == other.guild_id && @code == other.code) : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def inspect

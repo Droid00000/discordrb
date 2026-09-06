@@ -44,8 +44,8 @@ module Discordrb::Events
       result
     end
 
-    alias_method :send, :send_message
-    alias_method :respond, :send_message
+    alias :send :send_message
+    alias :respond :send_message
   end
 
   # Event raised when a text message is sent to a channel
@@ -143,8 +143,8 @@ module Discordrb::Events
       @bot.voice(@message.channel.guild.id)
     end
 
-    alias_method :user, :author
-    alias_method :text, :content
+    alias :user :author
+    alias :text :content
   end
 
   # Event handler for MessageEvent
@@ -242,7 +242,7 @@ module Discordrb::Events
     # @return [true, false] whether this mention event was raised
     #   due to a mention of the bot's auto-generated role.
     attr_reader :role_mention
-    alias_method :role_mention?, :role_mention
+    alias :role_mention? :role_mention
 
     # @!visibility private
     def initialize(message, bot, role_mention)

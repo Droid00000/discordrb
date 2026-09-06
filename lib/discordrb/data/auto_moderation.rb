@@ -243,7 +243,7 @@ module Discordrb
           @keyword_presets == other.keyword_presets && @exempt_keywords == other.exempt_keywords
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def inspect
@@ -310,7 +310,7 @@ module Discordrb
           @alert_channel_id == other.alert_channel_id && @timeout_duration == other.timeout_duration
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -349,7 +349,7 @@ module Discordrb
           @actions << { type: type.is_a?(Numeric) ? type : Action::TYPES[type.to_sym], metadata: metadata.empty? ? nil : metadata }.compact
         end
 
-        alias_method :add_action, :action
+        alias :add_action :action
 
         # @!visibility private
         def to_a
