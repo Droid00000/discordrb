@@ -98,7 +98,7 @@ module Discordrb
     def initialize(data, bot)
       @bot = bot
       @id = data[:id].to_i
-      @flags = data[:public_flags] || data[:flags] || 0
+      @flags = data[:flags] || data[:public_flags] || 0
       @username = data[:username]
       @avatar = data[:avatar]
       @global_name = data[:global_name]
