@@ -206,9 +206,9 @@ module Discordrb
 
       # Utility method to get a sticker pack's banner URL.
       # @param format [String] The URL will default to `webp`. You can otherwise specify one of `webp`, `jpg` or `png` to override this.
-      # @param size [Integer, nil] The URL will default to `4096`. You can otherwise specify any number that's a power of two to override this.
+      # @param size [Integer, nil] The URL will default to `nil`. You can otherwise specify any number that's a power of two to override this.
       # @return [String, nil] The URL to the sticker pack's banner image, or `nil` if the sticker pack doesn't have an associated banner image.
-      def banner_url(format: 'webp', size: 4096)
+      def banner_url(format: 'webp', size: nil)
         Assets[:sticker_pack_banner, @banner, format, size:] if @banner
       end
 
