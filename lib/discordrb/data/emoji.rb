@@ -55,8 +55,8 @@ module Discordrb
 
     # Get a hash that will allow the emoji to be used in various endpoints.
     # @return [Hash] A hash that will allow the emoji to be sent in polls and buttons.
-    def to_h
-      @id ? { id: @id } : { name: @name }
+    def to_h(prefix: false)
+      Emoji.build_hash(self, prefix: prefix)
     end
 
     # Get the icon URL of the emoji.

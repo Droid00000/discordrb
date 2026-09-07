@@ -277,18 +277,6 @@ module Discordrb
       @role_mentions ||= @mention_roles.filter_map { |item| guild&.role(item) }
     end
 
-    # Get the games that were mentioned in the message.
-    # @return [Array<Integer>] The IDs of the games that were in the message.
-    def games
-      return (@games || []) if @games || !@content || @content.empty?
-
-      list = []
-
-      @content.scan(/<@\$(\d{15,48})>/) { |(game)| list << game.to_i }
-
-      @games = list
-    end
-
     # Get the custom emojis that were used in the message.
     # @return [Array<Emoji>] The custom emojis that were used in the message.
     def emojis
@@ -798,7 +786,6 @@ module Discordrb
 
       if new_data[:content] != @content
         # Reset the data that has been parsed from the message content.
-        @games = nil
         @emojis = nil
         @timestamps = nil
       end
