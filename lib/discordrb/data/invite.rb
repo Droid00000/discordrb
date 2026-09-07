@@ -46,9 +46,6 @@ module Discordrb
     # @return [Time, nil] the time at when the invite was created.
     attr_reader :creation_time
 
-    # @return [Liveliness, nil] the activity metrics of the server for the last 7 days, if any.
-    attr_reader :activity_metrics
-
     # @return [Application, nil] the the embedded application to open the voice channel's invite.
     attr_reader :embedded_application
 
@@ -68,7 +65,6 @@ module Discordrb
       @stream_user = @bot.ensure_user(data[:target_user]) if data[:target_user]
       application = data[:target_application]
       @embedded_application = Application.new(application, @bot) if application
-      @activity_metrics = Liveliness.new(data[:liveliness], @bot) if data[:liveliness]
 
       if data[:channel_id] && resolve
         @channel = @bot.channel(data[:channel_id])
@@ -310,42 +306,6 @@ module Discordrb
       # @return [String, nil] The URL to the role's icon, or `nil` if the role doesn't have a custom icon set.
       def icon_url(format: 'webp', size: nil)
         Assets[:role_icon, @id, @icon, format, size:] if @icon
-      end
-    end
-
-    # The activity metrics for a guild.
-    class Liveliness
-      # @return [Array<Day>] a 7-element array
-      #   representing the activity for each day in the week.
-      attr_reader :days
-
-      # @return [Time, nil] the time at when the
-      #   activity metrics were last re-calculated, or `nil`.
-      attr_reader :updated_at
-
-      # @!visibility private
-      def initialize(data, bot)
-        @bot = bot
-        @updated_at = Time.iso8601(data[:last_updated_ts]) if data[:last_updated_ts]
-        @days = data[:msg_activity_bins]&.each_slice(24)&.map { |day| Day.new(day, @bot) } || []
-      end
-
-      # @!visibility private
-      def inspect
-        "<Liveliness updated_at=\"#{@updated_at || 'nil'}\">"
-      end
-
-      # The activity metrics for a single day.
-      class Day
-        # @return [Hash<Integer => Integer>] a hash mapping
-        #   the hour in the day, to the activity score for the hour.
-        attr_reader :hours
-
-        # @!visibility private
-        def initialize(day, bot)
-          @bot = bot
-          @hours = day.each.with_index(1).to_h { |hour, index| [index, hour] }
-        end
       end
     end
   end
