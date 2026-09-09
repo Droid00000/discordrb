@@ -43,8 +43,8 @@ class Discordrb::Webhooks::View
   }.freeze
 
   # This builder is used when constructing an ActionRow. Button and select menu components must be within an action row, but this can
-  # change in the future. A message can have 10 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
-  # and dropdowns have a weight of 5.
+  #   change in the future. A message can have 10 action rows, each action row can hold a weight of 5. Buttons have a weight of 1,
+  #   and dropdowns have a weight of 5.
   class RowBuilder
     # @!visibility private
     def initialize(id: nil)

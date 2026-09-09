@@ -100,6 +100,44 @@ module Discordrb
       nil
     end
 
+    # Add 1-1000 target users to the invite.
+    # @param users [Array<User, Member, Integer, String>] the users to add.
+    # @return [nil]
+    def add_target_users(users)
+      user_ids = [*users].tap { |array| array.map!(&:resolve_id) }
+
+      unless user_ids.length.between?(1, 1000)
+        raise ArgumentError, "'users' must be between 1-1000 in length"
+      end
+
+      if user_ids.one?
+        @bot.http.add_invite_target_user(@code, user_ids[0])
+      else
+        @bot.http.bulk_add_invite_target_users(@code, user_ids: user_ids)
+      end
+
+      nil
+    end
+
+    # Remove 1-1000 target users from the invite.
+    # @param users [Array<User, Member, Integer, String>] the users to remove.
+    # @return [nil]
+    def remove_target_users(users)
+      user_ids = [*users].tap { |array| array.map!(&:resolve_id) }
+
+      unless user_ids.length.between?(1, 1000)
+        raise ArgumentError, "'users' must be between 1-1000 in length"
+      end
+
+      if user_ids.one?
+        @bot.http.remove_invite_target_user(@code, user_ids[0])
+      else
+        @bot.http.bulk_remove_invite_target_users(@code, user_ids: user_ids)
+      end
+
+      nil
+    end
+
     # @!visibility private
     def inspect
       "<Invite type=#{@type} code=\"#{@code}\" creator_id=#{@creator&.id || 'nil'}>"

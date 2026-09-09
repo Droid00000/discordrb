@@ -32,5 +32,29 @@ module Discordrb::HTTP
       request Route[:GET, "/invites/#{invite_code}/target-users/job-status"],
               params: filter_undef(params)
     end
+
+    # @see https://docs.discord.com/developers/resources/invite#bulk-add-invite-target-users
+    def bulk_add_invite_target_users(invite_code, **body)
+      request Route[:POST, "/invites/#{invite_code}/target-users/bulk-add"],
+              body: filter_undef(body)
+    end
+
+    # @see https://docs.discord.com/developers/resources/invite#bulk-remove-invite-target-users
+    def bulk_remove_invite_target_users(invite_code, **body)
+      request Route[:POST, "/invites/#{invite_code}/target-users/bulk-delete"],
+              body: filter_undef(body)
+    end
+
+    # @see https://docs.discord.com/developers/resources/invite#add-invite-target-user
+    def add_invite_target_user(invite_code, user_id, **body)
+      request Route[:PUT, "/invites/#{invite_code}/target-users/#{user_id}"],
+              body: filter_undef(body)
+    end
+
+    # @see https://docs.discord.com/developers/resources/invite#remove-invite-target-user
+    def remove_invite_target_user(invite_code, user_id, **body)
+      request Route[:DELETE, "/invites/#{invite_code}/target-users/#{user_id}"],
+              body: filter_undef(body)
+    end
   end
 end

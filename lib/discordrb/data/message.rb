@@ -487,7 +487,7 @@ module Discordrb
 
     # Convert the message into a hash that can be used to reference the message in a forward or a reply.
     # @param type [Integer, Symbol] The reference type to set. Can either be one of `:reply` or `:forward`.
-    # @param must_exist [true, false] Whether to raise an error if this message was deleted when sending it.
+    # @param must_exist [true, false] Whether to raise an error if the message was deleted when sending it.
     # @return [Hash] The message as a hash representation that can be used in a forwarded message or a reply.
     def to_reference(type: :reply, must_exist: true)
       type = type.is_a?(Numeric) ? type : Message::Reference::TYPES[type.to_sym]
