@@ -22,9 +22,17 @@ module Discordrb::HTTP
     end
 
     # @see https://docs.discord.com/developers/resources/invite#update-target-users
-    def update_invite_target_users(invite_code, target_users)
+    def update_invite_target_users(invite_code, target_users_file)
+      body = {
+        target_users_file: Faraday::Multipart::FilePart.new(
+          target_users_file,
+          'text/csv',
+          'target_users_file.csv'
+        )
+      }
+
       request Route[:PUT, "/invites/#{invite_code}/target-users"],
-              body: target_users
+              body: body
     end
 
     # @see https://docs.discord.com/developers/resources/invite#get-target-users-job-status

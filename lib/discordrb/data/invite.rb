@@ -100,11 +100,23 @@ module Discordrb
       nil
     end
 
+    # Replace the target users for the invite.
+    # @param users [Array<User, Member, Integer, String>] the users to set.
+    # @return [nil]
+    def set_target_users(users)
+      user_ids = [*users].tap { |list| list.map!(&:resolve_id) }
+
+      target_users_file = StringIO.new(user_ids.join("\n"), 'rb')
+
+      @bot.http.update_invite_target_users(@code, target_users_file)
+      nil
+    end
+
     # Add 1-1000 target users to the invite.
     # @param users [Array<User, Member, Integer, String>] the users to add.
     # @return [nil]
     def add_target_users(users)
-      user_ids = [*users].tap { |array| array.map!(&:resolve_id) }
+      user_ids = [*users].tap { |list| list.map!(&:resolve_id) }
 
       unless user_ids.length.between?(1, 1000)
         raise ArgumentError, "'users' must be between 1-1000 in length"
@@ -123,7 +135,7 @@ module Discordrb
     # @param users [Array<User, Member, Integer, String>] the users to remove.
     # @return [nil]
     def remove_target_users(users)
-      user_ids = [*users].tap { |array| array.map!(&:resolve_id) }
+      user_ids = [*users].tap { |list| list.map!(&:resolve_id) }
 
       unless user_ids.length.between?(1, 1000)
         raise ArgumentError, "'users' must be between 1-1000 in length"
