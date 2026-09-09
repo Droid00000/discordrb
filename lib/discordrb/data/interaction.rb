@@ -123,7 +123,7 @@ module Discordrb
       @context = data[:context]
       @max_attachment_size = data[:attachment_size_limit]
       @guild_features = data[:guild] ? data[:guild][:features]&.map(&:to_sym) : []
-      @integration_owners = data[:authorizing_integration_owners]&.transform_values(&:to_i)
+      @integration_owners = data[:authorizing_integration_owners]&.tap { |hash| hash.transform_values!(&:to_i) }
     end
 
     # Respond to the creation of this interaction. An interaction must be responded to or deferred,
@@ -731,7 +731,7 @@ module Discordrb
         @triggering_metadata = Metadata.new(data[:triggering_interaction_metadata], @message, @bot) if data[:triggering_interaction_metadata]
         @interacted_message_id = data[:interacted_message_id]&.to_i
         @original_response_message_id = data[:original_response_message_id]&.to_i
-        @integration_owners = data[:authorizing_integration_owners]&.transform_values(&:to_i)
+        @integration_owners = data[:authorizing_integration_owners]&.tap { |hash| hash.transform_values!(&:to_i) }
       end
 
       # Check if the interaction was triggered by a user by installed the application.
