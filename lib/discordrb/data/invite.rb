@@ -140,7 +140,7 @@ module Discordrb
 
     # @!visibility private
     def inspect
-      "<Invite type=#{@type} code=\"#{@code}\" creator_id=#{@creator&.id || 'nil'}>"
+      "<Invite type=#{@type} code=\"#{@code}\" creator=#{@creator&.id || 'nil'}>"
     end
 
     # A partial guild for an invite.
