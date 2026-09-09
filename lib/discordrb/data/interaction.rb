@@ -44,57 +44,56 @@ module Discordrb
       user: 1
     }.freeze
 
-    # @return [User, Member] The user that initiated the interaction.
-    attr_reader :user
-
-    # @return [Integer, nil] The ID of the guild this interaction originates from.
-    attr_reader :guild_id
-
-    # @return [Integer] The ID of the channel this interaction originates from.
-    attr_reader :channel_id
-
-    # @return [Channel] The channel where this interaction originates from.
-    attr_reader :channel
-
-    # @return [Integer] The ID of the application associated with this interaction.
-    attr_reader :application_id
-
-    # @return [String] The interaction token.
-    attr_reader :token
-
-    # @!visibility private
-    # @return [Integer] Currently pointless
-    attr_reader :version
-
-    # @return [Integer] The type of this interaction.
+    # @return [Integer] the type of the interaction.
     # @see TYPES
     attr_reader :type
 
-    # @return [Hash] The interaction data.
+    # @return [User, Member] the user that initiated the interaction.
+    attr_reader :user
+
+    # @return [Integer, nil] the ID of the guild the interaction originates from.
+    attr_reader :guild_id
+
+    # @return [Integer] the ID of the channel the interaction originates from.
+    attr_reader :channel_id
+
+    # @return [Channel] the channel where the interaction originates from.
+    attr_reader :channel
+
+    # @return [Integer] the ID of the application associated with the interaction.
+    attr_reader :application_id
+
+    # @return [String] the interaction token.
+    attr_reader :token
+
+    # @return [Integer] the version of the interaction. Currently always `1`.
+    attr_reader :version
+
+    # @return [Hash] the inner `data` of the interaction.
     attr_reader :data
 
-    # @return [Interactions::Message, nil] The message associated with this interaction.
+    # @return [Interactions::Message, nil] the message associated with the interaction.
     attr_reader :message
 
-    # @return [Array<ActionRow>] The modal components associated with this interaction.
+    # @return [Array<ActionRow>] the modal components associated with the interaction.
     attr_reader :components
 
-    # @return [Permissions] The permissions the application has where this interaction originates from.
+    # @return [Permissions] the permissions that the application has where the interaction originates from.
     attr_reader :application_permissions
 
-    # @return [String] The selected language of the user that initiated this interaction.
+    # @return [String] the selected language of the user that initiated the interaction.
     attr_reader :user_locale
 
-    # @return [String, nil] The selected language of the guild this interaction originates from.
+    # @return [String, nil] the selected language of the guild the interaction originates from.
     attr_reader :guild_locale
 
-    # @return [Integer] The context of where this interaction was initiated from.
+    # @return [Integer] the context of where the interaction was initiated from.
     attr_reader :context
 
-    # @return [Integer] The maximum number of bytes an attachment can have when responding to this interaction.
+    # @return [Integer] the maximum number of bytes an attachment can have when responding to the interaction.
     attr_reader :max_attachment_size
 
-    # @return [Array<Symbol>] The features of the guild where this interaction was initiated from.
+    # @return [Array<Symbol>] the features of the guild where the interaction was initiated from.
     attr_reader :guild_features
 
     # @!visibility private
