@@ -3,7 +3,7 @@
 module Discordrb
   # A reaction on a message.
   class Reaction
-    # Mapping of types.
+    # Mapping of reaction types.
     TYPES = {
       normal: 0,
       burst: 1
@@ -12,8 +12,8 @@ module Discordrb
     # @return [Emoji] the emoji of the reaction.
     attr_reader :emoji
 
-    # @return [Integer] the total number of reactions for the emoji,
-    #   including super reactions and regular reactions.
+    # @return [Integer] the total number of reactions for the emoji, this
+    #   includes super reactions **and** regular reactions.
     attr_reader :total_count
 
     # @return [Integer] the total number of super reactions for the emoji.
@@ -25,7 +25,7 @@ module Discordrb
     # @return [Array<Color>] the colors associated with the super reaction.
     attr_reader :burst_colors
 
-    # @return [Integer] the total number of non-super reactions for the emoji.
+    # @return [Integer] the total number of standard reactions for the emoji.
     attr_reader :standard_count
 
     alias_method :current_bot?, :current_bot
@@ -57,14 +57,14 @@ module Discordrb
     # @return [Array<User>] The users for the reaction.
     # @see Message#reacted_with
     def users(**)
-      @message.reacted_with(emoji: @emoji, **)
+      @message.reacted_with(**, emoji: @emoji)
     end
 
     # Delete the reactions that are associated with the emoji.
     # @return [nil]
     # @see Message#delete_reactions
     def remove(**)
-      @message.remove_reaction(emoji: @emoji, **)
+      @message.remove_reaction(**, emoji: @emoji)
     end
 
     alias_method :delete, :remove

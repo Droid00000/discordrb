@@ -126,7 +126,7 @@ module Discordrb
     # @param banner [#read, File, nil] The new guild banner to set for the current bot. Should be a file-like object.
     # @param bio [String, nil] The new 1-300 character guild specific bio to set for the current bot.
     # @param suppressed [true, false] Whether or not the member should be suppressed in the stage channel.
-    # @param request_to_speak [true, false] Whether or not the current bot is requesting to speak in the stage channel.
+    # @param request_to_speak [true, false] Whether or not the current bot should request to speak in the stage channel.
     # @param reason [String, nil] The reason to show in the guild's audit log for modifying the member.
     # @return [nil]
     def modify(
@@ -160,10 +160,6 @@ module Discordrb
       end
 
       if suppressed != :undef || request_to_speak != :undef
-        unless self.voice_channel&.stage?
-          raise ArgumentError, 'The member must be connected to a stage channel'
-        end
-
         stage_data = {
           suppress: suppressed,
           channel_id: self.voice_channel.resolve_id
