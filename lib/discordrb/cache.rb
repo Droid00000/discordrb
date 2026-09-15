@@ -227,7 +227,7 @@ module Discordrb
               []
             else
               shard += 1
-              get_guilds.call(shard: shard)
+              get_guilds.call(shard: shard, cursor: nil)
             end
           else
             get_guilds.call(cursor: last_page&.last&.id, shard: shard)
