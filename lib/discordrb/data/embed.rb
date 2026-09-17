@@ -50,6 +50,9 @@ module Discordrb
     # @return [Array<EmbedField>] the fields of the embed object.
     attr_reader :fields
 
+    # @return [Array<Component>] the components used to render the embed.
+    attr_reader :components
+
     # @!visibility private
     def initialize(data, bot)
       @bot = bot
@@ -67,6 +70,7 @@ module Discordrb
       @thumbnail = EmbedThumbnail.new(data[:thumbnail], @bot) if data[:thumbnail]
       @author = EmbedAuthor.new(data[:author], @bot) if data[:author]
       @fields = data[:fields]&.map { |field| EmbedField.new(field, @bot) } || []
+      @components = data[:components]&.filter_map { |item| Components.from_data(item, @bot) } || []
     end
 
     # @!visibility private
