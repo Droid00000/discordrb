@@ -16,6 +16,18 @@ module Discordrb
       @avatar_decoration = AvatarDecoration.new(data[:avatar_decoration_data], bot) if data[:avatar_decoration_data]
     end
 
+    # Compare two collectibles for equality.
+    # @param other [Collectibles] The collectibles to compare against.
+    # @return [true, false] Whether or not the collectibles are equal.
+    def ==(other)
+      return false unless other.is_a?(Collectibles)
+
+      @nameplate == other.nameplace &&
+        @avatar_decoration == other.avatar_decoration
+    end
+
+    alias_method :eql?, :==
+
     # @!visibility private
     def to_h
       {
