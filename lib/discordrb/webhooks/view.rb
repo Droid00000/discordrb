@@ -372,15 +372,15 @@ class Discordrb::Webhooks::View
   class ContainerBuilder
     # Create a container component.
     # @param id [Integer, nil] The unique 32-bit ID of the container component.
-    # @param colour [Array, Integer, String, Color, nil] The accent colour of the container
-    #   component. This argument can be passed via the American spelling (`color:`) as well.
+    # @param color [Array, Integer, String, Color, nil] The accent color of the container
+    #   component. This argument can be passed via the British spelling (`colour:`) as well.
     # @param spoiler [true, false] Whether or not to apply a spoiler label to the container component.
     # @yieldparam builder [ContainerBuilder] Yields the initialized container component.
     def initialize(id: nil, color: nil, colour: nil, spoiler: false)
       @id = id
       @spoiler = spoiler
       @components = []
-      self.colour = (colour || color)
+      self.color = (color || colour)
 
       yield self if block_given?
     end
@@ -424,23 +424,23 @@ class Discordrb::Webhooks::View
     end
 
     # Set the color of the container.
-    # @param colour [Array, Integer, String, Color, nil] The accent colour of the container component, or `nil` to clear the accent colour.
-    def colour=(colour)
-      @colour = case colour
-                when Array
-                  (colour[0] << 16) | (colour[1] << 8) | colour[2]
-                when String
-                  colour.delete('#').to_i(16)
-                else
-                  colour&.to_i
-                end
+    # @param color [Array, Integer, String, Color, nil] The accent color of the container component, or `nil` to clear the accent color.
+    def color=(color)
+      @color = case color
+               when Array
+                 (color[0] << 16) | (color[1] << 8) | color[2]
+               when String
+                 color.delete_prefix('#').to_i(16)
+               else
+                 color&.to_i
+               end
     end
 
-    alias_method :color=, :colour=
+    alias_method :colour=, :color=
 
     # @!visibility private
     def to_h
-      { type: COMPONENT_TYPES[:container], id: @id, accent_color: @colour, spoiler: @spoiler, components: @components.map(&:to_h) }.compact
+      { type: COMPONENT_TYPES[:container], id: @id, accent_color: @color, spoiler: @spoiler, components: @components.map(&:to_h) }.compact
     end
   end
 

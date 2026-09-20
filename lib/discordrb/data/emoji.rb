@@ -59,6 +59,12 @@ module Discordrb
       Emoji.build_hash(self, prefix: prefix)
     end
 
+    # Get a string that will allow the emoji to be sent in a message.
+    # @return [String] A string that can be used to send the emoji in a message.
+    def mention
+      @id ? "<#{'a' if @animated}:#{@name}:#{@id}>" : @name
+    end
+
     # Get the icon URL of the emoji.
     # @param format [String, nil] The URL will default to `webp`. You can otherwise
     #   specifiy one of `png`, 'gif', or `jpeg` to override this.
@@ -66,13 +72,7 @@ module Discordrb
     #   number between 1-4096 that's a power of two.
     # @return [String, nil] The icon URL, or `nil` if the emoji is not a custom emoji.
     def url(format: 'webp', size: nil)
-      Assets[:custom_emoji, @id, format, size:] if @id
-    end
-
-    # Get a string that will allow the emoji to be sent in a message.
-    # @return [String] A string that can be used to send the emoji in a message.
-    def mention
-      @id ? "<#{'a' if @animated}:#{@name}:#{@id}>" : @name
+      Assets[:custom_emoji, @id, format, size:, animated:] if @id
     end
 
     # Check if the emoji is equivalent to another emoji.
