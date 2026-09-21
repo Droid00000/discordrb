@@ -6,6 +6,14 @@ module Discordrb
     # Zlib boundary used for separating messages split across multiple frames.
     ZLIB_SUFFIX = "\x00\x00\xFF\xFF".b.freeze
 
+    # Whether or not the zstd algorithim can be used for decompressing messages.
+    begin
+      require 'zstd-ruby'
+      ZSTANDARD_AVAILABLE = true
+    rescue LoadError
+      ZSTANDARD_AVAILABLE = false
+    end
+
     # @return [String] the URL of the connection to use.
     attr_reader :url
 
@@ -24,9 +32,17 @@ module Discordrb
       @ssl = OpenSSL::SSL::SSLSocket.new(tcp, ssl)
       @ssl.sync_close = true
 
-      @websocket = ::WebSocket::Driver.client(self)
       @compression_mode = compression
-      @zlib = Zlib::Inflate.new if @compression_mode != :none
+      @websocket = ::WebSocket::Driver.client(self)
+
+      if @compression_mode == :stream
+        if ZSTANDARD_AVAILABLE == false
+          @zlib = Zlib::Inflate.new
+        else
+          @buffer = +''
+          @zstd = Zstd::StreamingDecompress.new
+        end
+      end
     rescue ::SocketError => e
       raise(e) unless should_retry
 
@@ -95,7 +111,24 @@ module Discordrb
 
     # @!visibility private
     def handle_message(message)
-      if @zlib
+      if @zstd
+        output = +''
+        @buffer << message
+
+        loop do
+          chunk, consumed = @zstd.decompress_with_pos(@buffer)
+          output << chunk
+
+          if consumed.positive?
+            @buffer = (@buffer.byteslice(consumed..-1) || +'')
+            next
+          end
+
+          break
+        end
+
+        output.empty? ? return : (message = output)
+      elsif @zlib
         case @compression_mode
         when :large
           message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'

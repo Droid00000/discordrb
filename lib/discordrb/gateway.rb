@@ -51,7 +51,7 @@ module Discordrb
       @reconnect_seconds = 4
       @check_heartbeats = true
       @should_reconnect = Queue.new
-      @compression = (compression || :large)
+      @compression = compression || :large
     end
 
     # Block execution until the gateway permanently closes.
@@ -178,8 +178,12 @@ module Discordrb
         params = {
           v: VERSION,
           encoding: :json,
-          compress: ('zlib-stream' if @compression == :stream)
+          compress: ('zlib-stream' if @compression == :large)
         }
+
+        if Websocket::ZSTANDARD_AVAILABLE
+          params[:compress] = 'zstd-stream'
+        end
 
         @query_params = URI.encode_www_form(params.compact)
       end
