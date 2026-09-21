@@ -101,13 +101,12 @@ module Discordrb
 
     # Send the presence update event to the gateway.
     # @return [true, false, nil] Whether or not the event was successfully sent.
-    def modify_presence(
-      status:, activities: [], **rest
-    )
+    def modify_presence(status:, activities: [])
       options = {
+        since: 0,
+        afk: false,
         status: status.to_s,
-        activities: activities&.to_a,
-        **rest
+        activities: activities&.to_a
       }
 
       send_command(OPCODES[:presence_update], options)
@@ -116,14 +115,13 @@ module Discordrb
     # Send the update voice state event to the gateway.
     # @return [true, false, nil] Whether or not the event was successfully sent.
     def modify_voice_state(
-      guild:, channel:, mute: false, deaf: false, **rest
+      guild:, channel:, mute: false, deaf: false
     )
       options = {
         self_mute: mute,
         self_deaf: deaf,
         guild_id: guild.resolve_id,
-        channel_id: channel&.resolve_id,
-        **rest
+        channel_id: channel&.resolve_id
       }
 
       send_command(OPCODES[:voice_state_update], options)
@@ -144,7 +142,7 @@ module Discordrb
     # @return [true, false, nil] Whether or not the event was successfully sent.
     def request_guild_members(
       guild:, query: nil, limit: nil, presences: nil,
-      users: nil, nonce: nil, **rest
+      users: nil, nonce: nil
     )
       options = {
         nonce: nonce,
@@ -152,8 +150,7 @@ module Discordrb
         limit: limit,
         presences: presences,
         guild_id: guild.resolve_id,
-        user_ids: users ? [*users].map(&:resolve_id) : users,
-        **rest
+        user_ids: users ? [*users].map(&:resolve_id) : users
       }.compact
 
       send_command(OPCODES[:request_guild_members], options)
