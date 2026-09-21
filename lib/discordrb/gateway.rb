@@ -181,7 +181,7 @@ module Discordrb
           compress: ('zlib-stream' if @compression == :large)
         }
 
-        if Websocket::ZSTANDARD_AVAILABLE
+        if WebSocket::ZSTANDARD_AVAILABLE
           params[:compress] = 'zstd-stream'
         end
 
