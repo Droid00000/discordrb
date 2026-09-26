@@ -177,12 +177,15 @@ module Discordrb
       unless @query_params
         params = {
           v: VERSION,
-          encoding: :json,
-          compress: ('zlib-stream' if @compression == :large)
+          encoding: :json
         }
 
-        if WebSocket::ZSTANDARD_AVAILABLE
-          params[:compress] = 'zstd-stream'
+        if @compression == :stream
+          params[:compress] = if WebSocket::ZSTD_AVAILABLE
+                                'zstd-stream'
+                              else
+                                'zlib-stream'
+                              end
         end
 
         @query_params = URI.encode_www_form(params.compact)

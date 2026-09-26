@@ -9,9 +9,9 @@ module Discordrb
     # Whether or not the zstd algorithim can be used for decompressing messages.
     begin
       require 'zstd-ruby'
-      ZSTANDARD_AVAILABLE = true
+      ZSTD_AVAILABLE = true
     rescue LoadError
-      ZSTANDARD_AVAILABLE = false
+      ZSTD_AVAILABLE = false
     end
 
     # @return [String] the URL of the connection to use.
@@ -36,7 +36,7 @@ module Discordrb
       @websocket = ::WebSocket::Driver.client(self)
 
       if @compression == :stream
-        if ZSTANDARD_AVAILABLE == false
+        if ZSTD_AVAILABLE == false
           @zlib = Zlib::Inflate.new
         else
           @buffer = +''
@@ -109,7 +109,7 @@ module Discordrb
 
     private
 
-    if ZSTANDARD_AVAILABLE
+    if ZSTD_AVAILABLE
       # @!visibility private
       def handle_message(message)
         if @zstd
