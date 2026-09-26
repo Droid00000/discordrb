@@ -32,10 +32,10 @@ module Discordrb
       @ssl = OpenSSL::SSL::SSLSocket.new(tcp, ssl)
       @ssl.sync_close = true
 
-      @compression_mode = compression
+      @compression = compression
       @websocket = ::WebSocket::Driver.client(self)
 
-      if @compression_mode == :stream
+      if @compression == :stream
         if ZSTANDARD_AVAILABLE == false
           @zlib = Zlib::Inflate.new
         else
@@ -109,36 +109,53 @@ module Discordrb
 
     private
 
-    # @!visibility private
-    def handle_message(message)
-      if @zstd
-        output = +''
-        @buffer << message
+    if ZSTANDARD_AVAILABLE
+      # @!visibility private
+      def handle_message(message)
+        if @zstd
+          output = +''
+          @buffer << message
 
-        loop do
-          chunk, consumed = @zstd.decompress_with_pos(@buffer)
-          output << chunk
+          loop do
+            chunk, consumed = @zstd.decompress_with_pos(@buffer)
+            output << chunk
 
-          if consumed.positive?
-            @buffer = (@buffer.byteslice(consumed..-1) || +'')
-            next
+            if consumed.positive?
+              @buffer = (@buffer.byteslice(consumed..-1) || +'')
+              next
+            end
+
+            break
           end
 
-          break
+          output.empty? ? return : (message = output)
+        elsif @zlib
+          case @compression
+          when :large
+            message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
+          when :stream
+            @zlib << message
+            message.end_with?(ZLIB_SUFFIX) ? (message = @zlib.inflate('')) : return
+          end
         end
 
-        output.empty? ? return : (message = output)
-      elsif @zlib
-        case @compression_mode
-        when :large
-          message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
-        when :stream
-          @zlib << message
-          message.end_with?(ZLIB_SUFFIX) ? (message = @zlib.inflate('')) : return
-        end
+        @gateway.notify_message(message)
       end
+    else
+      # @!visibility private
+      def handle_message(message)
+        if @zlib
+          case @compression
+          when :large
+            message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
+          when :stream
+            @zlib << message
+            message.end_with?(ZLIB_SUFFIX) ? (message = @zlib.inflate('')) : return
+          end
+        end
 
-      @gateway.notify_message(message)
+        @gateway.notify_message(message)
+      end
     end
 
     # @!visibility private
