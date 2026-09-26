@@ -188,7 +188,7 @@ module Discordrb
                               end
         end
 
-        @query_params = URI.encode_www_form(params.compact)
+        @query_params = URI.encode_www_form(params)
       end
 
       "#{(@session&.resume_url || BASE_URL)}?#{@query_params}"
