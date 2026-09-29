@@ -772,8 +772,8 @@ module Discordrb
     # @option attributes [String, Regexp] :matched_content Matches the substring that triggered that triggered the auto moderation rule.
     # @option attributes [String, Regexp] :matched_keyword Matches the configured word or phrase that triggered the auto moderation rule.
     # @yield The block is executed when the event is raised.
-    # @yieldparam event [AutoModActionEvent] The event that was raised.
-    # @return [AutoModActionEventHandler] The event handler that was registered.
+    # @yieldparam event [AutoModRuleExecutionEvent] The event that was raised.
+    # @return [AutoModRuleExecutionEventHandler] The event handler that was registered.
     def automod_rule_execution(attributes = {}, &block)
       register_event(AutoModRuleExecutionEvent, attributes, block)
     end
