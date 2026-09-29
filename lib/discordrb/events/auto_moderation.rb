@@ -182,7 +182,7 @@ module Discordrb::Events
     # @!visibility private
     def matches?(event)
       # Check for the proper event type.
-      return false unless event.is_a?(AutoModActionEvent)
+      return false unless event.is_a?(AutoModRuleExecutionEvent)
 
       [
         matches_all(@attributes[:content], event.content) do |a, e|
