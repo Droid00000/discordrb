@@ -1604,7 +1604,7 @@ module Discordrb
         event = AutoModRuleDeleteEvent.new(data, self)
         raise_event(event)
       when :AUTO_MODERATION_ACTION_EXECUTION
-        event = AutoModActionEvent.new(data, self)
+        event = AutoModRuleExecutionEvent.new(data, self)
         raise_event(event)
       when :MESSAGE_POLL_VOTE_ADD
         event = PollVoteAddEvent.new(data, self)
