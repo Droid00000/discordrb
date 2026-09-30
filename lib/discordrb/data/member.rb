@@ -475,6 +475,7 @@ module Discordrb
       bot_account?
       creation_time
       verified_bot?
+      system_account?
       webhook_account?
     ]
 
@@ -524,8 +525,18 @@ module Discordrb
     #
     # @!method verified_bot?
     #   Check if the member is a bot account that has been verified.
-    #   # @return [true, false] Whethero nor the bot account has been verified.
-    #   # @see User#verified_bot
+    #   # @return [true, false] Whether or not the bot account has been verified.
+    #   # @see User#verified_bot?
+    #
+    # @!method system_account?
+    #   Check if the member is an official system account from Discord.
+    #   # @return [true, false] Whether or not the member is an offical system account.
+    #   # @see User#system_account?
+    #
+    # @!method webhook_account?
+    #   Check if the member is a fake user for a message sent via a webhook.
+    #   # @return [true, false] Whether or not the member is a fake user for a webhook.
+    #   # @see User#webhook_account?
     names.each do |name|
       define_method(name) { @user.public_send(name) }
     end

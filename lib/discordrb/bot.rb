@@ -122,7 +122,7 @@ module Discordrb
       @shard_key = num_shards ? [shard_id, num_shards] : nil
 
       if token.nil? || token.empty?
-        raise ArgumentError, "'token' cannot be empty or nil'"
+        raise ArgumentError, "'token' cannot be empty or nil"
       end
 
       intents = case intents
@@ -1744,7 +1744,7 @@ module Discordrb
 
     # @!visibility private
     def calculate_intents(intents)
-      intents = [intents] unless intents.is_a? Array
+      intents = [intents] unless intents.is_a?(Array)
 
       intents.reduce(0) do |sum, intent|
         case intent
