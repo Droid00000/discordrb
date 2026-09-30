@@ -43,7 +43,7 @@ module Discordrb
     include UserPresence
 
     # @!visibility private
-    PREIDCATES = %i[
+    PREDICATES = %i[
       bot_account
       system_account
       webhook_account
