@@ -16,10 +16,7 @@ module Discordrb
     # @param value [String, Integer] The color combined as an integer
     #   or a hexadecimal string.
     def initialize(value)
-      @red = nil
-      @blue = nil
-      @green = nil
-      @combined = value.is_a?(Numeric) ? value : value.delete_prefix('#').to_i(16)
+      @combined = value.is_a?(Numeric) ? value : value.delete('#').to_i(16)
     end
 
     # Convert the color to its hexadecimal form.
@@ -31,19 +28,19 @@ module Discordrb
     # Get the blue part of the color.
     # @return [Integer] the blue part of the color (0-255).
     def blue
-      @blue ||= (@combined & 0xFF)
+      @combined & 0xFF
     end
 
     # Get the red part of the color.
     # @return [Integer] the red part of the color (0-255).
     def red
-      @red ||= ((@combined >> 16) & 0xFF)
+      (@combined >> 16) & 0xFF
     end
 
     # Get the green part of the color.
     # @return [Integer] the green part of the color (0-255).
     def green
-      @green ||= ((@combined >> 8) & 0xFF)
+      (@combined >> 8) & 0xFF
     end
 
     # Check if two color objects are equivalent.
