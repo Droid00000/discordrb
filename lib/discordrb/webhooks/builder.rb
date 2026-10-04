@@ -83,7 +83,7 @@ module Discordrb::Webhooks
       poll
     end
 
-    alias_method :poll, :add_poll
+    alias :poll :add_poll
 
     # Convenience method to add a shared theme using a builder pattern.
     # @example Add a client theme to a message.
@@ -101,7 +101,7 @@ module Discordrb::Webhooks
       theme
     end
 
-    alias_method :client_theme, :add_client_theme
+    alias :client_theme :add_client_theme
 
     # @return [File, nil] the file attached to this message.
     attr_reader :file

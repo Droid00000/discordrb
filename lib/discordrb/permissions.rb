@@ -76,7 +76,7 @@ module Discordrb
 
     # @return [Integer] the raw bitfield representing the permissions.
     attr_reader :bits
-    alias_method :to_i, :bits
+    alias :to_i :bits
 
     # Create a new permissions object.
     # @example Create a new permissions object for a list of specific permissions.
@@ -100,8 +100,8 @@ module Discordrb
       define_method("#{name}?") { @bits.anybits?(mask) }
     end
 
-    alias_method :administrate?, :administrator?
-    alias_method :administrate=, :administrator=
+    alias :administrate? :administrator?
+    alias :administrate= :administrator=
 
     # Compare two permission objects based off of their bitfield.
     # @param other [Permissions, Object] The permissions object to compare this one against.
@@ -110,7 +110,7 @@ module Discordrb
       other.is_a?(Permissions) ? (@bits == other.bits) : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # Return the corresponding bitfield for an array of permission symbols.
     # @example Get the bits for permissions that could send voice messages and manage channels.
@@ -458,7 +458,7 @@ module Discordrb
       end
     end
 
-    alias_method :can_administrate?, :can_administrator?
+    alias :can_administrate? :can_administrator?
 
     private
 

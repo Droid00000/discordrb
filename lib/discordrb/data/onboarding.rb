@@ -132,7 +132,7 @@ module Discordrb
       other.is_a?(Onboarding) ? @guild.id == other.guild.id : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def to_h
@@ -473,7 +473,7 @@ module Discordrb
     class OptionBuilder
       # @!visibility private
       attr_reader :options
-      alias_method :to_a, :options
+      alias :to_a :options
 
       # @!visibility private
       def initialize(guild)

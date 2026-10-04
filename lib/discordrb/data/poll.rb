@@ -103,7 +103,7 @@ module Discordrb
       other.is_a?(Poll) ? @message == other.message : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!method default_layout?
     #   @return [true, false] whether or not the poll is using the default layout.
@@ -217,7 +217,7 @@ module Discordrb
         @message_id == other.message_id && @id == other.id
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -254,7 +254,7 @@ module Discordrb
         @text == other.text && @emoji == other.emoji
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -319,7 +319,7 @@ module Discordrb
         other.is_a?(Result) ? @message_id == other.message_id : false
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def inspect
@@ -352,7 +352,7 @@ module Discordrb
         @answers << { poll_media: { text: text, emoji: emoji }.compact }
       end
 
-      alias_method :add_answer, :answer
+      alias :add_answer :answer
 
       # @!visibility private
       def to_h

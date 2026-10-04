@@ -84,9 +84,9 @@ module Discordrb
       @id ? Discordrb.id_compare?(@id, other) : @name == other.name
     end
 
-    alias_method :eql?, :==
-    alias_method :use, :mention
-    alias_method :to_s, :mention
+    alias :eql? :==
+    alias :use :mention
+    alias :to_s :mention
 
     # Get the user who uploaded the emoji to the guild, or to the application.
     # @return [User, nil] The uploader of the emoji, or `nil` if it couldn't be resolved.

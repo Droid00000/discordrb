@@ -28,8 +28,8 @@ module Discordrb
     # @return [Integer] the total number of standard reactions for the emoji.
     attr_reader :standard_count
 
-    alias_method :current_bot?, :current_bot
-    alias_method :burst_colours, :burst_colors
+    alias :current_bot? :current_bot
+    alias :burst_colours :burst_colors
 
     # @!visibility private
     def initialize(data, message, bot)
@@ -67,7 +67,7 @@ module Discordrb
       @message.remove_reaction(**, emoji: @emoji)
     end
 
-    alias_method :delete, :remove
-    alias_method :to_reaction, :to_s
+    alias :delete :remove
+    alias :to_reaction :to_s
   end
 end

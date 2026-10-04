@@ -192,7 +192,7 @@ module Discordrb
       wait ? Message.new(response, @bot) : nil
     end
 
-    alias_method :execute, :send_message
+    alias :execute :send_message
 
     # Edit a message that was sent by the webhook.
     # @param message [Message, Integer, String] The message that should be edited.

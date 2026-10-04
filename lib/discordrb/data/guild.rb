@@ -315,8 +315,8 @@ module Discordrb
       nil
     end
 
-    alias_method :jump_url, :jump_link
-    alias_method :available_voice_regions, :voice_regions
+    alias :jump_url :jump_link
+    alias :available_voice_regions :voice_regions
 
     # @!endgroup
 
@@ -365,7 +365,7 @@ module Discordrb
       NOTIFICATION_LEVELS.key(@notification_level)
     end
 
-    alias_method :explicit_content_filter_level, :explicit_content_filter
+    alias :explicit_content_filter_level :explicit_content_filter
 
     # @!endgroup
 
@@ -717,7 +717,7 @@ module Discordrb
       QueriedMembers.new(@member_chunk_queries.delete(nonce) || { timeout: true }, self, @bot)
     end
 
-    alias_method :current_bot, :bot
+    alias :current_bot :bot
 
     # @!endgroup
 
@@ -1205,7 +1205,7 @@ module Discordrb
       Assets[:guild_widget, @id, style: style || :shield] if widget?
     end
 
-    alias_method :widget?, :widget_enabled?
+    alias :widget? :widget_enabled?
 
     # @!endgroup
 
@@ -1253,7 +1253,7 @@ module Discordrb
       VanityInvite.new(data, self, @bot)
     end
 
-    alias_method :vanity_invite_url, :vanity_invite_link
+    alias :vanity_invite_url :vanity_invite_link
 
     # @!endgroup
 
@@ -1925,7 +1925,7 @@ module Discordrb
       entries.tap { |list| list.map! { |entry| AuditLog::Entry.new(entry, results, @bot) } }
     end
 
-    alias_method :audit_logs, :audit_log
+    alias :audit_logs :audit_log
 
     # @!endgroup
 
@@ -2308,8 +2308,8 @@ module Discordrb
       @guild.unban(@user, reason:)
     end
 
-    alias_method :lift, :remove
-    alias_method :unban, :remove
+    alias :lift :remove
+    alias :unban :remove
   end
 
   # A bulk ban entry on a guild.

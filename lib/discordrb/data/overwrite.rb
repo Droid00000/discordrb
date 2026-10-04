@@ -24,7 +24,7 @@ module Discordrb
     attr_reader :allowed
 
     # @!visibility private
-    alias_method :resolve_id, :id
+    alias :resolve_id :id
 
     # @!visibility private
     def initialize(data, channel, bot)
@@ -66,7 +66,7 @@ module Discordrb
         @denied == other.denied && @allowed == other.allowed
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!method role?
     #   @return [true, false] whether or not the overwrite is for a role.

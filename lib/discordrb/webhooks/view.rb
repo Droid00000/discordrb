@@ -95,7 +95,7 @@ class Discordrb::Webhooks::View
       @components << builder.to_h
     end
 
-    alias_method :select_menu, :string_select
+    alias :select_menu :string_select
 
     # Add a user select to this action row.
     # @param custom_id [String] Custom IDs are used to pass state to the events that are raised from interactions.
@@ -397,7 +397,7 @@ class Discordrb::Webhooks::View
       @components << FileBuilder.new(...)
     end
 
-    alias_method :file_display, :file
+    alias :file_display :file
 
     # Add a section component to the container.
     # @see SectionBuilder#initialize
@@ -436,7 +436,7 @@ class Discordrb::Webhooks::View
                end
     end
 
-    alias_method :colour=, :color=
+    alias :colour= :color=
 
     # @!visibility private
     def to_h
@@ -468,7 +468,7 @@ class Discordrb::Webhooks::View
     @components << FileBuilder.new(...)
   end
 
-  alias_method :file_display, :file
+  alias :file_display :file
 
   # Add a section component to the view.
   # @see SectionBuilder#initialize

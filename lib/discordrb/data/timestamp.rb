@@ -45,7 +45,7 @@ module Discordrb
       other.is_a?(TimestampMarkdown) ? (other.style == style) && (other.time == time) : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def inspect

@@ -425,8 +425,8 @@ module Discordrb
       nil
     end
 
-    alias_method :category, :parent
-    alias_method :jump_url, :jump_link
+    alias :category :parent
+    alias :jump_url :jump_link
 
     # @!endgroup
 
@@ -1007,8 +1007,8 @@ module Discordrb
       Message.new(response[:message].merge!(channel_id: response[:id], thread: response), @bot)
     end
 
-    alias_method :create_forum_post, :start_forum_thread
-    alias_method :create_forum_thread, :start_forum_thread
+    alias :create_forum_post :start_forum_thread
+    alias :create_forum_thread :start_forum_thread
 
     # @!endgroup
 
@@ -1277,9 +1277,9 @@ module Discordrb
       SearchedThreads.new(paginator.to_a, total, messages, @bot)
     end
 
-    alias_method :add_tag, :add_tags
-    alias_method :remove_tag, :remove_tags
-    alias_method :create_thread, :start_thread
+    alias :add_tag :add_tags
+    alias :remove_tag :remove_tags
+    alias :create_thread :start_thread
 
     # @!endgroup
 

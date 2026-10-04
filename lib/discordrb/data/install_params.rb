@@ -25,7 +25,7 @@ module Discordrb
       @scopes == other.scopes && @permissions == other.permissions
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def to_h

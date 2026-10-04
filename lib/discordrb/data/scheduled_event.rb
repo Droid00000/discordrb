@@ -88,7 +88,7 @@ module Discordrb
       "https://discord.com/events/#{@guild_id}/#{@id}"
     end
 
-    alias_method :link, :url
+    alias :link :url
 
     # Utility method to get a scheduled event's cover image URL.
     # @param format [String] The URL will default to `webp`. You can otherwise specify one of `jpg` or `png` to override this.
@@ -203,7 +203,7 @@ module Discordrb
       @user_count ||= @bot.http.get_guild_scheduled_event(@guild_id, @id, with_user_count: true)[:user_count]
     end
 
-    alias_method :subscriber_count, :user_count
+    alias :subscriber_count :user_count
 
     # Get the users who are subscribed to the scheduled event.
     # @param limit [Integer, nil] The limit (`nil` for no limit) of how many subscribers to return.
@@ -229,7 +229,7 @@ module Discordrb
       paginator.to_a
     end
 
-    alias_method :subscribers, :users
+    alias :subscribers :users
 
     # @!visibility private
     def increment_user_count
@@ -368,7 +368,7 @@ module Discordrb
           @by_n_weekday == other.by_n_weekday && @by_month_day == other.by_month_day
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # Convert the recurrence rule into an RFC-5545 string.
       # @param start_time [true, false] Whether to include the `DTSTART` value in the string.
@@ -450,7 +450,7 @@ module Discordrb
           (@day == other.day) && (@week == other.week)
         end
 
-        alias_method :eql?, :==
+        alias :eql? :==
 
         # @!method monday?
         #   @return [true, false] whether the day within the week is a monday.
@@ -556,9 +556,9 @@ module Discordrb
       # @return [Time, nil] the new start time of the scheduled event recurrence.
       attr_reader :start_time
 
-      alias_method :resolve_id, :id
-      alias_method :canceled?, :canceled
-      alias_method :cancelled?, :canceled
+      alias :resolve_id :id
+      alias :canceled? :canceled
+      alias :cancelled? :canceled
 
       # @!visibility private
       def initialize(data, event, bot)
@@ -588,7 +588,7 @@ module Discordrb
         other.is_a?(Exception) ? hash == other.hash : false
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # Delete the scheduled event exception.
       # @param reason [String, nil] The reason to show in the guild's audit log for deleting the exception.

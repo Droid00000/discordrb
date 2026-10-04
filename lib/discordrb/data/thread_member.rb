@@ -48,8 +48,8 @@ module Discordrb
       @thread.id == other.thread.id && @user_id == other.user_id
     end
 
-    alias_method :eql?, :==
-    alias_method :kick, :remove
+    alias :eql? :==
+    alias :kick :remove
 
     # @!visibility private
     def inspect

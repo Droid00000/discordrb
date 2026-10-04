@@ -427,8 +427,8 @@ module Discordrb
       nil
     end
 
-    alias_method :edit, :modify
-    alias_method :jump_url, :jump_link
+    alias :edit :modify
+    alias :jump_url :jump_link
 
     # @!endgroup
 
@@ -470,8 +470,8 @@ module Discordrb
       @author ||= @bot.user(@author_id)
     end
 
-    alias_method :user, :author
-    alias_method :member, :author
+    alias :user :author
+    alias :member :author
 
     # @!endgroup
 
@@ -589,7 +589,7 @@ module Discordrb
       paginator.to_a
     end
 
-    alias_method :remove_reactions, :remove_reaction
+    alias :remove_reactions :remove_reaction
 
     # @!endgroup
 

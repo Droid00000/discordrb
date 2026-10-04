@@ -44,7 +44,7 @@ module Discordrb
         @intensity == other.intensity && @colours == other.colours
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!method unset_base?
     #   @return [true, false] whether or not the background tone of the theme is not defined.
@@ -97,9 +97,9 @@ module Discordrb
         @colours << format('%06x', value.is_a?(String) ? value&.delete('#')&.to_i(16) : value&.to_i)
       end
 
-      alias_method :color, :colour
-      alias_method :add_color, :colour
-      alias_method :add_colour, :colour
+      alias :color :colour
+      alias :add_color :colour
+      alias :add_colour :colour
 
       # @!visibility private
       def to_h

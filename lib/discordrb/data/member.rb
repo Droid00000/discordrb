@@ -184,8 +184,8 @@ module Discordrb
       nil
     end
 
-    alias_method :colour, :color
-    alias_method :boosting?, :premium?
+    alias :colour :color
+    alias :boosting? :premium?
 
     # @!endgroup
 
@@ -266,10 +266,10 @@ module Discordrb
       nil
     end
 
-    alias_method :add_role, :add_roles
-    alias_method :highest_role, :top_role
-    alias_method :colour_role, :color_role
-    alias_method :remove_role, :remove_roles
+    alias :add_role :add_roles
+    alias :highest_role :top_role
+    alias :colour_role :color_role
+    alias :remove_role :remove_roles
 
     # @!endgroup
 
@@ -482,7 +482,7 @@ module Discordrb
       @user == other
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # Send a message to the current member in the DM channel.
     # @return [Message] The message that was sent to the current member.

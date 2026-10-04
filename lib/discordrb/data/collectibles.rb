@@ -26,7 +26,7 @@ module Discordrb
         @avatar_decoration == other.avatar_decoration
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def to_h
@@ -80,7 +80,7 @@ module Discordrb
         (@asset == other.asset) && (@sku_id == other.sku_id)
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h
@@ -129,7 +129,7 @@ module Discordrb
         (@asset == other.asset) && (@sku_id == other.sku_id)
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
 
       # @!visibility private
       def to_h

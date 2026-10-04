@@ -71,7 +71,7 @@ module Discordrb::Events
       guild.member(@user_id) || @bot.user(@user_id)
     end
 
-    alias_method :user, :member
+    alias :user :member
   end
 
   # Raised whenever a user is added to a scheduled event.

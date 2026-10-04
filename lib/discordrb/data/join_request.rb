@@ -54,7 +54,7 @@ module Discordrb
       approved? || rejected?
     end
 
-    alias_method :finalised?, :finalized?
+    alias :finalised? :finalized?
 
     # @!attribute [r] approved?
     #   @return [true, false] whether or not the join request has been approved.

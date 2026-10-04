@@ -60,7 +60,7 @@ module Discordrb
       "https://discord.new/#{@code}"
     end
 
-    alias_method :url, :link
+    alias :url :link
 
     # Sync the guild template to match the source guild.
     # @return [nil]
@@ -92,7 +92,7 @@ module Discordrb
       other.is_a?(GuildTemplate) ? (@guild_id == other.guild_id && @code == other.code) : false
     end
 
-    alias_method :eql?, :==
+    alias :eql? :==
 
     # @!visibility private
     def inspect

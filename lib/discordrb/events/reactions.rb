@@ -80,7 +80,7 @@ module Discordrb::Events
       @member ||= guild&.member(@user_id) || @bot.user(@user_id)
     end
 
-    alias_method :user, :member
+    alias :user :member
 
     # @!method burst?
     #   @return [true, false] whether the reaction is super reaction.
@@ -116,7 +116,7 @@ module Discordrb::Events
       @member ||= guild&.member(@user_id) || @bot.user(@user_id)
     end
 
-    alias_method :user, :member
+    alias :user :member
 
     # @!method burst?
     #   @return [true, false] whether the reaction is super reaction.

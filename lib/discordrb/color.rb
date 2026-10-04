@@ -6,7 +6,7 @@ module Discordrb
   class Color
     # @return [Integer] the RGB values for the color as an integer.
     attr_reader :combined
-    alias_method :to_i, :combined
+    alias :to_i :combined
 
     # Create a new colour from a given value.
     # @example Create a color using a base 10 integer.
@@ -50,9 +50,9 @@ module Discordrb
       other.is_a?(Color) ? @combined == other.combined : false
     end
 
-    alias_method :eql?, :==
-    alias_method :to_s, :hex
-    alias_method :hexadecimal, :hex
+    alias :eql? :==
+    alias :to_s :hex
+    alias :hexadecimal :hex
 
     # @!visibility private
     def inspect

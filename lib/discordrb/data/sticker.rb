@@ -60,8 +60,8 @@ module Discordrb
       @type == 2
     end
 
-    alias_method :guild?, :custom?
-    alias_method :default?, :official?
+    alias :guild? :custom?
+    alias :default? :official?
 
     # Modify the properties of the sticker.
     # @param name [String] The new 2-30 character name of the sticker.

@@ -116,7 +116,7 @@ module Discordrb
       end
     end
 
-    alias_method :to_s, :mention
+    alias :to_s :mention
 
     # Get the subcommands for the application command.
     # @param groups [true, false] Whether to include subcommands nested in groups.
@@ -422,7 +422,7 @@ module Discordrb
         end
       end
 
-      alias_method :targets, :target
+      alias :targets :target
 
       # @!method role?
       #   @return [true, false] whether the permission is for a role.

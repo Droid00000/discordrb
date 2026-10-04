@@ -69,7 +69,7 @@ module Discordrb::Events
       @user ||= (guild&.member(@user_id) || @bot.user(@user_id))
     end
 
-    alias_method :member, :user
+    alias :member :user
   end
 
   # Generic event handler for polls.

@@ -597,7 +597,7 @@ module Discordrb
       register_event(StringSelectEvent, attributes, block)
     end
 
-    alias_method :select_menu, :string_select
+    alias :select_menu :string_select
 
     # This **event** is raised whenever a modal is submitted.
     # @param attributes [Hash] The event's attributes.
@@ -1127,8 +1127,8 @@ module Discordrb
       end
     end
 
-    alias_method :include!, :include_events
-    alias_method :<<, :add_handler
+    alias :<< :add_handler
+    alias :include! :include_events
 
     # Returns the handler class for an event class type.
     # @see #event_class

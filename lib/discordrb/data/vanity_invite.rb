@@ -52,8 +52,8 @@ module Discordrb
       (@code == other.code) && Discordrb.id_compare?(@guild.id, other.guild.id)
     end
 
-    alias_method :eql?, :==
-    alias_method :url, :link
+    alias :eql? :==
+    alias :url :link
 
     # @!visibility private
     def inspect

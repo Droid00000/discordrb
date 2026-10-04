@@ -72,6 +72,6 @@ module Discordrb::Webhooks
       }.compact
     end
 
-    alias_method :colour=, :color=
+    alias :colour= :color=
   end
 end

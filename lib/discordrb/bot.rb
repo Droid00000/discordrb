@@ -315,7 +315,7 @@ module Discordrb
       @gateway.sync
     end
 
-    alias_method :sync, :join
+    alias :sync :join
 
     # @!endgroup
 
@@ -557,7 +557,7 @@ module Discordrb
       response.map! { |app_command| ApplicationCommand.new(app_command, self) } || []
     end
 
-    alias_method :register_application_command, :create_application_command
+    alias :register_application_command :create_application_command
 
     # @!endgroup
 

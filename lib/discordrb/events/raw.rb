@@ -6,11 +6,11 @@ module Discordrb::Events
   class RawEvent < Event
     # @return [Symbol] the type of this dispatch.
     attr_reader :type
-    alias_method :t, :type
+    alias :t :type
 
     # @return [Hash] the data of this dispatch.
     attr_reader :data
-    alias_method :d, :data
+    alias :d :data
 
     # @!visibility private
     def initialize(type, data, bot)

@@ -46,7 +46,7 @@ module Discordrb::Events
       @channel&.guild&.member(@user_id) || @bot.user(@user_id)
     end
 
-    alias_method :user, :member
+    alias :user :member
   end
 
   # Event handler for TYPING_START events.

@@ -228,7 +228,7 @@ module Discordrb
         "https://discord.gg/#{@vanity_invite_code}" if @vanity_invite_code
       end
 
-      alias_method :vanity_invite_url, :vanity_invite_link
+      alias :vanity_invite_url :vanity_invite_link
 
       # Utility method to get a guild's splash URL.
       # @param format [String] The URL will default to `webp`. You can otherwise specify one of `jpg` or `png` to override this.
@@ -319,9 +319,9 @@ module Discordrb
       # @return [Color, nil] the second color for the role's gradident.
       attr_reader :secondary_color
 
-      alias_method :colour, :color
-      alias_method :tertiary_colour, :tertiary_color
-      alias_method :secondary_colour, :secondary_color
+      alias :colour :color
+      alias :tertiary_colour :tertiary_color
+      alias :secondary_colour :secondary_color
 
       # @!visibility private
       def initialize(data, bot)

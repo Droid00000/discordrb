@@ -89,7 +89,7 @@ module Discordrb
         Discordrb.id_compare?(other.user.id, @user.id)
       end
 
-      alias_method :eql?, :==
+      alias :eql? :==
     end
   end
 end
