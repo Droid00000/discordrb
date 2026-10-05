@@ -35,13 +35,13 @@ module Discordrb
     end
 
     # @!visibility private
-    def to_h
-      failed? ? {} : { filename: @filename, uploaded_filename: @upload_filename }
+    def inspect
+      "<CloudAttachment channel_id=#{@channel.id} filename=#{@filename}>"
     end
 
     # @!visibility private
-    def inspect
-      "<CloudAttachment channel_id=#{@channel.id} upload_filename=#{@upload_filename}>"
+    def to_h
+      failed? ? {} : { filename: @filename, uploaded_filename: @upload_filename }
     end
   end
 end
