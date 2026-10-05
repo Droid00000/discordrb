@@ -33,6 +33,12 @@ module Discordrb::HTTP
               body: filter_undef(body)
     end
 
+    # @see https://docs.discord.com/developers/resources/message#delete-message-attachment
+    def delete_message_attachment(upload_filename, **params)
+      request Route[:DELETE, "/attachments/#{upload_filename}"],
+              params: filter_undef(params)
+    end
+
     # @see https://docs.discord.com/developers/resources/message#crosspost-message
     def crosspost_message(channel_id, message_id, **body)
       request Route[:POST, "/channels/#{channel_id}/messages/#{message_id}/crosspost", channel_id],

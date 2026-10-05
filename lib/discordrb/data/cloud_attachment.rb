@@ -34,6 +34,12 @@ module Discordrb
       @unfulfilled != true
     end
 
+    # Delete the cloud attachment. This will prevent it from ever being used.
+    # @return [nil]
+    def delete
+      @bot.http.delete_message_attachment(@upload_filename)
+    end
+
     # @!visibility private
     def inspect
       "<CloudAttachment channel_id=#{@channel.id} filename=\"#{@filename}\">"
