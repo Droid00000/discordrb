@@ -136,7 +136,7 @@ module Discordrb
     # @param flags [Integer] Message flags.
     # @param ephemeral [true, false] Whether this message should only be visible to the interaction initiator.
     # @param components [Array<#to_h>] An array of components.
-    # @param attachments [Array<File>] Files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param has_components [true, false] Whether this message includes any V2 components. Enabling this disables sending content, polls, and embeds.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the method overwrite builder data.
@@ -230,7 +230,7 @@ module Discordrb
     # @param flags [Integer] Message flags.
     # @param ephemeral [true, false] Whether this message should only be visible to the interaction initiator.
     # @param components [Array<#to_h>] An array of components.
-    # @param attachments [Array<File>] Files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param has_components [true, false] Whether this message includes any V2 components. Enabling this disables sending content, polls, and embeds.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the method overwrite builder data.
@@ -273,7 +273,7 @@ module Discordrb
     # @param allowed_mentions [Hash, AllowedMentions] Mentions that can ping on this message.
     # @param flags [Integer] Message flags.
     # @param components [Array<#to_h>] An array of components.
-    # @param attachments [Array<File>] Files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param has_components [true, false] Whether this message includes any V2 components. Enabling this disables sending content, polls, and embeds.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.
     # @return [InteractionMessage] The updated response message.
@@ -315,7 +315,7 @@ module Discordrb
     # @param allowed_mentions [Hash, AllowedMentions] Mentions that can ping on this message.
     # @param flags [Integer] Message flags.
     # @param ephemeral [true, false] Whether this message should only be visible to the interaction initiator.
-    # @param attachments [Array<File>] Files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param has_components [true, false] Whether this message includes any V2 components. Enabling this disables sending content, polls, and embeds.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.
     # @yieldparam builder [Webhooks::Builder] An optional message builder. Arguments passed to the method overwrite builder data.
@@ -352,7 +352,7 @@ module Discordrb
     # @param content [String] The message content.
     # @param embeds [Array<Hash, Webhooks::Embed>] The embeds for the message.
     # @param allowed_mentions [Hash, AllowedMentions] Mentions that can ping on this message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds via `attachment://file.png`.
     # @param flags [Integer] Message flags.
     # @param has_components [true, false] Whether this message includes any V2 components. Enabling this disables sending content, polls, and embeds.
     # @param poll [Hash, Poll::Builder, Poll, nil] The poll that should be attached to this message.

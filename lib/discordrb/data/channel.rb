@@ -689,6 +689,147 @@ module Discordrb
       paginator.to_a
     end
 
+    # Upload multiple files directly to Discord's storage bucket. This method
+    #   is **required** in order to upload large files without the request failing.
+    # @param uploads [Array<File, StringIO, Hash>, File, StringIO, Hash] The files to upload.
+    # @param concurrent [true, false] Whether to upload each file concurrently instead of sequentially.
+    # @param exception [true, false] Whether to raise an exception if the file(s) were unable to be uploaded.
+    # @return [Array<CloudAttachment>] The attachments that were uploaded. These can be passed directly to whichever
+    #   method you're using to upload files, e.g. {#send_message}.
+    def create_attachments(*uploads, concurrent: true, exception: false)
+      # Wrap everything into a new array.
+      uploadable_objects = uploads.flatten
+
+      unless uploadable_objects.length.between?(1, 10)
+        raise ArgumentError, 'Can only upload between 1-10 files'
+      end
+
+      # List of normalized file/IO objects.
+      files = []
+
+      # List of threads working on uploads.
+      promises = []
+
+      # List of data used to accquire uploads URLs.
+      metadata = []
+
+      handle_hash = lambda do |upload, index|
+        case upload[:file]
+        when StringIO
+          unless upload.respond_to?(:original_filename)
+            raise ArgumentError, 'StringIO must implement {#original_filename}'
+          end
+
+          filename = upload[:filename] || upload[:file].original_filename
+        when File, TempFile
+          filename = if upload[:filename]
+                       upload[:filename]
+                     elsif upload.respond_to?(:original_filename)
+                       upload.original_filename
+                     else
+                       File.basename(upload.path)
+                     end
+        else
+          raise ArgumentError, "Unsupported data type: #{upload.class}"
+        end
+
+        files.push(hash[:file])
+
+        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
+      end
+
+      handle_string = lambda do |upload, index|
+        unless upload.respond_to?(:original_filename)
+          raise ArgumentError, 'StringIO must implement {#original_filename}'
+        end
+
+        filename = upload.original_filename
+
+        files.push(upload)
+
+        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
+      end
+
+      handle_file_like = lambda do |upload, index|
+        filename = if upload.respond_to?(:original_filename)
+                     upload.original_filename
+                   else
+                     File.basename(upload.path)
+                   end
+
+        files.push(upload)
+        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
+      end
+
+      uploadable_objects.each_with_index do |upload, index|
+        case upload
+        when Hash
+          handle_hash.call(upload, index)
+        when StringIO
+          handle_string.call(upload, index)
+        when File, TempFile
+          handle_file_like.call(upload, index)
+        else
+          raise ArgumentError, "Unsupported data type: #{upload.class}"
+        end
+      end
+
+      response = @bot.http.create_message_attachments(@id, files: metadata)
+
+      response[:attachments].each do |attachment|
+        io = files[attachment[:id].to_i]
+
+        if concurrent
+          promises << Thread.new(io) do |io|
+            binary = if io.is_a?(StringIO)
+                       io.string
+                     else
+                       File.binread(io)
+                     end
+
+            begin
+              response = Faraday.put(attachment[:upload_url], binary)
+
+              attachment[:_unfulfilled] = true unless response.success?
+            rescue StandardError => e
+              LOGGER.log_exception(e)
+              attachment[:_unfulfilled] = true
+            end
+          end
+
+          next
+        end
+
+        binary = if io.is_a?(StringIO)
+                   io.string.b
+                 else
+                   File.binread(io)
+                 end
+
+        begin
+          response = Faraday.put(attachment[:upload_url], binary)
+
+          attachment[:_unfulfilled] = true unless response.success?
+        rescue StandardError => e
+          LOGGER.log_exception(e)
+          attachment[:_unfulfilled] = true
+        end
+      end
+
+      promises.each(&:join) if concurrent
+
+      response[:attachments].map do |attachment|
+        if exception && attachment[:_unfulfilled]
+          raise "Unable to upload cloud attachment (#{attachment[:upload_filename]})"
+        end
+
+        uploaded = metadata[attachment[:id].to_i]
+        attachment[:filename] = uploaded[:filename]
+
+        CloudAttachment.new(attachment, self, @bot)
+      end
+    end
+
     # Send a message in the channel.
     # @example This sends a silent message with an embed.
     #   channel.send_message(content: 'Hi <@171764626755813376>', flags: :suppress_notifications) do |builder|
@@ -701,7 +842,7 @@ module Discordrb
     # @param timeout [Float, nil] The amount of time in seconds after which the message sent will be deleted, or `nil` if the message should not be deleted.
     # @param tts [true, false] Whether or not this message should be sent using Discord text-to-speech.
     # @param embeds [Array<Hash, Webhooks::Embed>] The embeds that should be attached to the message.
-    # @param attachments [Array<File>] Files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, CloudAttachment>] Files that can be referenced in embeds and components via `attachment://file.png`.
     # @param allowed_mentions [Hash, Discordrb::AllowedMentions, nil] Mentions that are allowed to ping on this message.
     # @param reference [Message, String, Integer, Hash, nil] The optional message, or message ID, to reply to or forward.
     # @param components [View, Array<#to_h>] Interaction components to associate with this message.

@@ -27,6 +27,12 @@ module Discordrb::HTTP
               body: make_attachments(files, body)
     end
 
+    # @see https://docs.discord.com/developers/resources/message#create-message-attachments
+    def create_message_attachments(channel_id, **body)
+      request Route[:POST, "/channels/#{channel_id}/attachments", channel_id],
+              body: filter_undef(body)
+    end
+
     # @see https://docs.discord.com/developers/resources/message#crosspost-message
     def crosspost_message(channel_id, message_id, **body)
       request Route[:POST, "/channels/#{channel_id}/messages/#{message_id}/crosspost", channel_id],

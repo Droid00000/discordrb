@@ -334,7 +334,7 @@ module Discordrb
     # Modify the properties of the message.
     # @param content [String, nil] The content of the message. Should not be longer than 2000 characters or it will result in an error.
     # @param embeds [Array<Hash, Webhooks::EmbedBuilder>, nil] The embeds that should be attached to the message.
-    # @param attachments [Array<File, Attachment, #read>, nil] The files that can be referenced in embeds and components via `attachment://file.png`.
+    # @param attachments [Array<File, Attachment, #read, CloudAttachment>, nil] The files that can be referenced in embeds and components.
     # @param allowed_mentions [Hash, Discordrb::AllowedMentions, nil] The mentions that are allowed to ping on the message.
     # @param flags [Integer, Symbol, Array<Symbol, Integer>] The new flags to set for the message.
     # @param components [View, Array<#to_h>, nil] The bot components to associate with the message.
