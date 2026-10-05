@@ -36,7 +36,7 @@ module Discordrb
 
     # @!visibility private
     def inspect
-      "<CloudAttachment channel_id=#{@channel.id} filename=#{@filename}>"
+      "<CloudAttachment channel_id=#{@channel.id} filename=\"#{@filename}\">"
     end
 
     # @!visibility private
