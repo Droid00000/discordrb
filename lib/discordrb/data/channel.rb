@@ -780,7 +780,7 @@ module Discordrb
         io = files[attachment[:id].to_i]
 
         if concurrent
-          promises << Thread.new(io) do |io|
+          promises << Thread.new(io, attachment) do |io, attachment|
             binary = if io.is_a?(StringIO)
                        io.string
                      else
@@ -788,9 +788,9 @@ module Discordrb
                      end
 
             begin
-              response = Faraday.put(attachment[:upload_url], binary)
+              result = Faraday.put(attachment[:upload_url], binary)
 
-              attachment[:_unfulfilled] = true unless response.success?
+              attachment[:_unfulfilled] = true unless result.success?
             rescue StandardError => e
               LOGGER.log_exception(e)
               attachment[:_unfulfilled] = true
@@ -807,9 +807,9 @@ module Discordrb
                  end
 
         begin
-          response = Faraday.put(attachment[:upload_url], binary)
+          result = Faraday.put(attachment[:upload_url], binary)
 
-          attachment[:_unfulfilled] = true unless response.success?
+          attachment[:_unfulfilled] = true unless result.success?
         rescue StandardError => e
           LOGGER.log_exception(e)
           attachment[:_unfulfilled] = true
