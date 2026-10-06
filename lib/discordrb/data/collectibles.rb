@@ -117,7 +117,7 @@ module Discordrb
       # Utility method to get an avatar decoration URL.
       # @return [String] the URL to the avatar decoration.
       def url
-        Assets[:avatar_decoration, @asset]
+        Assets[:avatar_decoration, @asset, 'png']
       end
 
       # Comparison based off of asset and SKU ID.

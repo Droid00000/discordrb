@@ -713,62 +713,49 @@ module Discordrb
       # List of data used to accquire uploads URLs.
       metadata = []
 
-      handle_hash = lambda do |upload, index|
-        case upload[:file]
+      uploadable_objects.each_with_index do |upload, index|
+        case upload
+        when Hash
+          case upload[:file]
+          when StringIO
+            unless upload.respond_to?(:original_filename)
+              raise ArgumentError, 'StringIO must implement {#original_filename}'
+            end
+
+            filename = upload[:filename] || upload[:file].original_filename
+          when File, TempFile
+            filename = if upload[:filename]
+                        upload[:filename]
+                      elsif upload.respond_to?(:original_filename)
+                        upload.original_filename
+                      else
+                        File.basename(upload.path)
+                      end
+          else
+            raise ArgumentError, "Unsupported data type: #{upload.class}"
+          end
+
+          files.push(upload[:file])
+
+          metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
         when StringIO
           unless upload.respond_to?(:original_filename)
             raise ArgumentError, 'StringIO must implement {#original_filename}'
           end
 
-          filename = upload[:filename] || upload[:file].original_filename
+          filename = upload.original_filename
+
+          files.push(upload)
+          metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
         when File, TempFile
-          filename = if upload[:filename]
-                       upload[:filename]
-                     elsif upload.respond_to?(:original_filename)
+          filename = if upload.respond_to?(:original_filename)
                        upload.original_filename
                      else
                        File.basename(upload.path)
                      end
-        else
-          raise ArgumentError, "Unsupported data type: #{upload.class}"
-        end
 
-        files.push(hash[:file])
-
-        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
-      end
-
-      handle_string = lambda do |upload, index|
-        unless upload.respond_to?(:original_filename)
-          raise ArgumentError, 'StringIO must implement {#original_filename}'
-        end
-
-        filename = upload.original_filename
-
-        files.push(upload)
-
-        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
-      end
-
-      handle_file_like = lambda do |upload, index|
-        filename = if upload.respond_to?(:original_filename)
-                     upload.original_filename
-                   else
-                     File.basename(upload.path)
-                   end
-
-        files.push(upload)
-        metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
-      end
-
-      uploadable_objects.each_with_index do |upload, index|
-        case upload
-        when Hash
-          handle_hash.call(upload, index)
-        when StringIO
-          handle_string.call(upload, index)
-        when File, TempFile
-          handle_file_like.call(upload, index)
+          files.push(upload)
+          metadata.push({ id: index, filename: filename, file_size: 20_000_000 })
         else
           raise ArgumentError, "Unsupported data type: #{upload.class}"
         end
@@ -782,7 +769,7 @@ module Discordrb
         if concurrent
           promises << Thread.new(io, attachment) do |io, attachment|
             binary = if io.is_a?(StringIO)
-                       io.string
+                       io.string.b
                      else
                        File.binread(io)
                      end
