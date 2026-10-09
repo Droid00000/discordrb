@@ -129,7 +129,7 @@ module Discordrb
           end
 
           output.empty? ? return : (message = output)
-        elsif @zlib
+        else
           case @compression
           when :large
             message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
@@ -144,14 +144,12 @@ module Discordrb
     else
       # @!visibility private
       def handle_message(message)
-        if @zlib
-          case @compression
-          when :large
-            message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
-          when :stream
-            @zlib << message
-            message.end_with?(ZLIB_SUFFIX) ? (message = @zlib.inflate('')) : return
-          end
+        case @compression
+        when :large
+          message = Zlib::Inflate.inflate(message) if message.byteslice(0) == 'x'
+        when :stream
+          @zlib << message
+          message.end_with?(ZLIB_SUFFIX) ? (message = @zlib.inflate('')) : return
         end
 
         @gateway.notify_message(message)
