@@ -84,7 +84,7 @@ module Discordrb
     # @return [String] the selected language of the user that initiated the interaction.
     attr_reader :user_locale
 
-    # @return [String, nil] the selected language of the guild the interaction originates from.
+    # @return [String, nil] the selected language of the guild that the interaction originates from.
     attr_reader :guild_locale
 
     # @return [Integer] the context of where the interaction was initiated from.
@@ -93,7 +93,7 @@ module Discordrb
     # @return [Integer] the maximum number of bytes an attachment can have when responding to the interaction.
     attr_reader :max_attachment_size
 
-    # @return [Array<Symbol>] the features of the guild where the interaction was initiated from.
+    # @return [Array<Symbol>] the features of the guild where the interaction was initiated from, e.g. `:VERIFIED`.
     attr_reader :guild_features
 
     # @!visibility private
