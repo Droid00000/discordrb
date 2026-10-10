@@ -772,9 +772,10 @@ module Discordrb
       # @param name [String, Symbol] The name of the argument.
       # @param description [String] A description of the argument.
       # @param required [true, false] Whether this option must be provided.
-      # @param types [Array<String, Symbol>] The file extensions or file groups to
-      #   restrict the option to. This restriction is **only** a client-side check.
-      # @return (see #option)
+      # @param types [Array<String, Symbol>] The dot-prefixed file extensions, or file
+      #   groups to estrict the option to. This restriction is **only** a client-side check. For
+      #   more info, please see: https://docs.discord.com/developers/reference#file-type-filtering
+      # @return [Hash]
       def attachment(name, description, required: nil, types: nil)
         option(TYPES[:attachment], name, description, required: required, file_types: types)
       end
@@ -791,7 +792,7 @@ module Discordrb
       # @param channel_types [Array<Integer>] Channel types that can be provides for channel options.
       # @param autocomplete [true, false] Whether this option can dynamically show options.
       # @param file_types [Array<String, Symbol>] The file types to restrict this option to in the client.
-      # @return Hash
+      # @return [Hash]
       def option(type, name, description, required: nil, choices: nil, options: nil, min_value: nil, max_value: nil,
                  min_length: nil, max_length: nil, channel_types: nil, autocomplete: nil, file_types: nil)
         opt = { type: type, name: name, description: description }
