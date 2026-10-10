@@ -105,12 +105,13 @@ module Discordrb
       @message = Interactions::Message.new(data[:message], @bot, self) if data[:message]
       @data = data[:data]
       @guild_id = data[:guild_id]&.to_i
+      @guild = @guild_id ? bot.guilds[@guild_id] : nil
       @channel_id = data[:channel_id]&.to_i
       @channel = @bot.ensure_channel(data[:channel], nil, true) if data[:channel]
       @user = if data[:member]
                 data[:member][:guild_id] = @guild_id
-                data[:member][:_interaction_channel_id] = @channel_id
-                Discordrb::Member.new(data[:member], bot.guilds[@guild_id], @bot)
+                data[:member][:interaction] = self
+                Discordrb::Member.new(data[:member], @guild, @bot)
               else
                 @bot.ensure_user(data[:user], true)
               end
@@ -408,7 +409,7 @@ module Discordrb
     # @return [Guild, nil] This will be nil for interactions that occur in DM channels or guilds where the bot
     #   does not have the `bot` scope.
     def guild
-      defined?(@guild) ? @guild : (@guild = @bot.guild(@guild_id))
+      @guild ||= (@guild = @bot.guild(@guild_id))
     end
 
     # Get the button component that triggered the interaction.
@@ -479,7 +480,7 @@ module Discordrb
     end
   end
 
-  # Objects specific to Interactions.
+  # Classes specific to Interactions.
   module Interactions
     # A builder for defining slash commands options.
     class OptionBuilder
@@ -498,26 +499,28 @@ module Discordrb
         attachment: 11
       }.freeze
 
-      # @return [Array<Hash>]
+      # @visibility private
       attr_reader :options
+      alias :to_a :options
 
       # @!visibility private
       def initialize
         @options = []
       end
 
-      # @param name [String, Symbol] The name of the subcommand.
-      # @param description [String] A description of the subcommand.
-      # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
-      # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @yieldparam [OptionBuilder]
-      # @return [Hash]
+      # Add a subcommand.
       # @example
       #   bot.register_application_command(:test, 'Test command') do |command|
       #     command.subcommand(:echo) do |subcommand|
       #       subcommand.string('message', 'What to echo back', required: true)
       #     end
       #   end
+      # @param name [String, Symbol] The 1-32 character name of the subcommand.
+      # @param description [String] The 1-100 character description of the subcommand.
+      # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
+      # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
+      # @yieldparam [OptionBuilder] An optional builder for adding command options.
+      # @return [nil]
       def subcommand(
         name, description, name_localizations: nil, description_localizations: nil
       )
@@ -534,12 +537,7 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the subcommand group.
-      # @param description [String] A description of the subcommand group.
-      # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
-      # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @yieldparam [OptionBuilder]
-      # @return [Hash]
+      # Add a subcommand group.
       # @example
       #   bot.register_application_command(:test, 'Test command') do |command|
       #     command.subcommand_group(:fun) do |group|
@@ -548,6 +546,12 @@ module Discordrb
       #       end
       #     end
       #   end
+      # @param name [String, Symbol] The 1-32 character name of the subcommand group.
+      # @param description [String] The 1-100 character description of the subcommand group.
+      # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
+      # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
+      # @yieldparam [OptionBuilder] A builder for adding subcommands.
+      # @return [nil]
       def subcommand_group(
         name, description, name_localizations: nil, description_localizations: nil
       )
@@ -563,27 +567,29 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param min_length [Integer] A minimum length for option value.
-      # @param max_length [Integer] A maximum length for option value.
-      # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
-      # @param autocomplete [true, false] Whether this option can dynamically show choices.
+      # Add a string option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
+      # @param min [Integer, nil] The minimum amount of characters the user must input.
+      # @param max [Integer, nil] The maximum amount of characters that the user can input.
+      # @param choices [Hash, Array<Hash>, nil] The options that the user can choose from. Can be
+      #   a hash mapping choice names to the value for said choice, or a list of raw choices.
+      # @param autocomplete [true, false] Whether or not the option can dynamically show choices.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def string(
-        name, description, required: nil, min_length: nil, max_length: nil,
-        choices: nil, autocomplete: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil, min: nil, max: nil, choices: nil,
+        autocomplete: nil, name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:string],
           name,
           description,
           required: required,
-          min_length: min_length,
-          max_length: max_length,
+          min_length: min,
+          max_length: max,
           choices: choices,
           autocomplete: autocomplete,
           name_localizations: name_localizations,
@@ -591,27 +597,29 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param min_value [Integer] A minimum value for option.
-      # @param max_value [Integer] A maximum value for option.
-      # @param choices [Hash, nil] Available choices, mapped as `Name => Value`.
-      # @param autocomplete [true, false] Whether this option can dynamically show choices.
+      # Add an integer option (`-2^53+1` to `2^53-1`).
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
+      # @param min [Integer, nil] The minimum integer value that the option will allow.
+      # @param max [Integer, nil] The maximum integer value that the option will allow.
+      # @param choices [Hash, Array<Hash>, nil] The options that the user can choose from. Can be
+      #   a hash mapping choice names to the value for said choice, or a list of raw choices.
+      # @param autocomplete [true, false] Whether or not the option can dynamically show choices.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def integer(
-        name, description, required: nil, min_value: nil, max_value: nil,
-        choices: nil, autocomplete: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil, min: nil, max: nil, choices: nil,
+        autocomplete: nil, name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:integer],
           name,
           description,
           required: required,
-          min_value: min_value,
-          max_value: max_value,
+          min_value: min,
+          max_value: max,
           choices: choices,
           autocomplete: autocomplete,
           name_localizations: name_localizations,
@@ -619,14 +627,16 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
+      # Add a boolean option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def boolean(
-        name, description, required: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil,
+        name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:boolean],
@@ -638,14 +648,16 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
+      # Add a {User user} option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def user(
-        name, description, required: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil,
+        name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:user],
@@ -657,35 +669,39 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param types [Array<Symbol, Integer>] Please refer to {Channel::TYPES} for possible values.
+      # Add a {Channel channel} option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
+      # @param types [Array<Integer, Symbol>, nil] The channel types to restrict the channels to.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def channel(
-        name, description, required: nil, types: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil, types: nil,
+        name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:channel],
           name,
           description,
           required: required,
-          channel_types: types&.map { |type| type.is_a?(Numeric) ? type : Channel::TYPES[type] },
+          channel_types: types,
           name_localizations: name_localizations,
           description_localizations: description_localizations
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
+      # Add a {Role role} option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def role(
-        name, description, required: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil,
+        name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:role],
@@ -697,14 +713,16 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
+      # Add a {Role role} **and** {User user} option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def mentionable(
-        name, description, required: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil,
+        name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:mentionable],
@@ -716,26 +734,29 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param min_value [Float] A minimum value for option.
-      # @param max_value [Float] A maximum value for option.
-      # @param autocomplete [true, false] Whether this option can dynamically show choices.
+      # Add a double option (`-2^53` to `2^53`).
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
+      # @param min [Integer, Float, nil] The minimum double value that the option will allow.
+      # @param max [Integer, Float, nil] The maximum double value that the option will allow.
+      # @param choices [Hash, Array<Hash>, nil] The options that the user can choose from. Can be
+      #   a hash mapping choice names to the value for said choice, or a list of raw choices.
+      # @param autocomplete [true, false] Whether or not the option can dynamically show choices.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def number(
-        name, description, required: nil, min_value: nil, max_value: nil,
-        choices: nil, autocomplete: nil, name_localizations: nil, description_localizations: nil
+        name, description, required: nil, min: nil, max: nil, choices: nil,
+        autocomplete: nil, name_localizations: nil, description_localizations: nil
       )
         option(
           TYPES[:number],
           name,
           description,
           required: required,
-          min_value: min_value,
-          max_value: max_value,
+          min_value: min&.to_f,
+          max_value: max&.to_f,
           choices: choices,
           autocomplete: autocomplete,
           name_localizations: name_localizations,
@@ -743,14 +764,17 @@ module Discordrb
         )
       end
 
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param types [Array<String, Symbol>] The file extensions or file groups to
-      #   restrict the option to. This restriction is **only** a client-side check.
+      alias :double :number
+
+      # Add a {Attachment file upload} option.
+      # @param name [String, Symbol] The 1-32 character name of the option.
+      # @param description [String] The 1-100 character description of the option.
+      # @param required [true, false] Whether or not the user must provide a value.
+      # @param types [Array<String, Symbol>] The dot-prefixed file extensions or file
+      #   groups to restrict the option to. This restriction is **only** a client-side check.
       # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
       # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @return [Hash]
+      # @return [nil]
       def attachment(
         name, description, required: nil, types: nil,
         name_localizations: nil, description_localizations: nil
@@ -766,51 +790,47 @@ module Discordrb
         )
       end
 
-      # @!visibility private
-      # @param type [Integer] The argument type.
-      # @param name [String, Symbol] The name of the argument.
-      # @param description [String] A description of the argument.
-      # @param required [true, false] Whether this option must be provided.
-      # @param min_value [Integer, Float] A minimum value for integer and number options.
-      # @param max_value [Integer, Float] A maximum value for integer and number options.
-      # @param min_length [Integer] A minimum length for string option value.
-      # @param max_length [Integer] A maximum length for string option value.
-      # @param channel_types [Array<Integer>] Channel types that can be provides for channel options.
-      # @param autocomplete [true, false] Whether this option can dynamically show options.
-      # @param name_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized names.
-      # @param description_localizations [Hash, #to_h, nil] A mapping of locale identifiers to localized descriptions.
-      # @param file_types [Array<String, Symbol>] The file types to restrict this option to in the client.
-      # @return [Hash]
+      private
+
+      # Add an option.
+      # @param type [Integer]
+      # @param name [String, Symbol]
+      # @param description [String]
+      # @param required [true, false, nil]
+      # @param min_value [Integer, Float, nil]
+      # @param max_value [Integer, Float, nil]
+      # @param min_length [Integer, nil]
+      # @param max_length [Integer, nil]
+      # @param channel_types [Array<Integer Symbol, String>, nil]
+      # @param autocomplete [true, false, nil]
+      # @param name_localizations [Hash, #to_h, nil]
+      # @param description_localizations [Hash, #to_h, nil]
+      # @param file_types [Array<String, Symbol>, nil]
+      # @return [nil]
       def option(
         type, name, description, required: nil, choices: nil, options: nil, min_value: nil,
         max_value: nil, min_length: nil, max_length: nil, channel_types: nil, autocomplete: nil,
         name_localizations: nil, description_localizations: nil, file_types: nil
       )
-        option = {
+        @options << {
           name: name,
           description: description,
           type: type,
           required: required,
-          choices: choices&.map { |key, value| { name: key, value: value } },
+          choices: choices.is_a?(Hash) ? choices.map { |key, value| { name: key, value: value } } : choices,
           options: options,
           min_value: min_value,
           max_value: max_value,
           min_length: min_length,
           max_length: max_length,
-          channel_types: channel_types,
+          channel_types: channel_types&.map { |type| type.is_a?(Numeric) ? type : Channel::TYPES[type.to_sym] },
           autocomplete: autocomplete,
           file_types: file_types,
           name_localizations: name_localizations&.to_h,
           description_localizations: description_localizations&.to_h
         }.compact
 
-        @options << option
-        option
-      end
-
-      # @return [Array<Hash>]
-      def to_a
-        @options
+        nil
       end
     end
 

@@ -725,12 +725,12 @@ module Discordrb
             filename = upload[:filename] || upload[:file].original_filename
           when File, TempFile
             filename = if upload[:filename]
-                        upload[:filename]
-                      elsif upload.respond_to?(:original_filename)
-                        upload.original_filename
-                      else
-                        File.basename(upload.path)
-                      end
+                         upload[:filename]
+                       elsif upload.respond_to?(:original_filename)
+                         upload.original_filename
+                       else
+                         File.basename(upload.path)
+                       end
           else
             raise ArgumentError, "Unsupported data type: #{upload.class}"
           end

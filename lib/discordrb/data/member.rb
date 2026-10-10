@@ -68,8 +68,7 @@ module Discordrb
       timeout_timestamp = data[:communication_disabled_until]
       @timeout_until = Time.iso8601(timeout_timestamp) if timeout_timestamp
       @permissions = Permissions.new(data[:permissions].to_i) if data[:permissions]
-      interaction_channel_id = data[:_interaction_channel_id]
-      @interaction_channel_id = interaction_channel_id&.to_i if interaction_channel_id
+      @interaction_channel_id = data[:interaction]&.channel_id
     end
 
     #  ##     ##    ###    #### ##    ##
