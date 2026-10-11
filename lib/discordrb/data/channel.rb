@@ -1305,7 +1305,7 @@ module Discordrb
     # @param offset [Integer, nil] The number of threads between 0-9975 to offset the search query by.
     # @param slop [Integer, nil] The amount of variation allowed between the placement of words when matching against thread names; between 0-100.
     # @param tags [Array<ChannelTag, Integer, String>, ChannelTag, Integer, String, nil] Get threads that have these tags.
-    # @param tag_matching [Symbol, string, nil] Whether to match `:match_all`, or `:match_some` of the `tags:`.
+    # @param tag_matching [Symbol, string, nil] Whether to `:match_all`, or `:match_some` of the `tags:`.
     # @param archived [true, false, nil] Whether or not to include archived threads. `nil` will retrieve archived **and** un-archived threads.
     # @param sort_by [Symbol, String, nil] Whether to sort the threads by `:creation_time`, `:relevance`, `:archive_time`, or `:last_message_time`.
     # @param sort_order [Symbol, string, nil] Whether to order the returned threads in `:descending`, or `:ascending` order.
@@ -1335,7 +1335,7 @@ module Discordrb
                    end
 
       sort_by = case sort_by&.to_sym
-                when :last_message_time, :recently_active, :activity
+                when :last_message_time, :recently_active, :activity, :recent_activity
                   :last_message_time
                 when nil, :timestamp, :creation_time
                   :creation_time
