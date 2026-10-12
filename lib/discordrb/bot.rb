@@ -434,9 +434,9 @@ module Discordrb
       end
 
       response = if (guild = guild&.resolve_id)
-                   @bot.http.create_guild_application_command(profile.id, guild, **data)
+                   @http.create_guild_application_command(profile.id, guild, **data)
                  else
-                   @bot.http.create_global_application_command(profile.id, **data)
+                   @http.create_global_application_command(profile.id, **data)
                  end
 
       ApplicationCommand.new(response, self)
@@ -485,9 +485,9 @@ module Discordrb
       }
 
       response = if (guild = guild&.resolve_id)
-                   @bot.http.modify_guild_application_command(profile.id, guild, command.resolve_id, **data)
+                   @http.modify_guild_application_command(profile.id, guild, command.resolve_id, **data)
                  else
-                   @bot.http.modify_global_application_command(profile.id, command.resolve_id, **data)
+                   @http.modify_global_application_command(profile.id, command.resolve_id, **data)
                  end
 
       command.update_data(response) if command.is_a?(ApplicationCommand)
