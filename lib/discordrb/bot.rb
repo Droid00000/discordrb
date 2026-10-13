@@ -1176,7 +1176,7 @@ module Discordrb
       when :MESSAGE_CREATE
         if data[:author][:bot]
           if @ignore_bots
-            LOGGER.debug("Ignored bot account (User ID: #{data[:author][:id]}")
+            LOGGER.debug("Ignored bot account (User ID: #{data[:author][:id]})")
             return
           end
 
@@ -1232,7 +1232,7 @@ module Discordrb
         end
 
         if @ignore_bots && data[:author][:bot]
-          LOGGER.debug("Ignored bot account (User ID: #{data[:author][:id]}")
+          LOGGER.debug("Ignored bot account (User ID: #{data[:author][:id]})")
           return
         end
 
