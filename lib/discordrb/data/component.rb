@@ -3,8 +3,8 @@
 module Discordrb
   # Components are interactable interfaces that can be attached to messages.
   module Components
-    # @deprecated This alias will be removed in future releases.
-    class View < Webhooks::View; end
+    # Mapping of component types.
+    TYPES = Webhooks::View::COMPONENT_TYPES
 
     # @!visibility private
     def self.from_data(data, bot)
@@ -83,6 +83,11 @@ module Discordrb
       def to_a
         @components
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:action_row], components: @components.map(&:to_h) }.compact
+      end
     end
 
     # An interactable button component.
@@ -143,6 +148,11 @@ module Discordrb
       def await_click!(**attributes, &block)
         @bot.add_await!(Discordrb::Events::ButtonEvent, { custom_id: @custom_id }.merge!(attributes), &block)
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:button], label: @label, style: @style, custom_id: @custom_id, disabled: @disabled, url: @url, emoji: @emoji&.to_h }.compact
+      end
     end
 
     # An interactable select menu component.
@@ -168,10 +178,18 @@ module Discordrb
           @description = data[:description]
           @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
         end
+
+        # @!visibility private
+        def to_h
+          { label: @label, value: @value, description: @description, emoji: @emoji&.to_h }.compact
+        end
       end
 
       # @return [Integer] the numeric identifier of the select menu.
       attr_reader :id
+
+      # @return [Integer] the specific sub-type of the select menu.
+      attr_reader :type
 
       # @return [Array<String>] the submitted values from the modal.
       attr_reader :values
@@ -195,12 +213,18 @@ module Discordrb
       def initialize(data, bot)
         @bot = bot
         @id = data[:id]
+        @type = data[:type]
         @values = data[:values] || []
         @custom_id = data[:custom_id]
         @max_values = data[:max_values]
         @min_values = data[:min_values]
         @placeholder = data[:placeholder]
         @options = data[:options]&.map { |option| Option.new(option) } || []
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: @type, custom_id: @custom_id, max_values: @max_values, min_values: @min_values, placeholder: @placeholder, options: @options.map(&:to_h) }.compact
       end
     end
 
@@ -242,6 +266,11 @@ module Discordrb
         @accessory = Components.from_data(data[:accessory], @bot)
         @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:section], accessory: @accessory.to_h, components: @components.map(&:to_h) }
+      end
     end
 
     # A content component representing message content.
@@ -257,6 +286,11 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @content = data[:content]
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:text_display], content: @content }
       end
     end
 
@@ -284,6 +318,11 @@ module Discordrb
         @description = data[:description]
         @media = MediaItem.new(data[:media], @bot)
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:thumbnail], media: @media.to_h, spoiler: @spoiler, description: @description }.compact
+      end
     end
 
     # A grouping of media attachments in an organized gallery format.
@@ -299,6 +338,11 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @items = data[:items].map { |item| Item.new(item, @bot) }
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:media_gallery], items: @items.map(&:to_h) }.compact
       end
 
       # A singular media attachment.
@@ -320,6 +364,11 @@ module Discordrb
           @spoiler = data[:spoiler]
           @description = data[:description]
           @media = MediaItem.new(data[:media], @bot)
+        end
+
+        # @!visibility private
+        def to_h
+          { media: @media.to_h, spoiler: @spoiler, description: @description }.compact
         end
       end
     end
@@ -343,6 +392,11 @@ module Discordrb
         @id = data[:id]
         @divider = data[:divider]
         @spacing = data[:spacing]
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:separator], divider: @divider, spacing: @spacing }.compact
       end
     end
 
@@ -384,6 +438,11 @@ module Discordrb
           end
         end.compact
       end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:container], spoiler: @spoiler, accent_color: @color&.to_i, components: @components.map(&:to_h) }.compact
+      end
     end
 
     # A component that allows you to display an attachment.
@@ -414,6 +473,11 @@ module Discordrb
         @size = data[:size]
         @spoiler = data[:spoiler]
         @media = MediaItem.new(data[:file], @bot)
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:file], spoiler: @spoiler, file: @media.to_h }
       end
     end
 
@@ -470,6 +534,11 @@ module Discordrb
       #   @return [true, false] whether or not the media item is animated.
       FLAGS.each do |name, value|
         define_method("#{name}?") { @flags.anybits?(value) }
+      end
+
+      # @!visibility private
+      def to_h
+        { url: @url, attachment_id: @attachment_id }.compact
       end
     end
 
