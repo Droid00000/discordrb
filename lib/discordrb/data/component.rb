@@ -89,7 +89,14 @@ module Discordrb
 
       # @!visibility private
       def tree_to_h
-        @modified_data ? to_h.merge!(@modified_data) : to_h
+        return to_h unless @modified_data
+
+        {
+          id: @id,
+          type: TYPES[:action_row],
+          components: @components.map(&:tree_to_h),
+          **@modified_data
+        }
       end
 
       # @!visibility private
@@ -304,7 +311,15 @@ module Discordrb
 
       # @!visibility private
       def tree_to_h
-        @modified_data ? to_h.merge!(@modified_data) : to_h
+        return to_h unless @modified_data&.any?
+        
+        { 
+          id: @id,
+          type: TYPES[:section],
+          accessory: @accessory.tree_to_h,
+          components: @components.map(&:tree_to_h),
+          **modified_data
+        }
       end
 
       # @!visibility private
