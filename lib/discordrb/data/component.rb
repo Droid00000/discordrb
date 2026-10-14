@@ -85,6 +85,14 @@ module Discordrb
       end
 
       # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
+      end
+
+      # @!visibility private
       def to_h
         { id: @id, type: TYPES[:action_row], components: @components.map(&:to_h) }.compact
       end
@@ -150,6 +158,14 @@ module Discordrb
       end
 
       # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
+      end
+
+      # @!visibility private
       def to_h
         { id: @id, type: TYPES[:button], label: @label, style: @style, custom_id: @custom_id, disabled: @disabled, url: @url, emoji: @emoji&.to_h }.compact
       end
@@ -177,6 +193,14 @@ module Discordrb
           @value = data[:value]
           @description = data[:description]
           @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
+        end
+
+        # @!visibility private
+        attr_writer :modified_data
+
+        # @!visibility private
+        def tree_to_h
+          @modified_data ? to_h.merge!(@modified_data) : to_h
         end
 
         # @!visibility private
@@ -220,6 +244,14 @@ module Discordrb
         @min_values = data[:min_values]
         @placeholder = data[:placeholder]
         @options = data[:options]&.map { |option| Option.new(option) } || []
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # @!visibility private
@@ -268,6 +300,14 @@ module Discordrb
       end
 
       # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
+      end
+
+      # @!visibility private
       def to_h
         { id: @id, type: TYPES[:section], accessory: @accessory.to_h, components: @components.map(&:to_h) }
       end
@@ -286,6 +326,14 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @content = data[:content]
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # @!visibility private
@@ -320,6 +368,14 @@ module Discordrb
       end
 
       # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
+      end
+
+      # @!visibility private
       def to_h
         { id: @id, type: TYPES[:thumbnail], media: @media.to_h, spoiler: @spoiler, description: @description }.compact
       end
@@ -338,6 +394,14 @@ module Discordrb
         @bot = bot
         @id = data[:id]
         @items = data[:items].map { |item| Item.new(item, @bot) }
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # @!visibility private
@@ -367,6 +431,14 @@ module Discordrb
         end
 
         # @!visibility private
+        attr_writer :modified_data
+
+        # @!visibility private
+        def tree_to_h
+          @modified_data ? to_h.merge!(@modified_data) : to_h
+        end
+
+        # @!visibility private
         def to_h
           { media: @media.to_h, spoiler: @spoiler, description: @description }.compact
         end
@@ -392,6 +464,14 @@ module Discordrb
         @id = data[:id]
         @divider = data[:divider]
         @spacing = data[:spacing]
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # @!visibility private
@@ -424,6 +504,14 @@ module Discordrb
         @spoiler = data[:spoiler]
         @color = Color.new(data[:accent_color]) if data[:accent_color]
         @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # Get the buttons contained within the container.
@@ -473,6 +561,14 @@ module Discordrb
         @size = data[:size]
         @spoiler = data[:spoiler]
         @media = MediaItem.new(data[:file], @bot)
+      end
+
+      # @!visibility private
+      attr_writer :modified_data
+
+      # @!visibility private
+      def tree_to_h
+        @modified_data ? to_h.merge!(@modified_data) : to_h
       end
 
       # @!visibility private
