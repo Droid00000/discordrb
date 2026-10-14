@@ -526,7 +526,17 @@ module Discordrb
 
       # @!visibility private
       def tree_to_h
-        @modified_data ? to_h.merge!(@modified_data) : to_h
+        return to_h unless @modified_data&.any?
+
+
+        { 
+          id: @id,
+          type: TYPES[:container],
+          spoiler: @spoiler,
+          accent_color: @color&.to_i,
+          components: @components.map(&:tree_to_h),
+          **@modified_data
+        }.compact
       end
 
       # Get the buttons contained within the container.
