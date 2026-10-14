@@ -314,7 +314,7 @@ module Discordrb
           type: TYPES[:section],
           accessory: @accessory.tree_to_h,
           components: @components.map(&:tree_to_h),
-          **modified_data
+          **@modified_data
         }
       end
 
