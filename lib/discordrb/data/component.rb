@@ -89,8 +89,6 @@ module Discordrb
 
       # @!visibility private
       def tree_to_h
-        return to_h unless @modified_data
-
         {
           id: @id,
           type: TYPES[:action_row],
@@ -310,9 +308,7 @@ module Discordrb
       attr_writer :modified_data
 
       # @!visibility private
-      def tree_to_h
-        return to_h unless @modified_data&.any?
-        
+      def tree_to_h        
         { 
           id: @id,
           type: TYPES[:section],
@@ -526,9 +522,6 @@ module Discordrb
 
       # @!visibility private
       def tree_to_h
-        return to_h unless @modified_data&.any?
-
-
         { 
           id: @id,
           type: TYPES[:container],
