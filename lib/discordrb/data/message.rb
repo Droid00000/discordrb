@@ -356,8 +356,8 @@ module Discordrb
       builder = Discordrb::Webhooks::Builder.new
 
       builder.content = content
+      builder.allowed_mentions = allowed_mentions
       [*embeds].each { |item| builder << item } unless embeds == :undef
-      builder.allowed_mentions = allowed_mentions unless allowed_mentions == :undef
       yield(builder, view) if block_given?
 
       view = view.to_a
