@@ -76,10 +76,10 @@ module Discordrb::Events
     # @!attribute [r] content
     #   @return [String] the message's content.
     #   @see Message#content
-    # @!attribute [r] timestamp
+    # @!attribute [r] creation_time
     #   @return [Time] the time at which the message was sent.
-    #   @see Message#timestamp
-    delegate :author, :channel, :content, :timestamp, to: :message
+    #   @see Message#creation_time
+    delegate :author, :channel, :content, :creation_time, to: :message
 
     # @!attribute [r] guild
     #   @return [Guild, nil] the guild where this message was sent, or nil if it was sent in a DM channel.
@@ -220,8 +220,8 @@ module Discordrb::Events
             a == e
           end
         end,
-        matches_all(@attributes[:after], event.timestamp) { |a, e| a > e },
-        matches_all(@attributes[:before], event.timestamp) { |a, e| a < e },
+        matches_all(@attributes[:after], event.creation_time) { |a, e| a > e },
+        matches_all(@attributes[:before], event.creation_time) { |a, e| a < e },
         matches_all(@attributes[:private], event.channel.private?) { |a, e| !e == !a },
         matches_all(@attributes[:guild], event.guild) { |a, e| a&.resolve_id == e&.resolve_id }
       ].reduce(true, &:&)

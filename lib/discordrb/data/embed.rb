@@ -3,6 +3,14 @@
 module Discordrb
   # An embed associated with a message.
   class Embed
+    # Mapping of embed flags.
+    FLAGS = {
+      explicit_content: 1 << 4,
+      content_inventory_entry: 1 << 5,
+      gore_content: 1 << 6,
+      self_harm_content: 1 << 7
+    }.freeze
+
     # @return [String] the URL the embed object is based on.
     attr_reader :url
 
@@ -71,6 +79,18 @@ module Discordrb
       @author = EmbedAuthor.new(data[:author], @bot) if data[:author]
       @fields = data[:fields]&.map { |field| EmbedField.new(field, @bot) } || []
       @components = data[:components]&.filter_map { |item| Components.from_data(item, @bot) } || []
+    end
+
+    # @!method content_inventory_entry?
+    #   @return [true, false] whether or not the embed is a fallback for a reply to an activity card.
+    # @!method gore_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as gore by Discord's content scanning.
+    # @!method explicit_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as NSFW by Discord's content scanning.
+    # @!method self_harm_content?
+    #   @return [true, false] whether or not the embed's media has been flagged as self-harm by Discord's content scanning.
+    FLAGS.each do |name, value|
+      define_method("#{name}?") { @flags.anybits?(value) }
     end
 
     # @!visibility private

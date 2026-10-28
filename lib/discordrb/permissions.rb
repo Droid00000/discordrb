@@ -16,7 +16,7 @@ module Discordrb
       7 => :view_audit_log,               # 128
       8 => :priority_speaker,             # 256
       9 => :stream,                       # 512
-      10 => :view_channel,               # 1024
+      10 => :view_channel,                # 1024
       11 => :send_messages,               # 2048
       12 => :send_tts_messages,           # 4096
       13 => :manage_messages,             # 8192

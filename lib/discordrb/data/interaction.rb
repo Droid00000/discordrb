@@ -409,8 +409,18 @@ module Discordrb
     # @return [Guild, nil] This will be nil for interactions that occur in DM channels or guilds where the bot
     #   does not have the `bot` scope.
     def guild
-      @guild ||= (@guild = @bot.guild(@guild_id))
+      @guild ||= @bot.guild(@guild_id)
     end
+
+    # Get an entity that can be used to modify the buttons on the message attached to the interaction.
+    # @return [Components::Tree, nil] An entity that can be used to modify the interaction's buttons, or `nil`.
+    def components_tree
+      return unless @message&.components&.any?
+
+      @components_tree ||= Components::Tree.new(self, @bot)
+    end
+
+    alias :component_tree :components_tree
 
     # Get the button component that triggered the interaction.
     # @return [Components::Button, nil] The button that triggered this interaction if applicable, otherwise `nil`.

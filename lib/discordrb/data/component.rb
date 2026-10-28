@@ -506,6 +506,13 @@ module Discordrb
         animated: 1 << 0
       }.freeze
 
+      # Mapping of content scan flags.
+      CONTENT_SCAN_FLAGS = {
+        explicit_content: 1 << 0,
+        gore_content: 1 << 1,
+        self_harm_content: 1 << 2
+      }.freeze
+
       # @return [String] the URL to the media item.
       attr_reader :url
 
@@ -531,7 +538,10 @@ module Discordrb
       #   when the media item was uploaded via an `attachment://<filename>` reference.
       attr_reader :attachment_id
 
-      # @return [Integer, nil] the version of the thumbhash for images and videos, if any.
+      # @return [Integer] the results of Discord's content scanning combined as a bitfield.
+      attr_reader :content_scan_flags
+
+      # @return [Integer, nil] the version of the thumbhash for images and videos, if applicable.
       attr_reader :placeholder_version
 
       # @!visibility private
@@ -546,12 +556,23 @@ module Discordrb
         @content_type = data[:content_type]
         @attachment_id = data[:attachment_id]&.to_i
         @placeholder_version = data[:placeholder_version]
+        @content_scan_flags = data[:content_scan_metadata]&.[](:flags) || 0
       end
 
       # @!method animated?
       #   @return [true, false] whether or not the media item is animated.
       FLAGS.each do |name, value|
         define_method("#{name}?") { @flags.anybits?(value) }
+      end
+
+      # @!method gore_content?
+      #   @return [true, false] whether or not the media item has been flagged as gore by Discord's content scanning.
+      # @!method explicit_content?
+      #   @return [true, false] whether or not the media item has been flagged as NSFW by Discord's content scanning.
+      # @!method self_harm_content?
+      #   @return [true, false] whether or not the media item has been flagged as self-harm by Discord's content scanning.
+      CONTENT_SCAN_FLAGS.each do |name, value|
+        define_method("#{name}?") { @content_scan_flags.anybits?(value) }
       end
 
       # @!visibility private

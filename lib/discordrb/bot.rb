@@ -401,7 +401,7 @@ module Discordrb
 
       data = {
         name: name&.to_s,
-        default_permissions: permissions&.to_s,
+        default_member_permissions: permissions&.to_s,
         description: description == '' ? nil : description,
         name_localizations: name_localizations&.to_h,
         description_localizations: description_localizations&.to_h,
@@ -474,7 +474,7 @@ module Discordrb
 
       data = {
         name: name,
-        default_permissions: permissions == :undef ? :undef : permissions&.to_s,
+        default_member_permissions: permissions == :undef ? :undef : permissions&.to_s,
         description: description == '' ? nil : description,
         name_localizations: name_localizations == :undef ? :undef : name_localizations&.to_h,
         description_localizations: description_localizations == :undef ? :undef : description_localizations&.to_h,
