@@ -242,7 +242,7 @@ module Discordrb::Events
         options = options[:options]
       end
 
-      @options = transform_options_hash(options || {})
+      @options = transform_options_hash(options || {}).freeze
     end
 
     # @return [true, false] Whether or not the application command that was executed
