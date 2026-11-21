@@ -97,7 +97,7 @@ module Discordrb::Events
         end,
 
         matches_all(@attributes[:premium_count] || @attributes[:boost_count], event.guild) do |a, e|
-          a&.to_i == e&.premium_tier
+          a&.to_i == e&.premium_count
         end
       ].reduce(true, &:&)
     end

@@ -34,7 +34,9 @@ module Discordrb
       guild_tag_badge: "#{BASE}/guild-tag-badges/%s/%s.%s",
       nameplate_asset: "#{BASE}/assets/collectibles/%sasset.%s",
       static_nameplate_asset: "#{BASE}/assets/collectibles/%sstatic.%s",
-      soundboard_sound: "#{BASE}/soundboard-sounds/%s"
+      soundboard_sound: "#{BASE}/soundboard-sounds/%s",
+      guild_new_member_action_icon: "#{BASE}/new-member-actions/%s/%s.%s",
+      guild_resource_channel_icon: "#{BASE}/resource-channels/%s/%s.%s"
     }.freeze
 
     # Create a new asset URL.

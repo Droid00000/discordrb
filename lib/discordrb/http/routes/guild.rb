@@ -254,5 +254,11 @@ module Discordrb::HTTP
       request Route[:PUT, "/guilds/#{guild_id}/incident-actions", guild_id],
               body: filter_undef(body), reason: reason
     end
+
+    # @see https://docs.discord.com/developers/resources/guild#get-guild-new-member-welcome
+    def get_guild_new_member_welcome(guild_id, **params)
+      request Route[:GET, "/guilds/#{guild_id}/new-member-welcome", guild_id],
+              params: filter_undef(params)
+    end
   end
 end

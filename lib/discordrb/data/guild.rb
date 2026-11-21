@@ -1832,6 +1832,15 @@ module Discordrb
 
     # @!group Community Experience
 
+    # Get the guild guide for the guild.
+    # @return [GuildGuide, nil] The guild guide for the guild.
+    def guide
+      response = @bot.http.get_guild_new_member_welcome(@id)
+      response ? GuildGuide.new(response, self, @bot) : nil
+    rescue Discordrb::Errors::NoPermission, Discordrb::Errors::NotFound
+      nil
+    end
+
     # Get the onboarding flow for the guild.
     # @return [Onboarding, nil] The onboarding flow for the guild.
     def onboarding
