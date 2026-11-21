@@ -150,7 +150,7 @@ module Discordrb
         return @permissions.bits
       end
 
-      return Permissions::ALL if owner?
+      return Permissions::ALL if !@user.current_bot? && owner?
 
       base = guild.everyone_role.permissions.bits
 
