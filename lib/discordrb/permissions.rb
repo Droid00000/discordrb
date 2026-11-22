@@ -150,8 +150,6 @@ module Discordrb
         return @permissions.bits
       end
 
-      return Permissions::ALL if !@user.current_bot? && owner?
-
       base = guild.everyone_role.permissions.bits
 
       roles.each do |role|
@@ -160,13 +158,11 @@ module Discordrb
         return Permissions::ALL if role.permissions.administrator?
       end
 
+      return Permissions::ALL if !@user.current_bot? && owner?
+
       (channel = @bot.channel(channel)) if channel && !channel.is_a?(Channel)
 
-      computed = if channel
-                   compute_overwrites(base, channel)
-                 else
-                   base
-                 end
+      computed = (channel ? compute_overwrites(base, channel) : base)
 
       # Members in timeout lose all of their permissions except for
       # the `:view_channel` and the `:read_message_history` permissions.

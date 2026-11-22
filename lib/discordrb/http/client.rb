@@ -54,8 +54,8 @@ require 'discordrb/http/routes/webhook'
 
 module Discordrb
   # @!visibility private
-  # All of the code from this point onwards was written by Swarley. I take **ZERO** credit for anything
-  #   in this file. Huge thanks to them for writing this (https://github.com/shardlab/discordrb/pull/96).
+  # All of the code from this point onwards was written by Swarley, not me.
+  #   Huge thanks to them for writing this (https://github.com/shardlab/discordrb/pull/96).
   module HTTP
     # A route for a HTTP request.
     class Route
@@ -127,9 +127,7 @@ module Discordrb
       end
     end
 
-    # Client for making HTTP requests to the Discord API. This entire HTTP client was written
-    #   by Swarley (https://github.com/shardlab/discordrb/pull/96) so huge thanks to them. I would've
-    #   never been able to figure out any of this by myself.
+    # Client for making HTTP requests to the Discord API.
     class Client
       include ApplicationCommandEndpoints
       include ApplicationRoleConnectionMetadataEndpoints
