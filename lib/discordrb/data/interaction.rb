@@ -105,7 +105,7 @@ module Discordrb
       @message = Interactions::Message.new(data[:message], @bot, self) if data[:message]
       @data = data[:data]
       @guild_id = data[:guild_id]&.to_i
-      @guild = @guild_id ? bot.guilds[@guild_id] : nil
+      @guild = @guild_id ? @bot.guilds[@guild_id] : nil
       @channel_id = data[:channel_id]&.to_i
       @channel = @bot.ensure_channel(data[:channel], nil, true) if data[:channel]
       @user = if data[:member]
@@ -144,15 +144,24 @@ module Discordrb
     # @yieldparam view [Webhooks::View] A builder for creating interaction components.
     # @return [Interactions::Message] The message that was created.
     def respond(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, components: nil, attachments: nil, has_components: false, poll: nil)
-      flags |= (1 << 6) if ephemeral
-      flags |= (1 << 15) if has_components
+      flags |= Message::FLAGS[:ephemeral] if ephemeral
+      flags |= Message::FLAGS[:uikit_components] if has_components
 
-      builder = Discordrb::Webhooks::Builder.new
-      view = Discordrb::Webhooks::View.new
+      if block_given?
+        builder = Discordrb::Webhooks::Builder.new
+        view = Discordrb::Webhooks::View.new
 
-      prepare_builder(builder, content, embeds, allowed_mentions, poll)
-      yield(builder, view) if block_given?
-      data = builder.to_json_hash
+        prepare_builder(builder, content, embeds, allowed_mentions, poll)
+        yield(builder, view)
+        data = builder.to_json_hash
+      else
+        data = {
+          content: content,
+          embeds: embeds&.map(&:to_h),
+          allowed_mentions: allowed_mentions&.to_h,
+          poll: poll&.to_h
+        }
+      end
 
       callback = {
         with_response: true,
@@ -181,7 +190,7 @@ module Discordrb
     # @param ephemeral [true, false] Whether this message should only be visible to the interaction initiator.
     # @return [nil]
     def defer(flags: 0, ephemeral: true)
-      flags |= (1 << 6) if ephemeral
+      flags |= Message::FLAGS[:ephemeral] if ephemeral
 
       @bot.http.create_interaction_response(@id, @token, type: CALLBACK_TYPES[:deferred_message], data: { flags: flags })
       nil
@@ -199,9 +208,7 @@ module Discordrb
     # @yieldparam [Discordrb::Webhooks::Modal] A builder for the modal's components.
     # @return [nil]
     def show_modal(title:, custom_id:, components: nil)
-      return if @type == Interaction::TYPES[:modal_submit]
-
-      if block_given?
+      if block_given? && !components
         modal_builder = Discordrb::Webhooks::Modal.new
         yield modal_builder
 
@@ -238,15 +245,24 @@ module Discordrb
     # @yieldparam view [Webhooks::View] A builder for creating interaction components.
     # @return [Interactions::Message] The message that was updated.
     def update_message(content: nil, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, components: nil, attachments: nil, has_components: false, poll: nil)
-      flags |= (1 << 6) if ephemeral
-      flags |= (1 << 15) if has_components
+      flags |= Message::FLAGS[:ephemeral] if ephemeral
+      flags |= Message::FLAGS[:uikit_components] if has_components
 
-      builder = Discordrb::Webhooks::Builder.new
-      view = Discordrb::Webhooks::View.new
+      if block_given?
+        builder = Discordrb::Webhooks::Builder.new
+        view = Discordrb::Webhooks::View.new
 
-      prepare_builder(builder, content, embeds, allowed_mentions, poll)
-      yield(builder, view) if block_given?
-      data = builder.to_json_hash
+        prepare_builder(builder, content, embeds, allowed_mentions, poll)
+        yield(builder, view)
+        data = builder.to_json_hash
+      else
+        data = {
+          content: content,
+          embeds: embeds&.map(&:to_h),
+          allowed_mentions: allowed_mentions&.to_h,
+          poll: poll&.to_h
+        }
+      end
 
       callback = {
         with_response: true,
@@ -282,13 +298,23 @@ module Discordrb
     # @yieldparam view [Webhooks::View] A builder for creating interaction components.
     # @return [Interactions::Message] The message that was updated.
     def edit_response(content: nil, embeds: nil, allowed_mentions: nil, flags: 0, components: nil, attachments: nil, has_components: false, poll: nil)
-      flags |= (1 << 15) if has_components
-      builder = Discordrb::Webhooks::Builder.new
-      view = Discordrb::Webhooks::View.new
+      flags |= Message::FLAGS[:uikit_components] if has_components
 
-      prepare_builder(builder, content, embeds, allowed_mentions, poll)
-      yield(builder, view) if block_given?
-      data = builder.to_json_hash
+      if block_given?
+        builder = Discordrb::Webhooks::Builder.new
+        view = Discordrb::Webhooks::View.new
+
+        prepare_builder(builder, content, embeds, allowed_mentions, poll)
+        yield(builder, view)
+        data = builder.to_json_hash
+      else
+        data = {
+          content: content,
+          embeds: embeds&.map(&:to_h),
+          allowed_mentions: allowed_mentions&.to_h,
+          poll: poll&.to_h
+        }
+      end
 
       callback = {
         content: data[:content],
@@ -323,15 +349,24 @@ module Discordrb
     # @yieldparam view [Webhooks::View] A builder for creating interaction components.
     # @return [Interactions::Message] The message that was created.
     def send_message(content: nil, embeds: nil, tts: false, allowed_mentions: nil, flags: 0, ephemeral: false, components: nil, attachments: nil, has_components: false, poll: nil)
-      flags |= (1 << 6) if ephemeral
-      flags |= (1 << 15) if has_components
+      flags |= Message::FLAGS[:ephemeral] if ephemeral
+      flags |= Message::FLAGS[:uikit_components] if has_components
 
-      builder = Discordrb::Webhooks::Builder.new
-      view = Discordrb::Webhooks::View.new
+      if block_given?
+        builder = Discordrb::Webhooks::Builder.new
+        view = Discordrb::Webhooks::View.new
 
-      prepare_builder(builder, content, embeds, allowed_mentions, poll)
-      yield(builder, view) if block_given?
-      data = builder.to_json_hash
+        prepare_builder(builder, content, embeds, allowed_mentions, poll)
+        yield(builder, view)
+        data = builder.to_json_hash
+      else
+        data = {
+          content: content,
+          embeds: embeds&.map(&:to_h),
+          allowed_mentions: allowed_mentions&.to_h,
+          poll: poll&.to_h
+        }
+      end
 
       callback = {
         wait: true,
@@ -361,14 +396,23 @@ module Discordrb
     # @yieldparam view [Webhooks::View] A builder for creating interaction components.
     # @return [Interactions::Message] The message that was edited.
     def edit_message(message, content: nil, embeds: nil, allowed_mentions: nil, components: nil, attachments: nil, flags: 0, has_components: false, poll: nil)
-      flags |= (1 << 15) if has_components
+      flags |= Message::FLAGS[:uikit_components] if has_components
 
-      builder = Discordrb::Webhooks::Builder.new
-      view = Discordrb::Webhooks::View.new
+      if block_given?
+        builder = Discordrb::Webhooks::Builder.new
+        view = Discordrb::Webhooks::View.new
 
-      prepare_builder(builder, content, embeds, allowed_mentions, poll)
-      yield(builder, view) if block_given?
-      data = builder.to_json_hash
+        prepare_builder(builder, content, embeds, allowed_mentions, poll)
+        yield(builder, view)
+        data = builder.to_json_hash
+      else
+        data = {
+          content: content,
+          embeds: embeds&.map(&:to_h),
+          allowed_mentions: allowed_mentions&.to_h,
+          poll: poll&.to_h
+        }
+      end
 
       callback = {
         content: data[:content],
@@ -471,22 +515,22 @@ module Discordrb
 
     # @!visibility private
     def flatten_components(components)
-      components = components.flat_map do |entity|
-        case entity
-        when Components::ActionRow
-          entity.components
+      components = components.flat_map do |item|
+        case item
+        when Components::ActionRow, Components::Container
+          flatten_components(item.components)
         when Components::Label
-          entity.component
+          item.component
+        when Components::OverflowMenu
+          item.groups.flat_map(&:components)
         when Components::Section
-          entity.accessory if entity.accessory.respond_to?(:custom_id)
-        when Components::Container
-          flatten_components(entity.components)
+          flatten_components([item.accessory])
         else
-          entity if entity.respond_to?(:custom_id)
+          item.respond_to?(:custom_id) ? item : nil
         end
       end
 
-      components.compact
+      components.tap(&:compact!)
     end
   end
 

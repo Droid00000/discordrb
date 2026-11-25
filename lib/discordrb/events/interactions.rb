@@ -410,12 +410,10 @@ module Discordrb::Events
   end
 
   # An event for when a user interacts with a button component.
-  class ButtonEvent < ComponentEvent
-  end
+  class ButtonEvent < ComponentEvent; end
 
   # Event handler for a Button interaction event.
-  class ButtonEventHandler < ComponentEventHandler
-  end
+  class ButtonEventHandler < ComponentEventHandler; end
 
   # Event for when a user interacts with a select string component.
   class StringSelectEvent < ComponentEvent
@@ -431,8 +429,7 @@ module Discordrb::Events
   end
 
   # Event handler for a select string component.
-  class StringSelectEventHandler < ComponentEventHandler
-  end
+  class StringSelectEventHandler < ComponentEventHandler; end
 
   # An event for when a user submits a modal.
   class ModalSubmitEvent < ComponentEvent
@@ -469,8 +466,7 @@ module Discordrb::Events
   end
 
   # Event handler for a modal submission.
-  class ModalSubmitEventHandler < ComponentEventHandler
-  end
+  class ModalSubmitEventHandler < ComponentEventHandler; end
 
   # Event for when a user interacts with a select user component.
   class UserSelectEvent < ComponentEvent
@@ -486,8 +482,7 @@ module Discordrb::Events
   end
 
   # Event handler for a select user component.
-  class UserSelectEventHandler < ComponentEventHandler
-  end
+  class UserSelectEventHandler < ComponentEventHandler; end
 
   # Event for when a user interacts with a select role component.
   class RoleSelectEvent < ComponentEvent
@@ -504,8 +499,7 @@ module Discordrb::Events
   end
 
   # Event handler for a select role component.
-  class RoleSelectEventHandler < ComponentEventHandler
-  end
+  class RoleSelectEventHandler < ComponentEventHandler; end
 
   # Event for when a user interacts with a select mentionable component.
   class MentionableSelectEvent < ComponentEvent
@@ -523,8 +517,7 @@ module Discordrb::Events
   end
 
   # Event handler for a select mentionable component.
-  class MentionableSelectEventHandler < ComponentEventHandler
-  end
+  class MentionableSelectEventHandler < ComponentEventHandler; end
 
   # Event for when a user interacts with a select channel component.
   class ChannelSelectEvent < ComponentEvent
@@ -540,8 +533,13 @@ module Discordrb::Events
   end
 
   # Event handler for a select channel component.
-  class ChannelSelectEventHandler < ComponentEventHandler
-  end
+  class ChannelSelectEventHandler < ComponentEventHandler; end
+
+  # An event for when a user interacts with an overflow menu item.
+  class OverflowMenuItemEvent < ComponentEvent; end
+
+  # Event handler for an overflow menu item interaction event.
+  class OverflowMenuItemEventHandler < ComponentEventHandler; end
 
   # Event handler for an autocomplete option choices.
   class AutocompleteEventHandler < InteractionCreateEventHandler

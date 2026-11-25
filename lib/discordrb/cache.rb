@@ -514,7 +514,7 @@ module Discordrb
     # @!visibility private
     # Requests member chunks for a given guild ID.
     # @param id [Integer] The guild ID to request chunks for.
-    def request_chunks(id)
+    def request_guild_member_chunks(id)
       id = id.resolve_id
 
       bucket = (@request_members_rl[id] ||= { mutex: Mutex.new, time: Time.at(0) })

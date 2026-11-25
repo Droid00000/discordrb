@@ -102,7 +102,7 @@ module Discordrb
     # Check if the member is the guild owner.
     # @return [true, false] Whether or not the member is the owner.
     def owner?
-      @user.resolve_id == guild.owner&.resolve_id
+      @user.resolve_id == guild.owner_id
     end
 
     # Get the guild the member is a part of.

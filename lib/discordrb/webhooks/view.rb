@@ -17,6 +17,13 @@ class Discordrb::Webhooks::View
     large: 2
   }.freeze
 
+  # Possible menu item style names and values.
+  MENU_ACTION_ITEM_STYLES = {
+    default: 1,
+    danger: 2,
+    link: 3
+  }.freeze
+
   # Component types.
   # @see https://discord.com/developers/docs/components/reference#component-object-component-types
   COMPONENT_TYPES = {
@@ -34,12 +41,14 @@ class Discordrb::Webhooks::View
     media_gallery: 12,
     file: 13,
     separator: 14,
-    container: 17
+    container: 17,
     # label: 18, # (defined in modal.rb)
     # file_upload: 19, (defined in modal.rb)
     # radio_group: 21, (defined in modal.rb)
     # checkbox_group: 22, (defined in modal.rb)
     # checkbox: 23 (defined in modal.rb)
+    overflow_menu: 25,
+    menu_action_item: 26
   }.freeze
 
   # This builder is used when constructing an ActionRow. Button and select menu components must be within an action row, but this can
@@ -52,6 +61,12 @@ class Discordrb::Webhooks::View
       @components = []
 
       yield self if block_given?
+    end
+
+    # Add an overflow menu to this action row.
+    # @see OverflowMenuBuilder#initialize
+    def overflow_menu(...)
+      @components << OverflowMenuBuilder.new(...).to_h
     end
 
     # Add a button to this action row.
@@ -311,6 +326,69 @@ class Discordrb::Webhooks::View
     end
   end
 
+  # A grouping of menu items within an overflow menu.
+  class OverflowMenuGroupBuilder
+    # Create an overflow menu group component.
+    # @param label [String, nil] The label of the group.
+    def initialize(label: nil)
+      @label = label
+      @components = []
+
+      yield self if block_given?
+    end
+
+    # Add an item to the overflow menu group.
+    # @param label [String] The label of the action item.
+    # @param style [Integer, Symbol] The style of the action item; see {MENU_ACTION_ITEM_STYLES}.
+    # @param custom_id [String] Custom IDs are 1-100 character strings that can be used to pass state to interaction events.
+    # @param id [Integer, nil] The unique 32-bit ID of the action item component. This is not to be confused with the `custom_id`.
+    # @param description [String, nil] The description of the action item.
+    # @param disabled [true, false, nil] Whether the action item should be un-clickable.
+    # @param emoji [Emoji, Reaction, String, Integer, nil] An optional emoji for the action item.
+    # @param url [String, nil] The URL of the action item. Only for action items with a `:link` style.
+    def item(label:, style:, custom_id: nil, id: nil, description: nil, disabled: nil, emoji: nil, url: nil)
+      @components << {
+        type: COMPONENT_TYPES[:menu_action_item],
+        custom_id: custom_id,
+        id: id,
+        label: label,
+        style: MENU_ACTION_ITEM_STYLES[style] || style,
+        description: description,
+        url: url,
+        disabled: disabled,
+        emoji: emoji ? Discordrb::Emoji.build_hash(emoji, prefix: false) : emoji
+      }.compact
+    end
+
+    # @!visibility private
+    def to_h
+      { label: @label, components: @components }.compact
+    end
+  end
+
+  # A button with grouped menu items.
+  class OverflowMenuBuilder
+    # Create an overflow menu component.
+    # @param id [Integer, nil] The unique 32-bit ID of the overflow menu component.
+    def initialize(id: nil)
+      @id = id
+      @groups = []
+
+      yield self if block_given?
+    end
+
+    # Add a group to the overflow menu.
+    # @see OverflowMenuGroupBuilder#initialize
+    def group(...)
+      @groups << OverflowMenuGroupBuilder.new(...)
+    end
+
+    # @!visibility private
+    def to_h
+      { type: COMPONENT_TYPES[:overflow_menu], id: @id, groups: @groups.map(&:to_h) }.compact
+    end
+  end
+
   # A section allows you to group together an accessory with text display components.
   class SectionBuilder
     # Create a section component.
@@ -324,13 +402,19 @@ class Discordrb::Webhooks::View
       yield self if block_given?
     end
 
-    # Add a text display component to this section.
+    # Add a text display component to the section.
     # @see TextDisplayBuilder#initialize
     def text_display(...)
       @components << TextDisplayBuilder.new(...)
     end
 
-    # Set the thumbnail for the section. This is mutually exclusive with {#button}.
+    # Set the overflow menu for the section. This is mutually exclusive with {#thumbnail} and {#button}.
+    # @see OverflowMenuBuilder#initialize
+    def overflow_menu(...)
+      @accessory = OverflowMenuBuilder.new(...).to_h
+    end
+
+    # Set the thumbnail for the section. This is mutually exclusive with {#button} and {#overflow_menu}.
     # @param url [String] The URL to the thumbnail image.
     # @param id [Integer, nil] The unique 32-bit ID of the thumbnail component.
     # @param description [String, nil] The description of the thumbnail.
@@ -339,7 +423,7 @@ class Discordrb::Webhooks::View
       @accessory = { type: COMPONENT_TYPES[:thumbnail], id: id, media: { url: }, description: description, spoiler: spoiler }.compact
     end
 
-    # Set the button for the section. This is mutually exclusive with {#thumbnail}.
+    # Set the button for the section. This is mutually exclusive with {#thumbnail} and {#overflow_menu}.
     # @param style [Symbol, Integer] The button's style type. See {BUTTON_STYLES}
     # @param id [Integer, nil] The unique 32-bit ID of the button component. This is not to be confused with the `custom_id`.
     # @param label [String, nil] The text label for the button. Either a label or emoji must be provided.

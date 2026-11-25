@@ -27,6 +27,7 @@
 
 require 'faraday'
 require 'faraday/multipart'
+require 'faraday/net_http_persistent'
 require 'discordrb/http/routes/application_command'
 require 'discordrb/http/routes/application_role_connection_metadata'
 require 'discordrb/http/routes/application'
@@ -157,10 +158,15 @@ module Discordrb
       # The user agent used when making requests.
       USER_AGENT = "DiscordBot (https://github.com/shardlab/discordrb, #{Discordrb::VERSION})".freeze
 
+      # @!visibility private
       def initialize(token, version: 10)
         @conn = Faraday.new("https://discord.com/api/v#{version}") do |builder|
-          builder.headers[:authorization] = "Bot #{token.delete_prefix('Bot ')}"
-          builder.headers[:user_agent] = USER_AGENT
+          builder.adapter(:net_http_persistent, pool_size: 20) do |adapter|
+            adapter.idle_timeout = 250
+          end
+
+          builder.headers['Authorization'] = "Bot #{token.delete_prefix('Bot ')}"
+          builder.headers['User-Agent'] = USER_AGENT
 
           builder.request :multipart
           builder.request :json

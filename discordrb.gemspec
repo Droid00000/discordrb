@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'base64', '~> 0.2'
   spec.add_dependency 'faraday', '>= 2.14.3'
   spec.add_dependency 'faraday-multipart', '>= 1.2.0'
+  spec.add_dependency 'faraday-net_http_persistent', '~> 2.0'
   spec.add_dependency 'ffi', '>= 1.9.24'
   spec.add_dependency 'opus-ruby'
   spec.add_dependency 'websocket-driver', '>= 0.8.2'

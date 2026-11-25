@@ -41,6 +41,10 @@ module Discordrb
         CheckboxGroup.new(data, bot)
       when Webhooks::Modal::COMPONENT_TYPES[:checkbox]
         Checkbox.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:overflow_menu]
+        OverflowMenu.new(data, bot)
+      when Webhooks::View::COMPONENT_TYPES[:menu_action_item]
+        OverflowMenuGroup::Item.new(data, bot)
       end
     end
 
@@ -51,7 +55,7 @@ module Discordrb
       # @return [Integer] the numeric identifier of the action row.
       attr_reader :id
 
-      # @return [Array<Button>] the components contained within this action row.
+      # @return [Array<Component>] the components contained within the action row.
       attr_reader :components
 
       # @!visibility private
@@ -67,16 +71,22 @@ module Discordrb
         @components.each(&block)
       end
 
-      # Get all the buttons in this action row.
-      # @return [Array<Button>] All of the buttons in this action row.
+      # Get all of the buttons in the action row.
+      # @return [Array<Button>] All of the buttons in the action row.
       def buttons
-        select { |component| component.is_a?(Button) }
+        @components.select { |component| component.is_a?(Button) }
       end
 
-      # Get all the text inputs in this action row.
-      # @return [Array<TextInput>] All of the text inputs in this action row.
-      def text_inputs
-        select { |component| component.is_a?(TextInput) }
+      # Get all of the select menus in the action row.
+      # @return [Array<SelectMenu>] All of the select menus in the action row.
+      def select_menus
+        @components.select { |component| component.is_a?(SelectMenu) }
+      end
+
+      # Get all of the overflow menus in the action row.
+      # @return [Array<OverflowMenu>] All of the overflow menus in the action row.
+      def overflow_menus
+        @components.select { |component| component.is_a?(OverflowMenu) }
       end
 
       # @!visibility private
@@ -106,6 +116,7 @@ module Discordrb
 
       # @return [true, false] whether or not the button is disabled.
       attr_reader :disabled
+      alias :disabled? :disabled
 
       # @return [String, nil] the URL of the button if applicable.
       attr_reader :url
@@ -675,6 +686,104 @@ module Discordrb
         @id = data[:id]
         @value = data[:value]
         @custom_id = data[:custom_id]
+      end
+    end
+
+    # A button with grouped menu items.
+    class OverflowMenu
+      # @return [Integer] the numeric identifier of the overflow menu.
+      attr_reader :id
+
+      # @return [Array<OverflowMenuGroup>] the groups within the overflow menu.
+      attr_reader :groups
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @id = data[:id]
+        @groups = data[:groups].map { |group| OverflowMenuGroup.new(group, @bot) }
+      end
+
+      # @!visibility private
+      def to_h
+        { id: @id, type: TYPES[:overflow_menu], groups: @groups.map(&:to_h) }
+      end
+    end
+
+    # A grouping of one or more menu items.
+    class OverflowMenuGroup
+      # @return [String, nil] the label of the overflow menu group.
+      attr_reader :label
+
+      # @return [Array<Item>] the action items within the overflow menu group.
+      attr_reader :components
+
+      # @!visibility private
+      def initialize(data, bot)
+        @bot = bot
+        @label = data[:label]
+        @components = data[:components].filter_map { |component| Components.from_data(component, @bot) }
+      end
+
+      # @!visibility private
+      def to_h
+        { label: @label, components: @components.map(&:to_h) }.compact
+      end
+
+      # A single item within an overflow menu.
+      class Item
+        # @return [Integer] the numeric identifier of the menu item.
+        attr_reader :id
+
+        # @return [String, nil] the URL of the menu item for the `:link` style.
+        attr_reader :url
+
+        # @return [String] the label of the menu item; maximum of 80 characters.
+        attr_reader :label
+
+        # @return [Integer] the style of the menu item; one of `1`, `2`, or `3`.
+        attr_reader :style
+
+        # @return [Emoji, nil] the emoji of the menu item, or `nil` if no emoji.
+        attr_reader :emoji
+
+        # @return [true, false] whether or not the menu item is currently un-clickable.
+        attr_reader :disabled
+        alias :disabled? :disabled
+
+        # @return [String] the 1-100 character custom ID used to identify the menu item.
+        attr_reader :custom_id
+
+        # @return [String, nil] the description of the menu item, or `nil` if no description.
+        attr_reader :description
+
+        # @!visibility private
+        def initialize(data, bot)
+          @bot = bot
+          @id = data[:id]
+          @url = data[:url]
+          @label = data[:label]
+          @style = data[:style]
+          @emoji = Emoji.new(data[:emoji], @bot) if data[:emoji]
+          @disabled = data[:disabled]
+          @custom_id = data[:custom_id]
+          @description = data[:description]
+        end
+
+        # @!method link?
+        #   @return [true, false] whether or not the style of the menu item is `:link`.
+        # @!method danger?
+        #   @return [true, false] whether or not the style of the menu item is `:danger`.
+        # @!method default?
+        #   @return [true, false] whether or not the style of the menu item is `:default`.
+        Webhooks::View::MENU_ACTION_ITEM_STYLES.each do |name, value|
+          define_method("#{name}?") { @style == value }
+        end
+
+        # @!visibility private
+        def to_h
+          { id: @id, url: @url, label: @label, style: @style, emoji: @emoji&.to_h, disabled: @disabled, custom_id: @custom_id, description: @description }.compact
+        end
       end
     end
   end

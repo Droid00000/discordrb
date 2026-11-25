@@ -586,7 +586,7 @@ module Discordrb
       register_event(ButtonEvent, attributes, block)
     end
 
-    # This **event** is raised whenever an select string interaction is created.
+    # This **event** is raised whenever a string select interaction is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Regexp] :custom_id A custom_id to match against.
     # @option attributes [String, Integer, Message] :message The message to filter for.
@@ -613,7 +613,7 @@ module Discordrb
       register_event(ModalSubmitEvent, attributes, block)
     end
 
-    # This **event** is raised whenever an select user interaction is created.
+    # This **event** is raised whenever a user select interaction is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Regexp] :custom_id A custom_id to match against.
     # @option attributes [String, Integer, Message] :message The message to filter for.
@@ -624,7 +624,7 @@ module Discordrb
       register_event(UserSelectEvent, attributes, block)
     end
 
-    # This **event** is raised whenever an select role interaction is created.
+    # This **event** is raised whenever a role select interaction is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Regexp] :custom_id A custom_id to match against.
     # @option attributes [String, Integer, Message] :message The message to filter for.
@@ -635,7 +635,7 @@ module Discordrb
       register_event(RoleSelectEvent, attributes, block)
     end
 
-    # This **event** is raised whenever an select mentionable interaction is created.
+    # This **event** is raised whenever a mentionable select interaction is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Regexp] :custom_id A custom_id to match against.
     # @option attributes [String, Integer, Message] :message The message to filter for.
@@ -646,7 +646,7 @@ module Discordrb
       register_event(MentionableSelectEvent, attributes, block)
     end
 
-    # This **event** is raised whenever an select channel interaction is created.
+    # This **event** is raised whenever a channel select interaction is created.
     # @param attributes [Hash] The event's attributes.
     # @option attributes [String, Regexp] :custom_id A custom_id to match against.
     # @option attributes [String, Integer, Message] :message The message to filter for.
@@ -656,6 +656,19 @@ module Discordrb
     def channel_select(attributes = {}, &block)
       register_event(ChannelSelectEvent, attributes, block)
     end
+
+    # This **event** is raised whenever an overflow menu item interaction is created.
+    # @param attributes [Hash] The event's attributes.
+    # @option attributes [String, Regexp] :custom_id A custom_id to match against.
+    # @option attributes [String, Integer, Message] :message The message to filter for.
+    # @yield The block is executed when the event is raised.
+    # @yieldparam event [OverflowMenuItemEvent] The event that was raised.
+    # @return [OverflowMenuItemEventHandler] The event handler that was registered.
+    def overflow_menu_item(attributes = {}, &block)
+      register_event(OverflowMenuItemEvent, attributes, block)
+    end
+
+    alias :overflow_menu :overflow_menu_item
 
     # This **event** is raised whenever a message is pinned or unpinned.
     # @param attributes [Hash] The event's attributes.

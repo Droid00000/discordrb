@@ -1505,6 +1505,10 @@ module Discordrb
             event = ChannelSelectEvent.new(data, self)
 
             raise_event(event)
+          when Webhooks::View::COMPONENT_TYPES[:menu_action_item]
+            event = OverflowMenuItemEvent.new(data, self)
+
+            raise_event(event)
           end
         when Interaction::TYPES[:modal_submit]
 

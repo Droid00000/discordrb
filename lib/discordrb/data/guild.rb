@@ -72,6 +72,9 @@ module Discordrb
     # @return [Array<Symbol>] the features of the guild, e.g. `:BANNER`, `:VERIFIED`, etc.
     attr_reader :features
 
+    # @return [Integer] the ID of the guild member that owns the guild.
+    attr_reader :owner_id
+
     # @return [Integer] the amount of time after which a voice user gets moved into the AFK channel, in seconds.
     attr_reader :afk_timeout
 
@@ -665,7 +668,7 @@ module Discordrb
         raise Discordrb::Errors::MissingGatewayIntent, 'The :guild_members intent is required to get guild members'
       end
 
-      @bot.request_chunks(@id)
+      @bot.request_guild_member_chunks(@id)
       sleep(0.01) until @chunked
       @members.values
     end
