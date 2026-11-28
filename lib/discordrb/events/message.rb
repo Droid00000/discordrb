@@ -150,8 +150,10 @@ module Discordrb::Events
   # Event handler for MessageEvent
   class MessageEventHandler < EventHandler
     def matches?(event)
-      # Check for the proper event type
-      return false unless event.is_a? MessageEvent
+      # Check for the proper event type.
+      return false unless event.is_a?(MessageEvent)
+
+      return true if @attributes.empty?
 
       [
         matches_all(@attributes[:starting_with] || @attributes[:start_with], event.content) do |a, e|
